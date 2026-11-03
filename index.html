@@ -208,6 +208,26 @@ body.tv.xmas{background:
 body.xmas{--panel:#16241c;--line:#2a4535;--bg2:#101b15}
 body.phone.xmas{background:#0b0f0d}
 
+/* ===== Family Round ===== */
+.tv .qphoto{max-height:36vh;max-width:60%;border-radius:1rem;border:.35rem solid #fff;box-shadow:0 1rem 3rem rgba(0,0,0,.5);object-fit:contain;background:#000}
+.tv .center.withphoto{gap:1rem}
+.tv .center.withphoto .qtext{font-size:2.6rem}
+.tv .center.withphoto .opt{min-height:4.6rem;padding:.8rem 1.2rem;font-size:1.6rem}
+.tv .center.withphoto .opt .let{width:2.6rem;height:2.6rem;font-size:2rem}
+.ph .fqlist{display:flex;flex-direction:column;gap:10px}
+.ph .fq{display:flex;align-items:center;gap:10px;background:var(--bg2);border-radius:12px;padding:8px}
+.ph .fq img,.ph .fq .fqi{width:52px;height:52px;border-radius:8px;object-fit:cover;flex:none;display:grid;place-items:center;font-size:26px;background:var(--panel)}
+.ph .fq .fqt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.ph .fq .fqt b{font-size:15px;overflow-wrap:anywhere}
+.ph .fq .fqt small{color:var(--muted)}
+.ph .fq .btn{padding:.5em .8em;font-size:14px}
+.ph .kindbtn{justify-content:flex-start;gap:12px}
+.ph .kindbtn span{font-size:26px}
+.ph .fphoto{display:flex;flex-direction:column;align-items:center;gap:10px;background:var(--bg2);border:2px dashed var(--line);border-radius:14px;padding:14px}
+.ph .fphoto img{max-width:100%;max-height:240px;border-radius:10px}
+.ph label.btn{flex-direction:row;color:var(--fg);font-size:15px}
+.ph .card input + input{margin-top:8px}
+
 </style>
 </head>
 <body>
@@ -546,7 +566,7 @@ const ROUND_ORDER = ["gk", "kids", "xmas", "tune", "emoji", "lines", "tf", "hl",
 const DEFAULT_ROUNDS = ["gk", "kids", "tune", "xmas", "lines", "closest", "buzz"];
 const EXTRA = {
   ai: { title: "Anything Round", type: "mc", blurb: "Claude writes a round on any topic you choose." },
-  family: { title: "Family Round", type: "mc", blurb: "Your own questions and photos. Coming next." },
+  family: { title: "Family Round", type: "mc", blurb: "Questions about your own family. How well do you know each other?" },
 };
 const roundInfo = id => PACKS[id] || EXTRA[id];
 const isXmas = theme => theme === "xmas" || (theme === "auto" && new Date().getMonth() === 11);
@@ -577,6 +597,131 @@ function paint(el, html) {
   for (const id in vals) { const i = document.getElementById(id); if (i) i.value = vals[id]; }
   for (const id in checks) { const i = document.getElementById(id); if (i) i.checked = checks[id]; }
   if (aid) { const n = document.getElementById(aid); if (n) { n.focus(); try { if (sel != null) n.setSelectionRange(sel, sel); } catch (e) { } } }
+}
+
+const fmtNum = (n, unit) => unit ? Number(n).toLocaleString("en-GB") + " " + unit : String(n);
+
+// Tiny IndexedDB wrapper: 'myfam' = family questions made on this phone, 'tvfam' = questions the TV has received
+const IDB = {
+  db: null,
+  open() {
+    return this.db || (this.db = new Promise((res, rej) => {
+      const r = indexedDB.open("buzzin", 1);
+      r.onupgradeneeded = () => { r.result.createObjectStore("myfam", { keyPath: "qid" }); r.result.createObjectStore("tvfam", { keyPath: "qid" }); };
+      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+    }));
+  },
+  async req(store, mode, fn) {
+    const db = await this.open();
+    return new Promise((res, rej) => { const q = fn(db.transaction(store, mode).objectStore(store)); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+  },
+  all(store) { return this.req(store, "readonly", o => o.getAll()).catch(() => []); },
+  put(store, v) { return this.req(store, "readwrite", o => o.put(v)); },
+  del(store, k) { return this.req(store, "readwrite", o => o.delete(k)); },
+};
+async function compressPhoto(file) {
+  const url = URL.createObjectURL(file);
+  const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+  let max = 800, q = .72, out = "";
+  for (let k = 0; k < 7; k++) {
+    const sc = Math.min(1, max / Math.max(img.width, img.height));
+    const c = document.createElement("canvas"); c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    out = c.toDataURL("image/jpeg", q);
+    if (out.length < 140000) break;
+    max *= .8; q = Math.max(.4, q - .06);
+  }
+  URL.revokeObjectURL(url);
+  return out;
+}
+const FAM_KINDS = {
+  photo: { icon: "📷", label: "Who's in the photo?", def: "Who's in the photo?" },
+  year: { icon: "📅", label: "Guess the year", def: "What year was this photo taken?" },
+  mc: { icon: "❓", label: "Question with choices", def: "" },
+  tf: { icon: "✅", label: "True or false", def: "" },
+};
+const famAnswer = q => q.kind === "year" ? String(q.year) : q.kind === "tf" ? (q.tf ? "True" : "False") : q.a;
+
+// Family Round editor (phone). Questions are saved on this phone only.
+function makeFamEditor(onChange) {
+  const E = { list: [], mode: "list", draft: null, confirmDel: false, msg: "" };
+  E.load = async () => { E.list = (await IDB.all("myfam")).sort((a, b) => (a.sort || 0) - (b.sort || 0)); };
+  const v = id => { const el = document.getElementById(id); return el ? el.value.trim() : ""; };
+  E.html = (standalone) => {
+    if (E.mode === "list") {
+      return `<div class="card"><h2>Family Round</h2>
+        <p class="muted">Questions about your own family. They're saved on this phone and sent to the TV when you host. Once they've been played, a second game skips them.</p>
+        <div class="fqlist">${E.list.map(q => `<div class="fq">${q.photo ? `<img src="${q.photo}" alt="">` : `<span class="fqi">${FAM_KINDS[q.kind].icon}</span>`}<div class="fqt"><b>${esc(q.text || FAM_KINDS[q.kind].def)}</b><small>Answer: ${esc(famAnswer(q))}</small></div><button class="btn" data-fe="edit" data-id="${q.qid}">Edit</button></div>`).join("") || `<p class="muted">No questions yet. Add a few, ideally 5 to 10.</p>`}</div>
+        <button class="btn gold big" data-fe="add">Add a question</button>
+        ${standalone ? "" : `<button class="btn big" data-fe="done">Done</button>`}
+        ${E.msg ? `<p class="muted center">${esc(E.msg)}</p>` : ""}</div>`;
+    }
+    if (E.mode === "pick") {
+      return `<div class="card"><h2>What kind of question?</h2>
+        ${Object.entries(FAM_KINDS).map(([k, x]) => `<button class="btn big kindbtn" data-fe="kind" data-kind="${k}"><span>${x.icon}</span>${x.label}</button>`).join("")}
+        <button class="btn big" data-fe="cancel">Cancel</button></div>`;
+    }
+    const d = E.draft, k = d.kind, needPhoto = k === "photo" || k === "year";
+    const photo = `<div class="fphoto">${d.photo ? `<img src="${d.photo}" alt="">` : `<span class="muted">${needPhoto ? "Add a photo" : "Photo (optional)"}</span>`}
+      <label class="btn">${d.photo ? "Change photo" : "Choose photo"}<input type="file" accept="image/*" data-fe-file hidden></label>${d.photo && !needPhoto ? `<button class="btn" data-fe="nophoto">Remove</button>` : ""}</div>`;
+    let f = "";
+    if (k === "photo") f = `${photo}<label>Question<input id="f-text" value="${esc(d.text || FAM_KINDS.photo.def)}"></label>
+      <label>Right answer<input id="f-a" value="${esc(d.a || "")}" placeholder="e.g. Grandad"></label>
+      <label>Other names to choose from (at least one)<input id="f-w1" value="${esc(d.w[0] || "")}" placeholder="e.g. Uncle Dai"><input id="f-w2" value="${esc(d.w[1] || "")}" placeholder="optional"><input id="f-w3" value="${esc(d.w[2] || "")}" placeholder="optional"></label>`;
+    if (k === "year") f = `${photo}<label>Question<input id="f-text" value="${esc(d.text || FAM_KINDS.year.def)}"></label>
+      <label>The year<input id="f-year" type="number" inputmode="numeric" value="${esc(d.year || "")}" placeholder="e.g. 1994"></label><p class="muted" style="font-size:14px">Closest guess wins, like the Closest Wins round.</p>`;
+    if (k === "mc") f = `<label>Question<input id="f-text" value="${esc(d.text || "")}" placeholder="e.g. Where did Mum and Dad go on honeymoon?"></label>
+      <label>Right answer<input id="f-a" value="${esc(d.a || "")}"></label>
+      <label>Wrong answers (at least one)<input id="f-w1" value="${esc(d.w[0] || "")}"><input id="f-w2" value="${esc(d.w[1] || "")}" placeholder="optional"><input id="f-w3" value="${esc(d.w[2] || "")}" placeholder="optional"></label>${photo}`;
+    if (k === "tf") f = `<label>Statement<input id="f-text" value="${esc(d.text || "")}" placeholder="e.g. Grandad once met the Queen"></label>
+      <div class="row"><button class="btn ${d.tf ? "gold" : ""}" data-fe="tf" data-val="1">True</button><button class="btn ${d.tf === false ? "gold" : ""}" data-fe="tf" data-val="0">False</button></div>${photo}`;
+    return `<div class="card"><h2>${FAM_KINDS[k].icon} ${FAM_KINDS[k].label}</h2>${f}
+      ${E.msg ? `<p style="color:var(--bad);font-weight:700">${esc(E.msg)}</p>` : ""}
+      <button class="btn gold big" data-fe="save">Save question</button>
+      <div class="row"><button class="btn" data-fe="cancel">Cancel</button>${d.qid ? (E.confirmDel ? `<button class="btn bad" data-fe="delyes">Yes, delete it</button>` : `<button class="btn" data-fe="del">Delete</button>`) : ""}</div></div>`;
+  };
+  function readDraft() {
+    const d = E.draft;
+    if (document.getElementById("f-text")) d.text = v("f-text");
+    if (document.getElementById("f-a")) d.a = v("f-a");
+    if (document.getElementById("f-w1")) d.w = [v("f-w1"), v("f-w2"), v("f-w3")];
+    if (document.getElementById("f-year")) d.year = v("f-year");
+  }
+  E.click = async (e, rerender) => {
+    const b = e.target.closest("[data-fe]"); if (!b) return false;
+    const a = b.dataset.fe; E.msg = "";
+    if (a === "add") { E.mode = "pick"; }
+    else if (a === "kind") { E.draft = { kind: b.dataset.kind, text: "", a: "", w: ["", "", ""], year: "", tf: null, photo: null }; E.mode = "edit"; E.confirmDel = false; }
+    else if (a === "edit") { const q = E.list.find(x => x.qid === b.dataset.id); E.draft = JSON.parse(JSON.stringify(q)); E.draft.w = (E.draft.w || []).concat(["", "", ""]).slice(0, 3); E.mode = "edit"; E.confirmDel = false; }
+    else if (a === "cancel") { E.mode = "list"; E.draft = null; }
+    else if (a === "done") { E.mode = "list"; rerender(true); return true; }
+    else if (a === "tf") { readDraft(); E.draft.tf = b.dataset.val === "1"; }
+    else if (a === "nophoto") { readDraft(); E.draft.photo = null; }
+    else if (a === "del") { readDraft(); E.confirmDel = true; }
+    else if (a === "delyes") { await IDB.del("myfam", E.draft.qid); await E.load(); E.mode = "list"; E.draft = null; E.msg = "Question deleted"; onChange && onChange(); }
+    else if (a === "save") {
+      readDraft(); const d = E.draft, k = d.kind;
+      const wrong = (d.w || []).filter(Boolean);
+      if ((k === "photo" || k === "year") && !d.photo) E.msg = "Add a photo first.";
+      else if ((k === "mc" || k === "tf") && !d.text) E.msg = k === "tf" ? "Write the statement." : "Write the question.";
+      else if ((k === "photo" || k === "mc") && !d.a) E.msg = "Add the right answer.";
+      else if ((k === "photo" || k === "mc") && !wrong.length) E.msg = "Add at least one other answer to choose from.";
+      else if (k === "year" && !/^\d{3,4}$/.test(d.year)) E.msg = "Enter the year, e.g. 1994.";
+      else if (k === "tf" && d.tf == null) E.msg = "Pick True or False.";
+      if (E.msg) { rerender(); return true; }
+      const isNew = !d.qid;
+      const q = { qid: d.qid || uid(), kind: k, text: d.text || FAM_KINDS[k].def, a: d.a, w: wrong.slice(0, 3), year: d.year ? Number(d.year) : null, tf: d.tf, photo: d.photo || null, sort: d.sort ?? Date.now(), v: Date.now() };
+      await IDB.put("myfam", q); await E.load(); E.mode = "list"; E.draft = null; E.msg = isNew ? "Question added" : "Question saved"; onChange && onChange();
+    }
+    rerender(); return true;
+  };
+  E.file = async (e, rerender) => {
+    if (!e.target.matches("[data-fe-file]") || !e.target.files[0]) return false;
+    readDraft(); E.msg = "Shrinking photo…"; rerender();
+    try { E.draft.photo = await compressPhoto(e.target.files[0]); E.msg = ""; } catch (err) { E.msg = "Couldn't read that photo. Try another."; }
+    rerender(); return true;
+  };
+  return E;
 }
 
 async function wakeLock() { try { if (navigator.wakeLock) await navigator.wakeLock.request("screen"); } catch (e) { } }
@@ -735,11 +880,11 @@ async function connect(room, onMsg, onStatus) {
 }
 
 // ===== SETTINGS UI (shared by TV and host phone) =====
-function settingsHTML(st, fresh, where) {
+function settingsHTML(st, fresh, where, famCount) {
   const chips = ROUND_ORDER.map(id => {
-    const r = roundInfo(id), on = st.rounds.includes(id), dis = id === "family";
+    const r = roundInfo(id), on = st.rounds.includes(id), dis = id === "family" && !famCount;
     const f = fresh && fresh[id] != null ? `<small>${fresh[id]} new</small>` : "";
-    return `<button class="chip ${on ? "on" : ""} ${dis ? "off" : ""}" data-round="${id}" ${dis ? "disabled" : ""}>${esc(r.title)} ${dis ? "<small>soon</small>" : f}</button>`;
+    return `<button class="chip ${on ? "on" : ""} ${dis ? "off" : ""}" data-round="${id}" ${dis ? "disabled" : ""}>${esc(r.title)} ${dis ? "<small>set up on host phone</small>" : f}</button>`;
   }).join("");
   const pick = (k, vals, fmt) => vals.map(v => `<button class="chip ${st[k] === v ? "on" : ""}" data-set="${k}" data-val="${v}">${fmt ? fmt(v) : v}</button>`).join("");
   return `<div class="setrow"><b>Rounds (in order)</b>${chips}</div>
@@ -748,7 +893,7 @@ function settingsHTML(st, fresh, where) {
     <div class="setrow"><b>Host</b>${pick("hostMode", ["host", "play"], v => v === "host" ? "Host only (sees answers)" : "Host & play")}</div>
     <div class="setrow"><b>Look</b>${pick("theme", ["auto", "classic", "xmas"], v => ({ auto: "Auto (Christmas in December)", classic: "Classic", xmas: "Christmas" })[v])}</div>
     ${st.rounds.includes("ai") ? `<div class="setrow"><b>Anything topic</b><input id="ai-topic-${where}" data-aitopic placeholder="e.g. Gavin & Stacey, 80s toys, Wales" value="${esc(st.aiTopic || "")}" style="flex:1 1 14em"></div>` : ""}
-    <div class="setrow"><b>How it works</b><span class="muted">Tap rounds to add or remove them. Kids' Corner is for kids only and is skipped if no kids join. Everyone gets one Joker to double a round. The last round scores double.</span></div>`;
+    <div class="setrow"><b>How it works</b><span class="muted">Tap rounds to add or remove them. Kids' Corner is for kids only and is skipped if no kids join. The Family Round uses questions set up on the host's phone and is skipped once they've all been played. Everyone gets one Joker to double a round. The last round scores double.</span></div>`;
 }
 function settingsClick(e, st) {
   const b = e.target.closest("[data-round],[data-set]"); if (!b) return null;
@@ -784,9 +929,12 @@ function tvMain() {
   Sound.setVol(S.audio.vol, S.audio.music);
   history.replaceState(null, "", "?tv=" + S.room + (LOCAL ? "&local=1" : ""));
   let T = null, conn = "connecting", lastShell = "", lastTick = -1, opened = !!S.started, tuneTimers = [], suspenseTimer = null, finalMusicAt = 0;
+  let fam = {}; // family questions received from the host phone (kept on this device)
+  IDB.all("tvfam").then(list => { list.forEach(q => fam[q.qid] = q); render(); });
+  let famBroadcastT = null;
 
   const used = () => new Set(ls.get("buzzin_used", []));
-  const freshCounts = () => { const u = used(), o = {}; for (const id in PACKS) o[id] = PACKS[id].qs.filter((q, i) => !u.has(id + i)).length; return o; };
+  const freshCounts = () => { const u = used(), o = {}; for (const id in PACKS) o[id] = PACKS[id].qs.filter((q, i) => !u.has(id + i)).length; o.family = Object.keys(fam).filter(k => !u.has("fam:" + k)).length; return o; };
   const save = () => { S.saved = Date.now(); ls.set("buzzin_tv", S); };
   const playersArr = () => S.order.filter(id => S.players[id]).map(id => S.players[id]);
   const curRound = () => S.plan[S.ri];
@@ -806,9 +954,10 @@ function tvMain() {
       players: playersArr().map(p => ({ id: p.id, name: p.name, members: p.members, kid: !!p.kid, joker: p.joker ?? null, color: p.color, score: p.score, on: Date.now() - p.seen < 20000 })),
     };
     if (S.phase === "lobby") o.fresh = freshCounts();
+    o.famCount = Object.keys(fam).length;
     if (r) o.round = { n: S.ri + 1, of: S.plan.length, id: r.id, title: r.title, type: r.type, blurb: r.blurb, dbl: r.dbl, kids: !!r.kids };
     if (q && (S.phase === "question" || S.phase === "suspense" || S.phase === "reveal")) {
-      o.q = { n: S.qi + 1, of: r.qs.length, key: qkey(), type: q.type, text: q.text, emoji: q.emoji, quote: q.quote, opts: q.opts, unit: q.unit, left: left(), paused: S.pausedLeft != null, total: qTime(q) };
+      o.q = { n: S.qi + 1, of: r.qs.length, key: qkey(), type: q.type, text: q.text, emoji: q.emoji, quote: q.quote, photo: !!q.photo, opts: q.opts, unit: q.unit, left: left(), paused: S.pausedLeft != null, total: qTime(q) };
       o.answered = Object.keys(S.answers);
       if (S.buzz) o.buzz = { cur: S.buzz.cur, locked: S.buzz.locked, steal: !!S.buzz.steal };
     }
@@ -842,8 +991,15 @@ function tvMain() {
     if (type === "odd") { const o = shuffle([raw[0], raw[1], raw[2], raw[3]]); return { id, type, text: "Which is the odd one out?", opts: o, correct: o.indexOf(raw[0]), ansText: raw[0], note: raw[4] }; }
     if (type === "hl") return { id, type, text: raw[0], opts: [raw[1], raw[2]], correct: raw[3], ansText: raw[3] === 0 ? raw[1] : raw[2], note: raw[4] };
     if (type === "tf") return { id, type, text: raw[0], opts: ["True", "False"], correct: raw[1] ? 0 : 1, ansText: raw[1] ? "True" : "False" };
-    if (type === "number") return { id, type, text: raw[0], answer: raw[1], unit: raw[2], ansText: raw[1].toLocaleString("en-GB") + (raw[2] ? " " + raw[2] : "") };
+    if (type === "number") return { id, type, text: raw[0], answer: raw[1], unit: raw[2], ansText: fmtNum(raw[1], raw[2]) };
     if (type === "buzz") return { id, type, text: raw[0], ansText: raw[1] };
+  }
+  function famQuestion(f) {
+    const id = "fam:" + f.qid, photo = f.photo ? f.qid : null;
+    if (f.kind === "year") return { id, type: "number", text: f.text, answer: Number(f.year), unit: "", ansText: String(f.year), photo };
+    if (f.kind === "tf") return { id, type: "tf", text: f.text, opts: ["True", "False"], correct: f.tf ? 0 : 1, ansText: f.tf ? "True" : "False", photo };
+    const o = shuffle([f.a].concat((f.w || []).filter(Boolean).slice(0, 3)));
+    return { id, type: "mc", text: f.text, opts: o, correct: o.indexOf(f.a), ansText: f.a, photo };
   }
   function pickQs(id, n) {
     const p = PACKS[id], u = used();
@@ -872,7 +1028,7 @@ function tvMain() {
   // ----- game flow -----
   async function startGame() {
     if (!playersArr().length) { toast("Nobody's joined yet. Scan the code to join."); return; }
-    let rounds = S.settings.rounds.filter(id => id !== "family");
+    let rounds = S.settings.rounds.slice();
     if (rounds.includes("kids") && !playersArr().some(p => p.kid)) { rounds = rounds.filter(id => id !== "kids"); toast("No kids have joined, so Kids' Corner is skipped."); }
     if (!rounds.length) { toast("Pick at least one round."); return; }
     S.phase = "loading"; broadcast();
@@ -880,12 +1036,17 @@ function tvMain() {
     for (const id of rounds) {
       const info = roundInfo(id);
       let qs, title = info.title, blurb = info.blurb;
-      if (id === "ai") {
+      if (id === "family") {
+        const u = used(), list = Object.values(fam).filter(f => !u.has("fam:" + f.qid)).sort((a, b) => (a.sort || 0) - (b.sort || 0));
+        if (!list.length) { toast(Object.keys(fam).length ? "The Family Round has already been played, so it's skipped. Reset used questions to play it again." : "No family questions yet, so the Family Round is skipped."); continue; }
+        qs = list.slice(0, 10).map(famQuestion);
+      } else if (id === "ai") {
         try { qs = await aiRound(S.settings.aiTopic, S.settings.perRound); title = S.settings.aiTopic; blurb = "A round written just for tonight."; }
         catch (e) { toast("Couldn't write the Anything Round, so it's General Knowledge instead."); qs = pickQs("gk", S.settings.perRound); title = "General Knowledge"; blurb = PACKS.gk.blurb; }
       } else qs = pickQs(id, id === "buzz" ? Math.min(S.settings.perRound + 2, 8) : S.settings.perRound);
       plan.push({ id, title, type: qs[0] ? qs[0].type : info.type, blurb, qs, kids: id === "kids" });
     }
+    if (!plan.length) { toast("No rounds left to play. Pick some more rounds."); S.phase = "lobby"; return broadcast(); }
     plan[plan.length - 1].dbl = plan.length > 1;
     S.plan = plan; S.ri = 0; S.qi = 0; S.started = true; S.gid = uid().slice(0, 4);
     playersArr().forEach(p => { p.score = 0; p.joker = null; p.st = { fast: [], close1: 0, close2: 0, buzz: 0, joker: 0 }; });
@@ -1022,6 +1183,17 @@ function tvMain() {
       } else Object.assign(S.players[m.pid], { name, members, kid, seen: Date.now() });
       return broadcast();
     }
+    if (m.t === "fam_list" && m.k === S.token) {
+      const want = new Set((m.items || []).map(i => i.qid));
+      Object.keys(fam).forEach(k => { if (!want.has(k)) { delete fam[k]; IDB.del("tvfam", k).catch(() => { }); } });
+      const need = (m.items || []).filter(i => !fam[i.qid] || fam[i.qid].v !== i.v).map(i => i.qid);
+      T.send({ t: "fam_need", qids: need });
+      return broadcast();
+    }
+    if (m.t === "fam_q" && m.k === S.token && m.q && m.q.qid) {
+      fam[m.q.qid] = m.q; IDB.put("tvfam", m.q).catch(() => { });
+      clearTimeout(famBroadcastT); famBroadcastT = setTimeout(broadcast, 400); return;
+    }
     if (m.t === "joker" && p && S.phase === "intro" && p.joker == null) { p.joker = S.ri; Sound.joker(); return broadcast(); }
     if (m.t === "answer" && p && S.phase === "question" && m.key === qkey() && !S.answers[m.pid]) {
       const q = curQ(); if (q.type === "buzz") return;
@@ -1108,7 +1280,7 @@ function tvMain() {
         <div class="side">
           <div class="disp" style="font-size:2.2rem">Who's playing · ${playersArr().length}</div>
           <div class="players">${playersArr().map(ptile).join("") || `<span class="muted" style="font-size:1.2rem">Waiting for the first player…</span>`}</div>
-          <div class="setup" data-settings>${settingsHTML(S.settings, freshCounts(), "tv")}
+          <div class="setup" data-settings>${settingsHTML(S.settings, freshCounts(), "tv", Object.keys(fam).length)}
             ${S.settings.rounds.includes("ai") && !hasKey ? `<div class="setrow"><b>Claude key</b><input id="ai-key" type="password" placeholder="Paste your Anthropic API key (stays on this device)" style="flex:1 1 14em"><button class="btn" data-a="savekey">Save</button></div>` : ""}
             <div class="hostbox"><div class="qr" id="qr-host"></div><div><b>Host controls on your phone</b><div class="muted">Scan with the host's phone to run the game from the sofa.</div></div>
               <div style="margin-left:auto;display:flex;flex-direction:column;gap:.5rem"><button class="btn gold" data-a="next">Start the quiz</button>${musicBtn()}<button class="btn" data-a="resetused" style="font-size:.8rem">Reset used questions</button></div></div>
@@ -1129,7 +1301,7 @@ function tvMain() {
       </div><div class="bottom"><div></div>${ctl()}</div></div>`;
     } else if (ph === "question" || ph === "suspense" || ph === "reveal") {
       const dotsFor = eligible();
-      html = `<div class="stage">${top()}<div class="center">${questionBody(q, ph)}</div>
+      html = `<div class="stage">${top()}<div class="center ${q.photo ? "withphoto" : ""}">${questionBody(q, ph)}</div>
         <div class="bottom"><div class="dots">${dotsFor.map(p => `<span class="dot ${S.answers[p.id] || (S.buzz && (S.buzz.locked.includes(p.id) || S.buzz.cur === p.id)) ? "in" : ""}" style="background:${p.color}" title="${esc(p.name)}">${esc(initials(p.name))}${p.joker === S.ri ? `<i class="jkb">🃏</i>` : ""}</span>`).join("")}</div>
         ${ph === "question" ? `<div style="display:flex;gap:1.2rem;align-items:center">${ctl((q.type === "buzz" && S.buzz && S.buzz.cur ? `<button class="btn good" data-a="right">Right (Y)</button><button class="btn bad" data-a="wrong">Wrong (N)</button>` : "") + (q.type === "tune" ? `<button class="btn" data-a="replay">Play again (R)</button>` : ""))}<div class="timer" id="timer"></div></div>` : ph === "reveal" ? ctl(q.type === "tune" ? `<button class="btn" data-a="replay">Play again (R)</button>` : "") : `<div></div>`}</div></div>`;
     } else if (ph === "scores") {
@@ -1156,6 +1328,7 @@ function tvMain() {
     const rev = ph === "reveal" ? S.res : null, ps = playersArr();
     let h = "";
     if (q.emoji) h += `<div class="emoji">${q.emoji}</div>`;
+    if (q.photo && fam[q.photo] && fam[q.photo].photo) h += `<img class="qphoto" src="${fam[q.photo].photo}" alt="">`;
     if (q.type === "tune") h += `<div class="eq ${ph === "question" || ph === "reveal" ? "on" : ""}">${Array.from({ length: 9 }, (_, i) => `<i style="animation-delay:${(i * 0.13) % 0.7}s"></i>`).join("")}</div>`;
     if (q.quote) h += `<div class="quote">“${esc(q.quote)}”</div>`;
     h += `<div class="qtext ${q.quote ? "small" : ""}">${esc(q.text)}</div>`;
@@ -1175,7 +1348,7 @@ function tvMain() {
       else if (rev) {
         h += `<div class="bigans">${esc(q.ansText)}</div><div class="glist">${(rev.order || []).map(id => {
           const p = S.players[id], x = rev.per[id]; if (!p) return "";
-          return `<div class="grow"><span><span class="mini" style="background:${p.color}">${esc(initials(p.name))}</span> ${esc(p.name)}: ${Number(x.ans).toLocaleString("en-GB")}</span><span class="gain">${x.gain ? "+" + x.gain : ""}</span></div>`;
+          return `<div class="grow"><span><span class="mini" style="background:${p.color}">${esc(initials(p.name))}</span> ${esc(p.name)}: ${esc(fmtNum(x.ans, q.unit))}</span><span class="gain">${x.gain ? "+" + x.gain : ""}</span></div>`;
         }).join("") || `<span class="muted">No guesses</span>`}</div>`;
       }
     }
@@ -1278,6 +1451,20 @@ function phoneMain(room, hostKey) {
   if (!pid) { pid = uid(); try { idStore.setItem(pidKey, pid); } catch (e) { } }
   let s = null, T = null, H = null, conn = "connecting", myAns = {}, lastKey = "", showJoin = false, pendingJoin = false;
   const isHost = !!hostKey;
+  let editingFam = false, famSyncedAt = 0, famSending = false;
+  const famEd = isHost ? makeFamEditor(() => famSync(true)) : null;
+  if (famEd) famEd.load().then(() => render());
+  function famSync(force) {
+    if (!isHost || !T || !famEd) return;
+    if (!force && Date.now() - famSyncedAt < 10000) return;
+    famSyncedAt = Date.now();
+    send({ t: "fam_list", k: hostKey, items: famEd.list.map(q => ({ qid: q.qid, v: q.v })) });
+  }
+  async function famSend(qids) {
+    if (famSending) return; famSending = true;
+    for (const id of qids) { const q = famEd.list.find(x => x.qid === id); if (q) { send({ t: "fam_q", k: hostKey, q }); await new Promise(r => setTimeout(r, 150)); } }
+    famSending = false;
+  }
   const me = () => s && s.players.find(p => p.id === pid);
 
   function send(m) { if (T) T.send(Object.assign({ pid }, m)); }
@@ -1290,7 +1477,9 @@ function phoneMain(room, hostKey) {
       if (s.q && s.q.key !== lastKey) { lastKey = s.q.key; if (navigator.vibrate) navigator.vibrate(60); }
       if (me()) pendingJoin = false;
       render();
+      if (isHost && famEd && s.phase === "lobby" && (s.famCount !== famEd.list.length)) famSync();
     } else if (m.t === "hostinfo" && isHost) { H = m.h; render(); }
+    else if (m.t === "fam_need" && isHost && famEd) famSend(m.qids || []);
   }
 
   const sitOut = () => s.round && s.round.kids && me() && !me().kid;
@@ -1330,7 +1519,7 @@ function phoneMain(room, hostKey) {
   }
   function questionPane(p) {
     const q = s.q, a = myAns[q.key], t = q.type;
-    const head = `<p class="muted">${esc(s.round.title)} · Q${q.n}/${q.of}${p.joker === s.round.n - 1 ? " · 🃏 x2" : ""}</p><div class="qsmall">${q.emoji ? `<div style="font-size:44px">${q.emoji}</div>` : ""}${q.quote ? `<div class="pquote">“${esc(q.quote)}”</div>` : ""}${t === "tune" ? `<div class="pquote">🎵 Listen to the TV…</div>` : ""}${esc(q.text)}</div>`;
+    const head = `<p class="muted">${esc(s.round.title)} · Q${q.n}/${q.of}${p.joker === s.round.n - 1 ? " · 🃏 x2" : ""}</p><div class="qsmall">${q.emoji ? `<div style="font-size:44px">${q.emoji}</div>` : ""}${q.quote ? `<div class="pquote">“${esc(q.quote)}”</div>` : ""}${t === "tune" ? `<div class="pquote">🎵 Listen to the TV…</div>` : ""}${q.photo ? `<div class="pquote">📷 Look at the photo on the TV</div>` : ""}${esc(q.text)}</div>`;
     if (s.phase === "suspense") return `${head}<div class="grow1 center"><div class="result" style="color:var(--gold)">🥁</div><p style="font-size:20px">Drumroll…</p></div>`;
     if (t === "buzz") {
       const locked = s.buzz && s.buzz.locked.includes(pid), cur = s.buzz && s.buzz.cur, steal = s.buzz && s.buzz.steal;
@@ -1338,7 +1527,7 @@ function phoneMain(room, hostKey) {
       return `${head}<div class="grow1 center"><button class="buzzbtn" data-a="buzz" ${locked || cur || q.paused ? "disabled" : ""}>${steal && !locked ? "Steal!" : "Buzz"}</button>
         <p class="muted">${locked ? "You're locked out of this one." : cur ? "Someone else buzzed…" : steal ? "Steal it for double points!" : "First to buzz gets to answer"}</p></div>`;
     }
-    if (a != null) return `${head}<div class="grow1 center"><div class="result" style="color:${p.color}">Locked in</div><p style="font-size:20px">${t === "number" ? Number(a).toLocaleString("en-GB") : esc(q.opts[a])}</p><p class="muted">Waiting for everyone else…</p></div>`;
+    if (a != null) return `${head}<div class="grow1 center"><div class="result" style="color:${p.color}">Locked in</div><p style="font-size:20px">${t === "number" ? esc(fmtNum(a, q.unit)) : esc(q.opts[a])}</p><p class="muted">Waiting for everyone else…</p></div>`;
     if (t === "number") return `${head}<div class="grow1"><input id="num-${q.key}" class="numin" type="number" inputmode="decimal" placeholder="?" autocomplete="off">${q.unit ? `<p class="center muted">${esc(q.unit)}</p>` : ""}<button class="btn gold big" data-a="num">Lock in my guess</button></div>`;
     if (t === "tf") return `${head}<div class="grow1"><div class="tfb"><button class="ans o3" data-ans="0">True</button><button class="ans o0" data-ans="1">False</button></div></div>`;
     if (q.opts.length === 2) return `${head}<div class="grow1"><div class="tfb hl"><button class="ans o1" data-ans="0">${esc(q.opts[0])}</button><button class="ans o2" data-ans="1">${esc(q.opts[1])}</button></div></div>`;
@@ -1375,7 +1564,10 @@ function phoneMain(room, hostKey) {
   }
   function hostLobby() {
     if (!isHost || s.phase !== "lobby") return "";
-    return `<div class="card"><h2>Game settings</h2><div class="setup" data-settings>${settingsHTML(s.settings, s.fresh, "ph")}</div>
+    const mine = famEd ? famEd.list.length : 0;
+    return `<div class="card"><h2>Family Round</h2><p>${mine ? `${mine} question${mine > 1 ? "s" : ""} on this phone · ${s.famCount || 0} on the TV` : "Add your own questions and family photos."}</p>
+      <button class="btn big" data-a="editfam">${mine ? "Add or edit family questions" : "Set up the Family Round"}</button></div>
+      <div class="card"><h2>Game settings</h2><div class="setup" data-settings>${settingsHTML(s.settings, s.fresh, "ph", s.famCount || 0)}</div>
       ${s.settings.rounds.includes("ai") ? `<p class="muted" style="font-size:14px">The Anything Round needs your Claude key saved on the TV screen.</p>` : ""}</div>
       <div class="card"><h2>Players</h2><div class="plist">${s.players.map(p => `<div class="pi"><span class="mini" style="background:${p.color}">${esc(initials(p.name))}</span>${esc(p.name)}${p.kid ? " 🧒" : ""}${p.members ? ` <span class="muted">+ ${esc(p.members)}</span>` : ""}<button class="x" data-kick="${p.id}">Remove</button></div>`).join("") || `<span class="muted">Nobody yet</span>`}</div></div>`;
   }
@@ -1385,6 +1577,7 @@ function phoneMain(room, hostKey) {
         ${conn === "lost" ? `<p>Can't reach game <b>${esc(room)}</b>. Check the code on the TV.</p><a class="btn" href="${esc(baseUrl())}">Enter a different code</a>` : `<div class="spin"></div><p class="muted">Joining game ${esc(room)}…</p>`}</div></div>`);
       return;
     }
+    if (editingFam && famEd) { paint(app, `<div class="ph"><div class="hd"><div class="disp">Buzz In</div><span class="muted">Family Round</span></div>${famEd.html(false)}</div>`); return; }
     const hostOnlyView = isHost && s.hostMode === "host" && !me() && !showJoin && s.phase !== "lobby";
     let main = "";
     if (hostOnlyView) main = hostWatch();
@@ -1404,9 +1597,12 @@ function phoneMain(room, hostKey) {
     return b;
   }
 
-  app.addEventListener("click", e => {
+  app.addEventListener("change", e => { if (famEd && editingFam) famEd.file(e, () => render()); });
+  app.addEventListener("click", async e => {
     const t = e.target;
+    if (famEd && editingFam) { await famEd.click(e, (done) => { if (done) editingFam = false; render(); }); return; }
     const a = t.closest("[data-a]"), ans = t.closest("[data-ans]"), h = t.closest("[data-h]"), kick = t.closest("[data-kick]");
+    if (a && a.dataset.a === "editfam") { editingFam = true; famEd.mode = "list"; render(); window.scrollTo(0, 0); return; }
     if (a && a.dataset.a === "join") {
       const name = ($("#j-name").value || "").trim(); if (!name) { $("#j-name").focus(); return; }
       send({ t: "join", name, members: $("#j-mem").value, kid: $("#j-kid").checked }); pendingJoin = true; showJoin = false; setTimeout(() => { if (!me()) { pendingJoin = false; render(); } }, 6000); wakeLock(); render(); return;
@@ -1433,9 +1629,22 @@ function phoneMain(room, hostKey) {
 
   render();
   connect(room, onMsg, st => { conn = st; if (st === "ok" && T) send({ t: "hello", host: isHost }); if (!s) render(); })
-    .then(t => { T = t; conn = "ok"; send({ t: "hello", host: isHost }); setTimeout(() => { if (!s) { conn = "lost"; render(); } }, 8000); })
+    .then(t => { T = t; conn = "ok"; send({ t: "hello", host: isHost }); setTimeout(() => famSync(true), 1500); setTimeout(() => { if (!s) { conn = "lost"; render(); } }, 8000); })
     .catch(() => { conn = "lost"; render(); });
   setInterval(() => send({ t: "hello", host: isHost }), 6000);
+}
+
+// ======================================================================
+// FAMILY ROUND EDITOR (standalone, no game needed)
+// ======================================================================
+function familyPage() {
+  document.body.className = "phone";
+  const ed = makeFamEditor();
+  const draw = () => paint(app, `<div class="ph land"><div class="hd"><div class="disp">Buzz In</div><a class="muted" href="${esc(baseUrl())}">Back</a></div>${ed.html(true)}
+    <p class="muted center" style="font-size:14px">When you host a game, scan the host code on the TV with this phone and your questions go to the TV automatically.</p></div>`);
+  app.addEventListener("click", e => ed.click(e, draw));
+  app.addEventListener("change", e => ed.file(e, draw));
+  draw(); ed.load().then(draw);
 }
 
 // ======================================================================
@@ -1448,7 +1657,9 @@ function landing() {
     <div class="card"><h2>Joining a game?</h2><input id="code" class="codein" maxlength="4" placeholder="CODE" autocomplete="off" autocapitalize="characters"><button class="btn gold big" data-a="go">Join</button></div>
     <div class="card"><h2>Hosting?</h2><p class="muted">Open this on the device connected to the TV.</p>
       <a class="btn big" href="${withLocal("?tv")}">This is the TV screen</a>
-      ${canResume ? `<a class="btn big" href="${withLocal("?tv=" + saved.room)}">Resume game ${esc(saved.room)}</a>` : ""}</div></div>`;
+      ${canResume ? `<a class="btn big" href="${withLocal("?tv=" + saved.room)}">Resume game ${esc(saved.room)}</a>` : ""}</div>
+    <div class="card"><h2>Family Round</h2><p class="muted">Set up questions and photos about your family on the phone you'll host with.</p>
+      <a class="btn big" href="${withLocal("?family=1")}">Set up the Family Round</a></div></div>`;
   const go = () => { const c = ($("#code").value || "").trim().toUpperCase(); if (c.length === 4) location.href = withLocal("?join=" + c); };
   app.addEventListener("click", e => { if (e.target.closest("[data-a=go]")) go(); });
   $("#code").addEventListener("keydown", e => { if (e.key === "Enter") go(); });
@@ -1456,6 +1667,7 @@ function landing() {
 
 // ===== ROUTE =====
 if (P.has("tv")) tvMain();
+else if (P.has("family")) familyPage();
 else if (P.get("join")) phoneMain(P.get("join"));
 else if (P.get("host")) phoneMain(P.get("host"), P.get("k"));
 else landing();

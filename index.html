@@ -5,6 +5,21 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#090b14">
 <title>Buzz In</title>
+<meta name="description" content="Family quiz night. The TV asks the questions, your phones are the buzzers.">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Buzz In">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Buzz In – Family Quiz Night">
+<meta property="og:description" content="The TV asks the questions, your phones are the buzzers. Name That Tune, Family Round, Kids' Corner and more.">
+<meta property="og:url" content="https://jimmywilson1979-arch.github.io/buzz-in/">
+<meta property="og:image" content="https://jimmywilson1979-arch.github.io/buzz-in/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@500;600;700;800&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -227,6 +242,9 @@ body.phone.xmas{background:#0b0f0d}
 .ph .fphoto img{max-width:100%;max-height:240px;border-radius:10px}
 .ph label.btn{flex-direction:row;color:var(--fg);font-size:15px}
 .ph .card input + input{margin-top:8px}
+.appicon{width:96px;height:96px;border-radius:22px;margin:24px auto 0;display:block;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.tv .appicon.tvicon{width:9rem;height:9rem;border-radius:2rem;margin:0}
+a.btn{color:var(--fg);text-decoration:none}
 
 </style>
 </head>
@@ -1259,7 +1277,7 @@ function tvMain() {
   function render() {
     syncTheme(); syncMusic();
     if (!opened) {
-      app.innerHTML = `<div class="stage"><div class="center"><div class="logo disp">Buzz In</div>
+      app.innerHTML = `<div class="stage"><div class="center"><img class="appicon tvicon" src="icon-192.png" alt=""><div class="logo disp">Buzz In</div>
         <p class="rblurb muted">Family quiz night. Put this screen on the TV, then press start.</p>
         <button class="btn gold big" style="max-width:24rem" data-a="open">Open the lobby</button>
         <p class="muted" style="font-size:.9rem">This switches on the music and keeps the screen awake.</p></div></div>`;
@@ -1653,7 +1671,7 @@ function familyPage() {
 function landing() {
   document.body.className = "phone";
   const saved = ls.get("buzzin_tv", null), canResume = saved && saved.phase !== "final" && Date.now() - (saved.saved || 0) < 12 * 3600e3;
-  app.innerHTML = `<div class="ph land"><div class="logo disp">Buzz In</div><p class="center muted">Family quiz night. The TV shows the questions, phones are the buzzers.</p>
+  app.innerHTML = `<div class="ph land"><img class="appicon" src="icon-192.png" alt=""><div class="logo disp" style="margin-top:4px">Buzz In</div><p class="center muted">Family quiz night. The TV shows the questions, phones are the buzzers.</p>
     <div class="card"><h2>Joining a game?</h2><input id="code" class="codein" maxlength="4" placeholder="CODE" autocomplete="off" autocapitalize="characters"><button class="btn gold big" data-a="go">Join</button></div>
     <div class="card"><h2>Hosting?</h2><p class="muted">Open this on the device connected to the TV.</p>
       <a class="btn big" href="${withLocal("?tv")}">This is the TV screen</a>

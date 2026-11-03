@@ -165,6 +165,49 @@ body.phone{font-size:16px}
 .land{max-width:520px;margin:0 auto}
 .land .logo{font-size:64px;color:var(--gold);text-shadow:0 5px 0 #7a4b00;text-align:center;margin-top:24px}
 
+/* ===== v2 additions ===== */
+.tv .quote{font-family:var(--display);font-weight:800;font-size:5rem;line-height:1;color:var(--gold);max-width:85%;text-wrap:balance}
+.tv .qtext.small{font-size:2.2rem;color:var(--muted)}
+.tv .opt.wait{opacity:.6}
+.tv .drum{font-size:2.4rem;animation:pulse .5s ease-in-out infinite alternate}
+.tv .note{font-size:1.6rem;color:var(--fg);background:var(--panel);border:2px solid var(--line);border-radius:1rem;padding:.5rem 1.2rem}
+.tv .eq{display:flex;gap:.6rem;align-items:flex-end;height:8rem}
+.tv .eq i{display:block;width:1.6rem;height:20%;border-radius:.4rem;background:linear-gradient(var(--gold),#ff7a3c)}
+.tv .eq.on i{animation:eq .7s ease-in-out infinite alternate}
+@keyframes eq{0%{height:15%}100%{height:100%}}
+@keyframes pulse{from{transform:scale(1)}to{transform:scale(1.08)}}
+.tv .jokers{display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center}
+.tv .jk{border:3px solid;border-radius:99px;padding:.4rem 1rem;font-weight:800;font-size:1.3rem;background:var(--panel);animation:pop .35s ease-out}
+.dot{position:relative}
+.dot .jkb{position:absolute;right:-.7rem;top:-.8rem;font-style:normal;font-size:1.1rem}
+.kidtag{background:var(--b);color:#fff;border-radius:.4em;padding:.05em .45em}
+.tv .awards{display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center;max-width:80rem}
+.award{display:flex;gap:.7rem;align-items:center;background:var(--panel);border:2px solid var(--line);border-radius:1rem;padding:.6rem 1rem;text-align:left;font-size:1.05rem;animation:pop .4s ease-out}
+.award .ai{font-size:2.2rem}
+.award small{color:var(--muted)}
+.ph .check{flex-direction:row;align-items:flex-start;gap:10px;color:var(--fg);font-size:15px;cursor:pointer}
+.ph .check input{width:24px;height:24px;flex:none;margin-top:1px;accent-color:var(--gold)}
+.ph .check small{color:var(--muted);font-weight:500}
+.ph .jokerbtn{background:linear-gradient(135deg,#6d28d9,#c026d3);border-color:#c026d3;color:#fff;line-height:1.25;flex-direction:column}
+.ph .jokerbtn small{font-weight:500;opacity:.85}
+.ph .jokercard{background:var(--panel);border:2px solid var(--gold);color:var(--gold);border-radius:14px;padding:12px;font-weight:800;font-size:18px}
+.ph .pquote{font-family:var(--display);font-weight:800;font-size:30px;color:var(--gold);line-height:1.05;margin-bottom:6px}
+.ph .tfb.hl .ans{font-family:var(--body);text-transform:none;font-size:22px;min-height:120px}
+.hbar .aud{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.hbar .aud button{border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--fg);font-weight:700}
+.hbar .aud button:first-child{margin-right:auto}
+.hbar .aud b{color:var(--fg);min-width:3.2em;text-align:center}
+.ph.withbar{padding-bottom:calc(200px + env(safe-area-inset-bottom,0px))}
+#snow{position:fixed;inset:0;pointer-events:none;z-index:0}
+body.tv .stage{z-index:1}
+/* Christmas look */
+body.tv.xmas{background:
+  radial-gradient(60vw 40vw at 50% -10%, #7a1f2b 0%, transparent 70%),
+  radial-gradient(40vw 30vw at 0% 100%, #0f4d2e 0%, transparent 70%),
+  radial-gradient(40vw 30vw at 100% 100%, #0f4d2e 0%, transparent 70%), #0b0f0d}
+body.xmas{--panel:#16241c;--line:#2a4535;--bg2:#101b15}
+body.phone.xmas{background:#0b0f0d}
+
 </style>
 </head>
 <body>
@@ -397,6 +440,96 @@ const PACKS = {
   ]},
 };
 
+// tune: [title, "NOTE:beats ...", wrong1, wrong2, wrong3, bpm]  (public-domain melodies, played as generated notes)
+PACKS.tune = { title: "Name That Tune", type: "tune", blurb: "Listen to the TV. Name the tune before it finishes.", qs: [
+  ["Jingle Bells", "E4:1 E4:1 E4:2 E4:1 E4:1 E4:2 E4:1 G4:1 C4:1.5 D4:.5 E4:4 F4:1 F4:1 F4:1.5 F4:.5 F4:1 E4:1 E4:1 E4:.5 E4:.5 E4:1 D4:1 D4:1 E4:1 D4:2 G4:2", "Deck the Halls", "Jingle Bell Rock", "Sleigh Ride", 150],
+  ["Twinkle Twinkle Little Star", "C4:1 C4:1 G4:1 G4:1 A4:1 A4:1 G4:2 F4:1 F4:1 E4:1 E4:1 D4:1 D4:1 C4:2", "Mary Had a Little Lamb", "Humpty Dumpty", "Hickory Dickory Dock", 120],
+  ["Silent Night", "G4:1.5 A4:.5 G4:1 E4:3 G4:1.5 A4:.5 G4:1 E4:3 D5:2 D5:1 B4:3 C5:2 C5:1 G4:3", "O Holy Night", "Away in a Manger", "Once in Royal David's City", 110],
+  ["Ode to Joy (Beethoven)", "E4:1 E4:1 F4:1 G4:1 G4:1 F4:1 E4:1 D4:1 C4:1 C4:1 D4:1 E4:1 E4:1.5 D4:.5 D4:2", "Für Elise", "Moonlight Sonata", "The Blue Danube", 130],
+  ["Für Elise (Beethoven)", "E5:.5 D#5:.5 E5:.5 D#5:.5 E5:.5 B4:.5 D5:.5 C5:.5 A4:1.5 R:.5 C4:.5 E4:.5 A4:.5 B4:1.5 R:.5 E4:.5 G#4:.5 B4:.5 C5:1.5", "Moonlight Sonata", "Ode to Joy", "Clair de Lune", 130],
+  ["Beethoven's 5th Symphony", "G4:.4 G4:.4 G4:.4 Eb4:2.5 R:.6 F4:.4 F4:.4 F4:.4 D4:3", "The Ride of the Valkyries", "Mozart's 40th Symphony", "The Four Seasons", 110],
+  ["In the Hall of the Mountain King", "A3:.5 B3:.5 C4:.5 D4:.5 E4:.5 C4:.5 E4:1 D#4:.5 B3:.5 D#4:1 D4:.5 Bb3:.5 D4:1 A3:.5 B3:.5 C4:.5 D4:.5 E4:.5 C4:.5 E4:.5 A4:.5 G4:.5 E4:.5 C4:.5 E4:.5 G4:2", "The Flight of the Bumblebee", "The Ride of the Valkyries", "Dance of the Sugar Plum Fairy", 140],
+  ["William Tell Overture", "B4:.25 B4:.25 B4:.5 B4:.25 B4:.25 B4:.5 B4:.25 B4:.25 E5:.5 F#5:.5 G5:1 R:.5 B4:.25 B4:.25 B4:.5 B4:.25 B4:.25 B4:.5 B4:.25 B4:.25 E5:.5 F#5:.5 G5:1", "The Can-Can", "Flight of the Bumblebee", "The Blue Danube", 120],
+  ["Happy Birthday", "G4:.75 G4:.25 A4:1 G4:1 C5:1 B4:2 G4:.75 G4:.25 A4:1 G4:1 D5:1 C5:2 G4:.75 G4:.25 G5:1 E5:1 C5:1 B4:1 A4:2 F5:.75 F5:.25 E5:1 C5:1 D5:1 C5:2", "For He's a Jolly Good Fellow", "Auld Lang Syne", "Congratulations", 120],
+  ["We Wish You a Merry Christmas", "D4:1 G4:1 G4:.5 A4:.5 G4:.5 F#4:.5 E4:1 E4:1 E4:1 A4:1 A4:.5 B4:.5 A4:.5 G4:.5 F#4:1 D4:1 D4:1 B4:1 B4:.5 C5:.5 B4:.5 A4:.5 G4:1 E4:1 D4:.5 D4:.5 E4:1 A4:1 F#4:1 G4:2", "Deck the Halls", "Jingle Bells", "Here We Come A-Wassailing", 150],
+  ["Deck the Halls", "G4:1.5 F4:.5 E4:1 D4:1 C4:1 D4:1 E4:1 C4:1 D4:.5 E4:.5 F4:.5 D4:.5 E4:1.5 D4:.5 C4:1 B3:1 C4:2", "We Wish You a Merry Christmas", "The Holly and the Ivy", "Ding Dong Merrily on High", 140],
+  ["Mary Had a Little Lamb", "E4:1 D4:1 C4:1 D4:1 E4:1 E4:1 E4:2 D4:1 D4:1 D4:2 E4:1 G4:1 G4:2 E4:1 D4:1 C4:1 D4:1 E4:1 E4:1 E4:1 E4:1 D4:1 D4:1 E4:1 D4:1 C4:2", "Twinkle Twinkle Little Star", "Old MacDonald", "Row, Row, Row Your Boat", 140],
+  ["Here Comes the Bride", "G4:1 C5:.75 C5:.25 C5:2 G4:1 D5:.75 B4:.25 C5:2", "Pachelbel's Canon", "The Wedding March", "Ave Maria", 90],
+  ["Greensleeves", "A4:1 C5:2 D5:1 E5:1.5 F5:.5 E5:1 D5:2 B4:1 G4:1.5 A4:.5 B4:1 C5:2 A4:1 A4:1.5 G#4:.5 A4:1 B4:2 G#4:1 E4:2", "Scarborough Fair", "Danny Boy", "Auld Lang Syne", 170],
+  ["Auld Lang Syne", "C4:1 F4:1.5 F4:.5 F4:1 A4:1 G4:1.5 F4:.5 G4:1 A4:1 F4:1.5 F4:.5 A4:1 C5:1 D5:3", "Danny Boy", "Greensleeves", "For He's a Jolly Good Fellow", 110],
+  ["The Entertainer (Scott Joplin)", "D4:.25 D#4:.25 E4:.25 C5:.5 E4:.25 C5:.5 E4:.25 C5:1.25 C5:.25 D5:.25 D#5:.25 E5:.25 C5:.25 D5:.25 E5:.5 B4:.25 D5:.5 C5:1.5", "Maple Leaf Rag", "The Can-Can", "Flight of the Bumblebee", 100],
+  ["Old MacDonald Had a Farm", "G4:1 G4:1 G4:1 D4:1 E4:1 E4:1 D4:2 B4:1 B4:1 A4:1 A4:1 G4:2", "The Farmer's in His Den", "Mary Had a Little Lamb", "Baa Baa Black Sheep", 150],
+  ["Row, Row, Row Your Boat", "C4:1.5 C4:1.5 C4:1 D4:.5 E4:1.5 E4:1 D4:.5 E4:1 F4:.5 G4:3", "London Bridge Is Falling Down", "Twinkle Twinkle Little Star", "Frère Jacques", 200],
+  ["Eine kleine Nachtmusik (Mozart)", "G4:1 D4:.5 G4:1 D4:.5 G4:.5 D4:.5 G4:.5 B4:.5 D5:2 C5:1 A4:.5 C5:1 A4:.5 C5:.5 A4:.5 F#4:.5 A4:.5 D4:2", "The Magic Flute", "Ode to Joy", "The Four Seasons", 130],
+]};
+// lines: [quote, film, wrong1, wrong2, wrong3]
+PACKS.lines = { title: "Famous Lines", type: "lines", blurb: "Which film is the line from?", qs: [
+  ["I'll be back.", "The Terminator", "Die Hard", "Rocky", "Top Gun"],
+  ["May the Force be with you.", "Star Wars", "Star Trek", "Avatar", "Guardians of the Galaxy"],
+  ["To infinity and beyond!", "Toy Story", "Wall-E", "The Incredibles", "Up"],
+  ["There's no place like home.", "The Wizard of Oz", "Home Alone", "E.T.", "Mary Poppins"],
+  ["You're gonna need a bigger boat.", "Jaws", "Titanic", "Finding Nemo", "Pirates of the Caribbean"],
+  ["Houston, we have a problem.", "Apollo 13", "Gravity", "Armageddon", "The Martian"],
+  ["Life is like a box of chocolates.", "Forrest Gump", "Charlie and the Chocolate Factory", "Chocolat", "Big"],
+  ["I'm the king of the world!", "Titanic", "The Lion King", "King Kong", "Gladiator"],
+  ["Just keep swimming.", "Finding Nemo", "The Little Mermaid", "Jaws", "Moana"],
+  ["E.T. phone home.", "E.T.", "Close Encounters", "Men in Black", "Toy Story"],
+  ["Keep the change, ya filthy animal.", "Home Alone", "Elf", "The Grinch", "Scrooged"],
+  ["Son of a nutcracker!", "Elf", "The Nutcracker", "Home Alone", "The Santa Clause"],
+  ["Here's Johnny!", "The Shining", "Psycho", "Jaws", "Ghostbusters"],
+  ["Why so serious?", "The Dark Knight", "Joker", "Spider-Man", "The Mask"],
+  ["You shall not pass!", "The Lord of the Rings", "Harry Potter", "The Hobbit", "Narnia"],
+  ["I see dead people.", "The Sixth Sense", "Ghost", "Ghostbusters", "Beetlejuice"],
+  ["Show me the money!", "Jerry Maguire", "The Wolf of Wall Street", "Wall Street", "Rocky"],
+  ["Wax on, wax off.", "The Karate Kid", "Rocky", "Kung Fu Panda", "The Mighty Ducks"],
+  ["Nobody puts Baby in a corner.", "Dirty Dancing", "Grease", "Footloose", "Mamma Mia!"],
+  ["Ogres are like onions.", "Shrek", "Monsters, Inc.", "Frozen", "Tangled"],
+  ["Adventure is out there!", "Up", "Toy Story", "Moana", "Cars"],
+  ["Ohana means family.", "Lilo & Stitch", "Moana", "Encanto", "Coco"],
+  ["It's alive!", "Frankenstein", "Dracula", "Jurassic Park", "Gremlins"],
+]};
+// hl: [question, option A, option B, index of correct (0/1), fact shown at the reveal]
+PACKS.hl = { title: "Higher or Lower", type: "hl", blurb: "Two choices. Pick the bigger, taller or older one.", qs: [
+  ["Which is taller?", "Pen y Fan", "The Shard", 0, "Pen y Fan is 886 m. The Shard is 310 m."],
+  ["Which has more people?", "Wales", "Birmingham", 0, "Wales has about 3.1 million people, Birmingham about 1.1 million."],
+  ["Which river is longer?", "River Wye", "River Thames", 1, "The Thames is about 215 miles, the Wye about 155."],
+  ["Which is heavier?", "Blue whale", "African elephant", 0, "A blue whale can weigh over 20 times as much as an elephant."],
+  ["Which came first?", "The first iPhone", "YouTube", 1, "YouTube launched in 2005, the iPhone in 2007."],
+  ["Which country is bigger?", "Wales", "Belgium", 1, "Belgium is about 30,700 km², Wales about 20,800 km²."],
+  ["Which planet is bigger?", "Neptune", "Earth", 0, "Neptune is about four times wider than Earth."],
+  ["Which is faster?", "Cheetah", "Racehorse", 0, "A cheetah can hit about 70 mph, a racehorse about 44 mph."],
+  ["Which was started first?", "Stonehenge", "The Great Pyramid", 0, "Stonehenge was begun around 3000 BC, the Great Pyramid around 2560 BC."],
+  ["Which has more legs?", "Lobster", "Spider", 0, "A lobster has 10 legs, a spider has 8."],
+  ["Which is taller?", "Big Ben's tower", "The Statue of Liberty", 0, "Big Ben's tower is 96 m. The Statue of Liberty is 93 m with its base."],
+  ["Which is hotter?", "Surface of the Sun", "Lava", 0, "The Sun's surface is about 5,500°C, lava about 1,200°C."],
+  ["Which is deeper?", "Loch Ness", "Lake Windermere", 0, "Loch Ness is about 230 m deep, Windermere about 67 m."],
+  ["Which country is bigger?", "Canada", "USA", 0, "Canada is slightly bigger in total area."],
+  ["Which started first?", "Doctor Who", "Coronation Street", 1, "Coronation Street began in 1960, Doctor Who in 1963."],
+  ["Which is longer?", "A marathon", "The English Channel at its narrowest", 0, "A marathon is 26.2 miles, the narrowest part of the Channel about 21 miles."],
+  ["Which is taller?", "A giraffe", "A double-decker bus", 0, "A tall giraffe reaches about 5.5 m, a double-decker about 4.4 m."],
+]};
+// odd: [odd one out, other1, other2, other3, reason shown at the reveal]
+PACKS.odd = { title: "Odd One Out", type: "odd", blurb: "Four answers. Tap the one that doesn't belong.", qs: [
+  ["Mars", "Jupiter", "Saturn", "Neptune", "The rest are giant planets."],
+  ["Bristol", "Cardiff", "Swansea", "Newport", "The rest are in Wales."],
+  ["Robin", "Penguin", "Ostrich", "Emu", "The rest can't fly."],
+  ["Carrot", "Tomato", "Cucumber", "Pepper", "The rest are fruits, botanically."],
+  ["Barcelona", "Paris", "Rome", "Berlin", "The rest are capital cities."],
+  ["Nemo", "Woody", "Buzz", "Rex", "The rest are from Toy Story."],
+  ["Shark", "Dolphin", "Whale", "Seal", "The rest are mammals."],
+  ["Triangle", "Square", "Rectangle", "Rhombus", "The rest have four sides."],
+  ["Flute", "Violin", "Cello", "Harp", "The rest have strings."],
+  ["Shrek", "Elsa", "Anna", "Olaf", "The rest are from Frozen."],
+  ["Water", "Copper", "Gold", "Iron", "The rest are metals."],
+  ["Loch Lomond", "Snowdon", "Ben Nevis", "Scafell Pike", "The rest are mountains."],
+  ["Golf", "Rugby", "Football", "Netball", "The rest are team sports."],
+  ["Daffodil", "Holly", "Ivy", "Mistletoe", "The rest are Christmas plants."],
+  ["Bambi", "Rudolph", "Dasher", "Comet", "The rest are Santa's reindeer."],
+  ["9", "2", "3", "5", "The rest are prime numbers."],
+  ["German", "Spanish", "French", "Italian", "The rest come from Latin."],
+  ["Toaster", "Mouse", "Keyboard", "Monitor", "The rest are parts of a computer."],
+]};
+
 // ===== CONFIG (filled in at deploy) =====
 const SUPA_URL = "https://uqwlmegbelyqtbegxqlz.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxd2xtZWdiZWx5cXRiZWd4cWx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3NTYzNzAsImV4cCI6MjEwNzMzMjM3MH0.bSeF8_kwKqSrEj3n8Ku2OeSU8E5nMqJj0hcfgXb8cW0";
@@ -409,13 +542,14 @@ const app = $("#app");
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const COLORS = ["#ff6b6b", "#4dabff", "#ffd43b", "#51e08a", "#c792ff", "#ff9f43", "#3ee6d6", "#ff7ac0", "#b5e853", "#a5b4cc", "#ffb4a2", "#8ce99a"];
 const LET = ["A", "B", "C", "D"];
-const ROUND_ORDER = ["gk", "kids", "xmas", "emoji", "tf", "closest", "telly", "music", "sport", "food", "buzz", "ai", "family"];
-const DEFAULT_ROUNDS = ["gk", "kids", "emoji", "closest", "xmas", "buzz"];
+const ROUND_ORDER = ["gk", "kids", "xmas", "tune", "emoji", "lines", "tf", "hl", "odd", "closest", "telly", "music", "sport", "food", "buzz", "ai", "family"];
+const DEFAULT_ROUNDS = ["gk", "kids", "tune", "xmas", "lines", "closest", "buzz"];
 const EXTRA = {
   ai: { title: "Anything Round", type: "mc", blurb: "Claude writes a round on any topic you choose." },
   family: { title: "Family Round", type: "mc", blurb: "Your own questions and photos. Coming next." },
 };
 const roundInfo = id => PACKS[id] || EXTRA[id];
+const isXmas = theme => theme === "xmas" || (theme === "auto" && new Date().getMonth() === 11);
 
 const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -434,35 +568,148 @@ function toast(msg, ms = 2500) {
   setTimeout(() => t.remove(), ms);
 }
 
-// Re-render without losing typing or focus
+// Re-render without losing typing, ticks or focus
 function paint(el, html) {
   const act = document.activeElement, aid = act && act.id, sel = act && act.selectionStart;
-  const vals = {}; el.querySelectorAll("input[id]").forEach(i => { if (i.type !== "checkbox") vals[i.id] = i.value; });
+  const vals = {}, checks = {};
+  el.querySelectorAll("input[id]").forEach(i => { if (i.type === "checkbox") checks[i.id] = i.checked; else vals[i.id] = i.value; });
   el.innerHTML = html;
-  for (const id in vals) { const i = document.getElementById(id); if (i && !i.dataset.fresh) i.value = vals[id]; }
+  for (const id in vals) { const i = document.getElementById(id); if (i) i.value = vals[id]; }
+  for (const id in checks) { const i = document.getElementById(id); if (i) i.checked = checks[id]; }
   if (aid) { const n = document.getElementById(aid); if (n) { n.focus(); try { if (sel != null) n.setSelectionRange(sel, sel); } catch (e) { } } }
 }
 
 async function wakeLock() { try { if (navigator.wakeLock) await navigator.wakeLock.request("screen"); } catch (e) { } }
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") wakeLock(); });
 
-// ===== SOUND (generated, no audio files) =====
+// ===== SOUND & MUSIC (all generated in the browser, no audio files) =====
+const NOTE_BASE = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+function parseNotes(str) {
+  return str.trim().split(/\s+/).map(tok => {
+    const [n, b] = tok.split(":");
+    if (n === "R") return [0, +b];
+    const m = n.match(/^([A-G])(#|b)?(\d)$/);
+    return [12 * (+m[3] + 1) + NOTE_BASE[m[1]] + (m[2] === "#" ? 1 : m[2] === "b" ? -1 : 0), +b];
+  });
+}
 const Sound = {
-  ctx: null, on: true,
-  init() { try { this.ctx = this.ctx || new (window.AudioContext || window.webkitAudioContext)(); if (this.ctx.state === "suspended") this.ctx.resume(); } catch (e) { } },
-  tone(f, d, type = "sine", v = .15, when = 0) {
-    if (!this.on || !this.ctx) return;
-    const c = this.ctx, o = c.createOscillator(), g = c.createGain(), t = c.currentTime + when;
-    o.type = type; o.frequency.value = f; g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
-    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + d + .05);
+  ctx: null, master: null, sfx: null, mus: null, noiseBuf: null, vol: .8, musicOn: true, melNodes: [],
+  init() {
+    try {
+      if (!this.ctx) {
+        const C = window.AudioContext || window.webkitAudioContext; this.ctx = new C();
+        this.master = this.ctx.createGain(); this.master.connect(this.ctx.destination);
+        this.sfx = this.ctx.createGain(); this.sfx.connect(this.master);
+        this.mus = this.ctx.createGain(); this.mus.connect(this.master);
+        this.setVol(this.vol, this.musicOn);
+      }
+      if (this.ctx.state === "suspended") this.ctx.resume();
+    } catch (e) { }
   },
+  setVol(v, m) { this.vol = v; this.musicOn = m; if (this.master) { this.master.gain.value = v; this.mus.gain.value = m ? .5 : 0; } },
+  osc(f, t, d, type, v, bus, attack = .005) {
+    const c = this.ctx; if (!c) return null;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.value = f;
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(v, t + attack); g.gain.exponentialRampToValueAtTime(.0001, t + Math.max(d, attack + .02));
+    o.connect(g); g.connect(bus || this.sfx); o.start(t); o.stop(t + d + .05); return o;
+  },
+  noise(t, d, v, hp = 6000, bus) {
+    const c = this.ctx; if (!c) return;
+    if (!this.noiseBuf) { const b = c.createBuffer(1, c.sampleRate, c.sampleRate), a = b.getChannelData(0); for (let i = 0; i < a.length; i++) a[i] = Math.random() * 2 - 1; this.noiseBuf = b; }
+    const s = c.createBufferSource(); s.buffer = this.noiseBuf;
+    const f = c.createBiquadFilter(); f.type = "highpass"; f.frequency.value = hp;
+    const g = c.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+    s.connect(f); f.connect(g); g.connect(bus || this.sfx); s.start(t, Math.random() * .5); s.stop(t + d + .05);
+  },
+  kick(t, bus) {
+    const c = this.ctx; if (!c) return;
+    const o = c.createOscillator(), g = c.createGain();
+    o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(45, t + .15);
+    g.gain.setValueAtTime(.45, t); g.gain.exponentialRampToValueAtTime(.0001, t + .2);
+    o.connect(g); g.connect(bus || this.sfx); o.start(t); o.stop(t + .25);
+  },
+  tone(f, d, type = "sine", v = .15, when = 0) { if (this.ctx) this.osc(f, this.ctx.currentTime + when, d, type, v, this.sfx); },
   tick() { this.tone(1200, .06, "square", .04); },
   join() { this.tone(660, .12, "triangle", .12); this.tone(990, .15, "triangle", .12, .08); },
   good() { [523, 659, 784, 1047].forEach((f, i) => this.tone(f, .22, "triangle", .14, i * .09)); },
   bad() { this.tone(200, .35, "sawtooth", .07); this.tone(150, .4, "sawtooth", .07, .15); },
   buzz() { this.tone(180, .5, "square", .14); this.tone(184, .5, "square", .1); },
   whoosh() { [300, 450, 600, 800].forEach((f, i) => this.tone(f, .12, "sine", .08, i * .05)); },
+  joker() { [392, 523, 659, 784, 1047].forEach((f, i) => this.tone(f, .15, "square", .06, i * .06)); },
   fanfare() { [[523, 0], [659, .15], [784, .3], [1047, .45], [784, .7], [1047, .85]].forEach(([f, w]) => this.tone(f, .35, "triangle", .16, w)); },
+  drumroll() {
+    const c = this.ctx; if (!c) return; const t0 = c.currentTime;
+    for (let i = 0; i < 30; i++) this.noise(t0 + i * .04, .05, .03 + i * .005, 1200);
+    this.noise(t0 + 1.22, 1.1, .22, 5000);
+  },
+  melody(notes, bpm = 120, limit) {
+    if (!this.ctx) return 0;
+    this.stopMelody();
+    const spb = 60 / bpm; let t = this.ctx.currentTime + .1;
+    for (const [m, b] of (limit ? notes.slice(0, limit) : notes)) {
+      const d = b * spb;
+      if (m) {
+        const o1 = this.osc(mtof(m), t, Math.max(.15, d * .95), "triangle", .3, this.sfx, .01);
+        const o2 = this.osc(mtof(m) * 2, t, Math.max(.1, d * .5), "sine", .07, this.sfx, .01);
+        this.melNodes.push(o1, o2);
+      }
+      t += d;
+    }
+    return t - this.ctx.currentTime;
+  },
+  stopMelody() { this.melNodes.forEach(o => { try { o && o.stop(); } catch (e) { } }); this.melNodes = []; },
+};
+// Original background tracks, sequenced in 16th notes
+const TRACKS = {
+  lobby: {
+    bpm: 112, len: 64, play(s, t, st) {
+      const B = Sound.mus, i = s % 16, ch = [[48, 0], [45, 1], [41, 0], [43, 0]][Math.floor(s / 16)];
+      const root = ch[0], tri = ch[1] ? [0, 3, 7] : [0, 4, 7];
+      if (i === 0 || i === 6 || i === 8 || i === 14) Sound.osc(mtof(root - 12), t, st * 1.8, "triangle", .22, B);
+      if (i % 2 === 0) Sound.osc(mtof(root + 12 + tri[[0, 1, 2, 1, 2, 1, 0, 2][i / 2]]), t, st * 1.5, "square", .03, B);
+      if (i === 0 || i === 8) Sound.kick(t, B);
+      if (i === 4 || i === 12) Sound.noise(t, .12, .1, 2000, B);
+      if (i % 2 === 1) Sound.noise(t, .03, .04, 8000, B);
+      if (s >= 32 && [0, 3, 6, 10].includes(i)) Sound.osc(mtof(root + 24 + tri[[2, 1, 0, 1][[0, 3, 6, 10].indexOf(i)]]), t, st * 2.5, "sine", .06, B, .01);
+    }
+  },
+  xmas: {
+    bpm: 120, len: 64, play(s, t, st) {
+      const B = Sound.mus, i = s % 16, ch = [[43, 0], [40, 1], [36, 0], [38, 0]][Math.floor(s / 16)];
+      const root = ch[0], tri = ch[1] ? [0, 3, 7] : [0, 4, 7];
+      if (i === 0 || i === 8) Sound.osc(mtof(root - 12), t, st * 3, "triangle", .22, B);
+      if (i % 2 === 0) Sound.noise(t, .05, i % 4 === 0 ? .07 : .035, 9000, B); // sleigh bells
+      if (i % 4 === 0) Sound.osc(mtof(root + 24 + tri[(i / 4) % 3]), t, st * 3, "sine", .08, B, .005); // bell arpeggio
+      if (i % 4 === 2) Sound.osc(mtof(root + 31), t, st * 1.5, "sine", .03, B, .005);
+      if (i === 0) Sound.kick(t, B);
+    }
+  },
+  think: {
+    bpm: 96, len: 32, play(s, t, st) {
+      const B = Sound.mus, i = s % 16;
+      if (i % 2 === 0) Sound.osc(mtof(s < 16 ? 45 : 52), t, st * 1.6, "triangle", .16, B);
+      if (i % 4 === 0) Sound.noise(t, .02, .08, 9000, B);
+      if (s === 0 || s === 16) Sound.osc(mtof(64), t, st * 7, "sine", .04, B, .3);
+      if (s === 8 || s === 24) Sound.osc(mtof(65), t, st * 7, "sine", .04, B, .3);
+    }
+  },
+};
+const Music = {
+  cur: null, step: 0, nextT: 0, timer: null,
+  play(name) {
+    if (this.cur === name) return;
+    this.cur = name; this.step = 0;
+    if (Sound.ctx) this.nextT = Sound.ctx.currentTime + .1;
+    if (!this.timer) this.timer = setInterval(() => this.tick(), 60);
+  },
+  tick() {
+    const c = Sound.ctx; if (!c || !this.cur) return;
+    const tr = TRACKS[this.cur], st = 60 / tr.bpm / 4;
+    if (this.nextT < c.currentTime) this.nextT = c.currentTime + .05;
+    while (this.nextT < c.currentTime + .2) { if (Sound.musicOn) tr.play(this.step % tr.len, this.nextT, st); this.nextT += st; this.step++; }
+  },
 };
 
 // ===== TRANSPORT =====
@@ -499,8 +746,9 @@ function settingsHTML(st, fresh, where) {
     <div class="setrow"><b>Questions</b>${pick("perRound", [4, 5, 6, 8, 10], v => v + " per round")}</div>
     <div class="setrow"><b>Timer</b>${pick("timer", [15, 20, 30], v => v + " sec")}</div>
     <div class="setrow"><b>Host</b>${pick("hostMode", ["host", "play"], v => v === "host" ? "Host only (sees answers)" : "Host & play")}</div>
+    <div class="setrow"><b>Look</b>${pick("theme", ["auto", "classic", "xmas"], v => ({ auto: "Auto (Christmas in December)", classic: "Classic", xmas: "Christmas" })[v])}</div>
     ${st.rounds.includes("ai") ? `<div class="setrow"><b>Anything topic</b><input id="ai-topic-${where}" data-aitopic placeholder="e.g. Gavin & Stacey, 80s toys, Wales" value="${esc(st.aiTopic || "")}" style="flex:1 1 14em"></div>` : ""}
-    <div class="setrow"><b>Order</b><span class="muted">Tap rounds to add or remove them. The last round scores double.</span></div>`;
+    <div class="setrow"><b>How it works</b><span class="muted">Tap rounds to add or remove them. Kids' Corner is for kids only and is skipped if no kids join. Everyone gets one Joker to double a round. The last round scores double.</span></div>`;
 }
 function settingsClick(e, st) {
   const b = e.target.closest("[data-round],[data-set]"); if (!b) return null;
@@ -514,6 +762,7 @@ function settingsClick(e, st) {
   const k = b.dataset.set, raw = b.dataset.val;
   return { [k]: isNaN(raw) ? raw : Number(raw) };
 }
+const isChoice = t => ["mc", "emoji", "lines", "tune", "odd", "hl", "tf"].includes(t);
 
 // ======================================================================
 // TV — runs the game
@@ -526,12 +775,15 @@ function tvMain() {
   if (!S) {
     S = {
       room: roomCode(), token: uid() + uid(), phase: "lobby", players: {}, order: [],
-      settings: { rounds: DEFAULT_ROUNDS.slice(), perRound: 5, timer: 20, hostMode: "host", aiTopic: "" },
+      settings: { rounds: DEFAULT_ROUNDS.slice(), perRound: 5, timer: 20, hostMode: "host", aiTopic: "", theme: "auto" },
+      audio: { music: true, vol: .8 },
       plan: [], ri: 0, qi: 0, answers: {}, res: null, buzz: null, qEnds: 0, pausedLeft: null, qStart: 0, started: false,
     };
   }
+  S.settings.theme = S.settings.theme || "auto"; S.audio = S.audio || { music: true, vol: .8 };
+  Sound.setVol(S.audio.vol, S.audio.music);
   history.replaceState(null, "", "?tv=" + S.room + (LOCAL ? "&local=1" : ""));
-  let T = null, conn = "connecting", lastShell = "", lastTick = -1, opened = !!S.started;
+  let T = null, conn = "connecting", lastShell = "", lastTick = -1, opened = !!S.started, tuneTimers = [], suspenseTimer = null, finalMusicAt = 0;
 
   const used = () => new Set(ls.get("buzzin_used", []));
   const freshCounts = () => { const u = used(), o = {}; for (const id in PACKS) o[id] = PACKS[id].qs.filter((q, i) => !u.has(id + i)).length; return o; };
@@ -541,25 +793,31 @@ function tvMain() {
   const curQ = () => curRound() && curRound().qs[S.qi];
   const qkey = () => (S.gid || "g") + "-" + S.ri + "-" + S.qi;
   const left = () => S.pausedLeft != null ? S.pausedLeft : Math.max(0, S.qEnds - Date.now());
+  const eligible = () => { const r = curRound(); return r && r.kids ? playersArr().filter(p => p.kid) : playersArr(); };
+  const pmult = p => (curRound().dbl ? 2 : 1) * (p.joker === S.ri ? 2 : 1);
+  const xmas = () => isXmas(S.settings.theme);
+  const qTime = q => (q && q.type === "tune" ? Math.max(25, S.settings.timer) : S.settings.timer) * 1000;
+  function addGain(p, gain) { p.score += gain; if (p.joker === S.ri) p.st.joker += gain; }
 
   function pub() {
     const r = curRound(), q = curQ();
     const o = {
-      room: S.room, phase: S.phase, hostMode: S.settings.hostMode, settings: S.settings,
-      players: playersArr().map(p => ({ id: p.id, name: p.name, members: p.members, color: p.color, score: p.score, on: Date.now() - p.seen < 20000 })),
+      room: S.room, phase: S.phase, hostMode: S.settings.hostMode, settings: S.settings, theme: xmas() ? "xmas" : "classic", audio: S.audio,
+      players: playersArr().map(p => ({ id: p.id, name: p.name, members: p.members, kid: !!p.kid, joker: p.joker ?? null, color: p.color, score: p.score, on: Date.now() - p.seen < 20000 })),
     };
     if (S.phase === "lobby") o.fresh = freshCounts();
-    if (r) o.round = { n: S.ri + 1, of: S.plan.length, id: r.id, title: r.title, type: r.type, blurb: r.blurb, dbl: r.dbl };
-    if (q && (S.phase === "question" || S.phase === "reveal")) {
-      o.q = { n: S.qi + 1, of: r.qs.length, key: qkey(), text: q.text, emoji: q.emoji, opts: q.opts, unit: q.unit, left: left(), paused: S.pausedLeft != null, total: S.settings.timer * 1000 };
+    if (r) o.round = { n: S.ri + 1, of: S.plan.length, id: r.id, title: r.title, type: r.type, blurb: r.blurb, dbl: r.dbl, kids: !!r.kids };
+    if (q && (S.phase === "question" || S.phase === "suspense" || S.phase === "reveal")) {
+      o.q = { n: S.qi + 1, of: r.qs.length, key: qkey(), type: q.type, text: q.text, emoji: q.emoji, quote: q.quote, opts: q.opts, unit: q.unit, left: left(), paused: S.pausedLeft != null, total: qTime(q) };
       o.answered = Object.keys(S.answers);
-      if (S.buzz) o.buzz = { cur: S.buzz.cur, locked: S.buzz.locked };
+      if (S.buzz) o.buzz = { cur: S.buzz.cur, locked: S.buzz.locked, steal: !!S.buzz.steal };
     }
     if (S.phase === "reveal" && S.res) o.reveal = S.res;
+    if (S.phase === "final") o.awards = awards();
     return o;
   }
   function hostInfo() {
-    const q = curQ(); if (!q || !(S.phase === "question" || S.phase === "intro")) return null;
+    const q = curQ(); if (!q || !(S.phase === "question" || S.phase === "intro" || S.phase === "suspense")) return null;
     const showAns = S.settings.hostMode === "host" || (q.type === "buzz" && S.buzz && S.buzz.cur);
     return { ans: showAns ? q.ansText : null };
   }
@@ -569,12 +827,20 @@ function tvMain() {
     render();
   }
 
-  // ----- game flow -----
+  // ----- questions -----
   function buildQuestion(type, raw, id) {
-    if (type === "mc" || type === "emoji") {
-      const opts = shuffle([raw[1], raw[2], raw[3], raw[4]]);
-      return { id, type, text: type === "emoji" ? "Which film is this?" : raw[0], emoji: type === "emoji" ? raw[0] : null, opts, correct: opts.indexOf(raw[1]), ansText: raw[1] };
+    if (type === "mc" || type === "emoji" || type === "lines" || type === "tune") {
+      const correctText = type === "tune" ? raw[0] : raw[1];
+      const o = shuffle([correctText, raw[2], raw[3], raw[4]]);
+      const q = { id, type, opts: o, correct: o.indexOf(correctText), ansText: correctText };
+      if (type === "mc") q.text = raw[0];
+      if (type === "emoji") { q.text = "Which film is this?"; q.emoji = raw[0]; }
+      if (type === "lines") { q.text = "Which film is this line from?"; q.quote = raw[0]; }
+      if (type === "tune") { q.text = "Name that tune!"; q.notes = parseNotes(raw[1]); q.bpm = raw[5] || 120; }
+      return q;
     }
+    if (type === "odd") { const o = shuffle([raw[0], raw[1], raw[2], raw[3]]); return { id, type, text: "Which is the odd one out?", opts: o, correct: o.indexOf(raw[0]), ansText: raw[0], note: raw[4] }; }
+    if (type === "hl") return { id, type, text: raw[0], opts: [raw[1], raw[2]], correct: raw[3], ansText: raw[3] === 0 ? raw[1] : raw[2], note: raw[4] };
     if (type === "tf") return { id, type, text: raw[0], opts: ["True", "False"], correct: raw[1] ? 0 : 1, ansText: raw[1] ? "True" : "False" };
     if (type === "number") return { id, type, text: raw[0], answer: raw[1], unit: raw[2], ansText: raw[1].toLocaleString("en-GB") + (raw[2] ? " " + raw[2] : "") };
     if (type === "buzz") return { id, type, text: raw[0], ansText: raw[1] };
@@ -582,7 +848,7 @@ function tvMain() {
   function pickQs(id, n) {
     const p = PACKS[id], u = used();
     let idx = p.qs.map((q, i) => i).filter(i => !u.has(id + i));
-    if (idx.length < n) { // pack used up: recycle the oldest
+    if (idx.length < n) {
       const all = ls.get("buzzin_used", []).filter(x => !x.startsWith(id)); ls.set("buzzin_used", all);
       idx = p.qs.map((q, i) => i);
     }
@@ -602,9 +868,12 @@ function tvMain() {
     const arr = JSON.parse(txt.slice(txt.indexOf("["), txt.lastIndexOf("]") + 1));
     return arr.slice(0, n).map((x, i) => buildQuestion("mc", [x.q, x.a, x.w[0], x.w[1], x.w[2]], "ai" + Date.now() + i));
   }
+
+  // ----- game flow -----
   async function startGame() {
     if (!playersArr().length) { toast("Nobody's joined yet. Scan the code to join."); return; }
-    const rounds = S.settings.rounds.filter(id => id !== "family");
+    let rounds = S.settings.rounds.filter(id => id !== "family");
+    if (rounds.includes("kids") && !playersArr().some(p => p.kid)) { rounds = rounds.filter(id => id !== "kids"); toast("No kids have joined, so Kids' Corner is skipped."); }
     if (!rounds.length) { toast("Pick at least one round."); return; }
     S.phase = "loading"; broadcast();
     const plan = [];
@@ -615,94 +884,128 @@ function tvMain() {
         try { qs = await aiRound(S.settings.aiTopic, S.settings.perRound); title = S.settings.aiTopic; blurb = "A round written just for tonight."; }
         catch (e) { toast("Couldn't write the Anything Round, so it's General Knowledge instead."); qs = pickQs("gk", S.settings.perRound); title = "General Knowledge"; blurb = PACKS.gk.blurb; }
       } else qs = pickQs(id, id === "buzz" ? Math.min(S.settings.perRound + 2, 8) : S.settings.perRound);
-      plan.push({ id, title, type: qs[0] ? qs[0].type : info.type, blurb, qs });
+      plan.push({ id, title, type: qs[0] ? qs[0].type : info.type, blurb, qs, kids: id === "kids" });
     }
     plan[plan.length - 1].dbl = plan.length > 1;
     S.plan = plan; S.ri = 0; S.qi = 0; S.started = true; S.gid = uid().slice(0, 4);
-    playersArr().forEach(p => p.score = 0);
+    playersArr().forEach(p => { p.score = 0; p.joker = null; p.st = { fast: [], close1: 0, close2: 0, buzz: 0, joker: 0 }; });
     S.phase = "intro"; Sound.whoosh(); broadcast();
+  }
+  function clearTune() { tuneTimers.forEach(clearTimeout); tuneTimers = []; Sound.stopMelody(); }
+  function playTune(full) {
+    const q = curQ(); if (!q || q.type !== "tune") return;
+    Sound.init(); Sound.melody(q.notes, q.bpm, full ? 0 : 6);
   }
   function startQuestion() {
     const q = curQ();
+    clearTune(); clearTimeout(suspenseTimer);
     S.answers = {}; S.res = null; S.pausedLeft = null;
-    S.buzz = q.type === "buzz" ? { cur: null, locked: [] } : null;
-    S.qStart = Date.now(); S.qEnds = Date.now() + S.settings.timer * 1000;
+    S.buzz = q.type === "buzz" ? { cur: null, locked: [], steal: false } : null;
+    S.qStart = Date.now(); S.qEnds = Date.now() + qTime(q);
     S.phase = "question"; broadcast();
+    if (q.type === "tune") {
+      const k = qkey();
+      tuneTimers.push(setTimeout(() => { if (qkey() === k && S.phase === "question") playTune(false); }, 700));
+      tuneTimers.push(setTimeout(() => { if (qkey() === k && S.phase === "question") playTune(true); }, 8000));
+    }
   }
-  function endQuestion() {
+  function endQuestion(direct) {
     if (S.phase !== "question") return;
-    const q = curQ(), r = curRound(), mult = r.dbl ? 2 : 1, res = { correct: q.correct, ansText: q.ansText, answer: q.answer, per: {} };
-    const ps = playersArr();
+    clearTune();
+    const q = curQ(), res = { correct: q.correct, ansText: q.ansText, answer: q.answer, note: q.note, per: {} };
+    const ps = eligible();
     if (q.type === "number") {
       const guesses = ps.filter(p => S.answers[p.id]).map(p => ({ p, g: Number(S.answers[p.id].c), d: Math.abs(Number(S.answers[p.id].c) - q.answer) })).sort((a, b) => a.d - b.d);
       const dists = [...new Set(guesses.map(x => x.d))];
       guesses.forEach(x => {
         const rank = dists.indexOf(x.d); let gain = rank === 0 ? 100 : rank === 1 ? 50 : 0;
-        if (x.d === 0) gain += 50; gain *= mult; x.p.score += gain;
+        if (x.d === 0) gain += 50; gain *= pmult(x.p); addGain(x.p, gain);
+        if (rank === 0) x.p.st.close1++; else if (rank === 1) x.p.st.close2++;
         res.per[x.p.id] = { ans: x.g, gain, ok: rank === 0 };
       });
       res.order = guesses.map(x => x.p.id);
     } else if (q.type === "buzz") {
-      // scored during judging
       Object.assign(res.per, S.buzzRes || {});
     } else {
       ps.forEach(p => {
         const a = S.answers[p.id]; if (!a) return;
         const ok = a.c === q.correct;
-        const speed = Math.max(0, 1 - a.ms / (S.settings.timer * 1000));
-        const gain = ok ? Math.round((100 + 50 * speed) * mult) : 0;
-        p.score += gain; res.per[p.id] = { ans: a.c, gain, ok };
+        const speed = Math.max(0, 1 - a.ms / qTime(q));
+        const gain = ok ? Math.round((100 + 50 * speed) * pmult(p)) : 0;
+        if (ok) p.st.fast.push(a.ms);
+        addGain(p, gain); res.per[p.id] = { ans: a.c, gain, ok };
       });
     }
     S.buzzRes = null;
-    const anyRight = Object.values(res.per).some(x => x.ok);
-    anyRight ? Sound.good() : Sound.bad();
-    // remember used questions
     const u = ls.get("buzzin_used", []); if (!u.includes(q.id)) { u.push(q.id); ls.set("buzzin_used", u); }
-    S.res = res; S.phase = "reveal"; broadcast();
+    S.res = res;
+    if (direct || q.type === "buzz") return reveal();
+    S.phase = "suspense"; Sound.drumroll(); broadcast();
+    const k = qkey(); suspenseTimer = setTimeout(() => { if (qkey() === k && S.phase === "suspense") reveal(); }, 1400);
+  }
+  function reveal() {
+    S.phase = "reveal";
+    const anyRight = Object.values(S.res.per).some(x => x.ok);
+    anyRight ? Sound.good() : Sound.bad();
+    const q = curQ(); if (q.type === "tune") setTimeout(() => { if (S.phase === "reveal" && curQ() === q) Sound.melody(q.notes, q.bpm); }, 900);
+    broadcast();
   }
   function next() {
     Sound.init();
     if (S.phase === "lobby") return startGame();
     if (S.phase === "intro") return startQuestion();
     if (S.phase === "question") return endQuestion();
+    if (S.phase === "suspense") return;
     if (S.phase === "reveal") {
+      Sound.stopMelody();
       if (S.qi < curRound().qs.length - 1) { S.qi++; return startQuestion(); }
       S.phase = S.ri < S.plan.length - 1 ? "scores" : "final";
-      if (S.phase === "final") Sound.fanfare();
+      if (S.phase === "final") { Sound.fanfare(); finalMusicAt = Date.now() + 3500; }
       return broadcast();
     }
     if (S.phase === "scores") { S.ri++; S.qi = 0; S.phase = "intro"; Sound.whoosh(); return broadcast(); }
-    if (S.phase === "final") { S.phase = "lobby"; S.plan = []; S.started = false; playersArr().forEach(p => p.score = 0); return broadcast(); }
+    if (S.phase === "final") { S.phase = "lobby"; S.plan = []; S.started = false; playersArr().forEach(p => { p.score = 0; p.joker = null; }); return broadcast(); }
   }
   function pause() {
-    if (S.phase !== "question") return;
+    if (S.phase !== "question" || (S.buzz && S.buzz.cur)) return;
     if (S.pausedLeft != null) { S.qEnds = Date.now() + S.pausedLeft; S.pausedLeft = null; }
     else S.pausedLeft = left();
     broadcast();
   }
   function skip() {
-    if (S.phase === "question" || S.phase === "reveal") {
-      if (S.phase === "question") { S.res = { per: {}, skipped: true }; }
+    if (S.phase === "question" || S.phase === "reveal" || S.phase === "suspense") {
+      clearTune(); clearTimeout(suspenseTimer);
       if (S.qi < curRound().qs.length - 1) { S.qi++; return startQuestion(); }
       S.phase = S.ri < S.plan.length - 1 ? "scores" : "final"; broadcast();
     }
   }
   function judge(ok) {
     if (S.phase !== "question" || !S.buzz || !S.buzz.cur) return;
-    const p = S.players[S.buzz.cur], mult = curRound().dbl ? 2 : 1;
+    const p = S.players[S.buzz.cur];
     S.buzzRes = S.buzzRes || {};
     if (ok) {
-      const gain = 100 * mult; p.score += gain; S.buzzRes[p.id] = { gain, ok: true };
-      S.buzz.cur = null; endQuestion();
+      const gain = 100 * pmult(p) * (S.buzz.steal ? 2 : 1); addGain(p, gain); p.st.buzz++;
+      S.buzzRes[p.id] = { gain, ok: true, steal: !!S.buzz.steal };
+      S.buzz.cur = null; endQuestion(true);
     } else {
       S.buzzRes[p.id] = { gain: 0, ok: false };
-      S.buzz.locked.push(p.id); S.buzz.cur = null;
-      S.qEnds = Date.now() + (S.pausedLeft ?? 8000); S.pausedLeft = null; Sound.bad();
-      const remaining = playersArr().filter(x => !S.buzz.locked.includes(x.id));
-      if (!remaining.length) return endQuestion();
+      S.buzz.locked.push(p.id); S.buzz.cur = null; S.buzz.steal = true;
+      S.qEnds = Date.now() + Math.max(8000, S.pausedLeft ?? 0); S.pausedLeft = null; Sound.bad();
+      const remaining = eligible().filter(x => !S.buzz.locked.includes(x.id));
+      if (!remaining.length) return endQuestion(true);
       broadcast();
     }
+  }
+  function awards() {
+    const ps = playersArr().filter(p => p.st); const out = [];
+    const best = (f) => { let b = null, bv = null; ps.forEach(p => { const v = f(p); if (v != null && (bv == null || v > bv)) { bv = v; b = p; } }); return b ? { p: b, v: bv } : null; };
+    const fast = best(p => p.st.fast.length >= 2 ? -p.st.fast.reduce((a, c) => a + c, 0) / p.st.fast.length : null);
+    if (fast) out.push({ icon: "⚡", title: "Fastest Finger", id: fast.p.id, detail: `${(-fast.v / 1000).toFixed(1)}s average on right answers` });
+    const g = best(p => p.st.close1 || null); if (g) out.push({ icon: "🎯", title: "Best Guesser", id: g.p.id, detail: `Closest ${g.v} time${g.v > 1 ? "s" : ""}` });
+    const sc = best(p => p.st.close2 || null); if (sc) out.push({ icon: "😬", title: "So Close", id: sc.p.id, detail: `Runner-up guess ${sc.v} time${sc.v > 1 ? "s" : ""}` });
+    const bz = best(p => p.st.buzz || null); if (bz) out.push({ icon: "🔔", title: "Buzzer Champ", id: bz.p.id, detail: `${bz.v} buzzer answer${bz.v > 1 ? "s" : ""} right` });
+    const jk = best(p => p.st.joker || null); if (jk) out.push({ icon: "🃏", title: "Joker Genius", id: jk.p.id, detail: `${jk.v} points in their Joker round` });
+    return out;
   }
 
   // ----- messages -----
@@ -712,22 +1015,26 @@ function tvMain() {
     if (m.t === "hello") { if (p) p.seen = Date.now(); T.send({ t: "state", s: pub() }); if (m.host) T.send({ t: "hostinfo", h: hostInfo() }); return; }
     if (m.t === "join") {
       const name = String(m.name || "").trim().slice(0, 24); if (!name) return;
+      const members = String(m.members || "").trim().slice(0, 60), kid = !!m.kid;
       if (!S.players[m.pid]) {
-        S.players[m.pid] = { id: m.pid, name, members: String(m.members || "").trim().slice(0, 60), color: COLORS[S.order.length % COLORS.length], score: 0, seen: Date.now() };
+        S.players[m.pid] = { id: m.pid, name, members, kid, joker: null, color: COLORS[S.order.length % COLORS.length], score: 0, seen: Date.now(), st: { fast: [], close1: 0, close2: 0, buzz: 0, joker: 0 } };
         S.order.push(m.pid); Sound.join();
-      } else Object.assign(S.players[m.pid], { name, members: String(m.members || "").trim().slice(0, 60), seen: Date.now() });
+      } else Object.assign(S.players[m.pid], { name, members, kid, seen: Date.now() });
       return broadcast();
     }
+    if (m.t === "joker" && p && S.phase === "intro" && p.joker == null) { p.joker = S.ri; Sound.joker(); return broadcast(); }
     if (m.t === "answer" && p && S.phase === "question" && m.key === qkey() && !S.answers[m.pid]) {
       const q = curQ(); if (q.type === "buzz") return;
+      if (curRound().kids && !p.kid) return;
       let c = m.c; if (q.type === "number") { c = Number(c); if (!isFinite(c)) return; }
       S.answers[m.pid] = { c, ms: Date.now() - S.qStart }; p.seen = Date.now();
       Sound.tick();
-      const active = playersArr().filter(x => Date.now() - x.seen < 20000);
-      if (active.every(x => S.answers[x.id])) { const k = qkey(); setTimeout(() => { if (qkey() === k) endQuestion(); }, 700); }
+      const active = eligible().filter(x => Date.now() - x.seen < 20000);
+      if (active.length && active.every(x => S.answers[x.id])) { const k = qkey(); setTimeout(() => { if (qkey() === k) endQuestion(); }, 700); }
       return broadcast();
     }
     if (m.t === "buzz" && p && S.phase === "question" && S.buzz && !S.buzz.cur && !S.buzz.locked.includes(m.pid) && m.key === qkey() && S.pausedLeft == null) {
+      if (curRound().kids && !p.kid) return;
       S.buzz.cur = m.pid; S.pausedLeft = left(); Sound.buzz(); return broadcast();
     }
     if (m.t === "cmd" && m.k === S.token) {
@@ -735,6 +1042,8 @@ function tvMain() {
       else if (m.cmd === "pause") pause();
       else if (m.cmd === "skip") skip();
       else if (m.cmd === "judge") judge(!!m.ok);
+      else if (m.cmd === "replay") playTune(true);
+      else if (m.cmd === "audio") { S.audio = { music: !!m.music, vol: Math.max(0, Math.min(1, Number(m.vol))) }; Sound.setVol(S.audio.vol, S.audio.music); broadcast(); }
       else if (m.cmd === "kick") { delete S.players[m.pid]; S.order = S.order.filter(x => x !== m.pid); broadcast(); }
       else if (m.cmd === "settings" && S.phase === "lobby") { Object.assign(S.settings, m.patch || {}); broadcast(); }
       else if (m.cmd === "lobby") { S.phase = "lobby"; S.plan = []; S.started = false; playersArr().forEach(x => x.score = 0); broadcast(); }
@@ -748,22 +1057,40 @@ function tvMain() {
     if (!el) return; el.innerHTML = "";
     try { new QRCode(el, { text, width: 512, height: 512, correctLevel: QRCode.CorrectLevel.M }); } catch (e) { el.textContent = text; }
   }
-  const ptile = p => `<div class="ptile ${Date.now() - p.seen < 20000 ? "" : "off"}"><span class="av" style="background:${p.color}">${esc(initials(p.name))}</span><span>${esc(p.name)}${p.members ? `<small>with ${esc(p.members)}</small>` : ""}</span></div>`;
+  const ptile = p => `<div class="ptile ${Date.now() - p.seen < 20000 ? "" : "off"}"><span class="av" style="background:${p.color}">${esc(initials(p.name))}</span><span>${esc(p.name)}${p.kid ? " 🧒" : ""}${p.members ? `<small>with ${esc(p.members)}</small>` : ""}</span></div>`;
   const ranked = () => playersArr().slice().sort((a, b) => b.score - a.score);
-  const ctl = (extra = "") => `<div class="ctl">${extra}<button class="btn" data-a="pause">${S.pausedLeft != null ? "Resume" : "Pause"} (P)</button><button class="btn" data-a="skip">Skip</button><button class="btn gold" data-a="next">Next (Space)</button></div>`;
+  const musicBtn = () => `<button class="btn" data-a="music">♫ ${S.audio.music ? "On" : "Off"} (M)</button>`;
+  const ctl = (extra = "") => `<div class="ctl">${extra}${musicBtn()}${S.phase === "question" && !(S.buzz && S.buzz.cur) ? `<button class="btn" data-a="pause">${S.pausedLeft != null ? "Resume" : "Pause"} (P)</button>` : ""}<button class="btn" data-a="skip">Skip</button><button class="btn gold" data-a="next">Next (Space)</button></div>`;
   const top = () => {
-    const r = curRound();
+    const r = curRound(), inQ = ["question", "suspense", "reveal"].includes(S.phase);
     return `<div class="top"><div class="brand disp">Buzz In</div>
-      <div class="crumbs">${r ? `Round ${S.ri + 1} of ${S.plan.length} · ${esc(r.title)}${S.phase === "question" || S.phase === "reveal" ? ` · Q${S.qi + 1}/${r.qs.length}` : ""}` : ""}</div>
+      <div class="crumbs">${r ? `Round ${S.ri + 1} of ${S.plan.length} · ${esc(r.title)}${inQ ? ` · Q${S.qi + 1}/${r.qs.length}` : ""}${r.kids ? ` · <span class="kidtag">Kids only</span>` : ""}` : ""}</div>
       <div class="conn">${conn === "ok" ? "Room " + S.room : conn === "lost" ? "Reconnecting…" : "Connecting…"}</div></div>`;
   };
+  function syncMusic() {
+    const ph = S.phase, r = curRound(), bg = xmas() ? "xmas" : "lobby";
+    let want = null;
+    if (!opened) want = null;
+    else if (ph === "lobby" || ph === "loading" || ph === "intro" || ph === "scores") want = bg;
+    else if (ph === "question") want = r && r.type === "tune" ? null : "think";
+    else if (ph === "final") want = Date.now() > finalMusicAt ? bg : null;
+    Music.play(want);
+  }
+  function syncTheme() {
+    const on = xmas() && opened;
+    document.body.classList.toggle("xmas", on);
+    let cv = $("#snow");
+    if (on && !cv) { cv = document.createElement("canvas"); cv.id = "snow"; document.body.prepend(cv); snow(cv); }
+    if (!on && cv) cv.remove();
+  }
 
   function render() {
+    syncTheme(); syncMusic();
     if (!opened) {
       app.innerHTML = `<div class="stage"><div class="center"><div class="logo disp">Buzz In</div>
         <p class="rblurb muted">Family quiz night. Put this screen on the TV, then press start.</p>
         <button class="btn gold big" style="max-width:24rem" data-a="open">Open the lobby</button>
-        <p class="muted" style="font-size:.9rem">This switches on the sound and keeps the screen awake.</p></div></div>`;
+        <p class="muted" style="font-size:.9rem">This switches on the music and keeps the screen awake.</p></div></div>`;
       return;
     }
     const ph = S.phase, q = curQ(), r = curRound();
@@ -784,34 +1111,41 @@ function tvMain() {
           <div class="setup" data-settings>${settingsHTML(S.settings, freshCounts(), "tv")}
             ${S.settings.rounds.includes("ai") && !hasKey ? `<div class="setrow"><b>Claude key</b><input id="ai-key" type="password" placeholder="Paste your Anthropic API key (stays on this device)" style="flex:1 1 14em"><button class="btn" data-a="savekey">Save</button></div>` : ""}
             <div class="hostbox"><div class="qr" id="qr-host"></div><div><b>Host controls on your phone</b><div class="muted">Scan with the host's phone to run the game from the sofa.</div></div>
-              <div style="margin-left:auto;display:flex;flex-direction:column;gap:.5rem"><button class="btn gold" data-a="next">Start the quiz</button><button class="btn" data-a="resetused" style="font-size:.8rem">Reset used questions</button></div></div>
+              <div style="margin-left:auto;display:flex;flex-direction:column;gap:.5rem"><button class="btn gold" data-a="next">Start the quiz</button>${musicBtn()}<button class="btn" data-a="resetused" style="font-size:.8rem">Reset used questions</button></div></div>
           </div>
         </div>
       </div></div>`;
     } else if (ph === "loading") {
       html = `<div class="stage">${top()}<div class="center"><div class="spin" style="width:4rem;height:4rem;border-width:.4rem"></div><div class="rblurb">Getting the questions ready…</div></div></div>`;
     } else if (ph === "intro") {
+      const jokers = playersArr().filter(p => p.joker === S.ri);
       html = `<div class="stage">${top()}<div class="center">
         <div class="rnum disp">Round ${S.ri + 1}</div><div class="rtitle disp">${esc(r.title)}</div>
-        <div class="rblurb">${esc(r.blurb)}</div>${r.dbl ? `<div class="dbl">Final round · double points</div>` : ""}
+        <div class="rblurb">${esc(r.blurb)}</div>
+        ${r.kids ? `<div class="dbl" style="background:var(--b);color:#fff">Kids only! Grown-ups sit this one out</div>` : ""}
+        ${r.dbl ? `<div class="dbl">Final round · double points</div>` : ""}
+        <div class="jokers">${jokers.map(p => `<span class="jk" style="border-color:${p.color}">🃏 ${esc(p.name)} plays their Joker!</span>`).join("")}</div>
+        <div class="muted" style="font-size:1.1rem">Want double points on this round? Play your Joker on your phone now.</div>
       </div><div class="bottom"><div></div>${ctl()}</div></div>`;
-    } else if (ph === "question" || ph === "reveal") {
+    } else if (ph === "question" || ph === "suspense" || ph === "reveal") {
+      const dotsFor = eligible();
       html = `<div class="stage">${top()}<div class="center">${questionBody(q, ph)}</div>
-        <div class="bottom"><div class="dots">${playersArr().map(p => `<span class="dot ${S.answers[p.id] || (S.buzz && (S.buzz.locked.includes(p.id) || S.buzz.cur === p.id)) ? "in" : ""}" style="background:${p.color}" title="${esc(p.name)}">${esc(initials(p.name))}</span>`).join("")}</div>
-        ${ph === "question" ? `<div style="display:flex;gap:1.2rem;align-items:center">${ctl(q.type === "buzz" && S.buzz && S.buzz.cur ? `<button class="btn good" data-a="right">Right (Y)</button><button class="btn bad" data-a="wrong">Wrong (N)</button>` : "")}<div class="timer" id="timer"></div></div>` : ctl()}</div></div>`;
+        <div class="bottom"><div class="dots">${dotsFor.map(p => `<span class="dot ${S.answers[p.id] || (S.buzz && (S.buzz.locked.includes(p.id) || S.buzz.cur === p.id)) ? "in" : ""}" style="background:${p.color}" title="${esc(p.name)}">${esc(initials(p.name))}${p.joker === S.ri ? `<i class="jkb">🃏</i>` : ""}</span>`).join("")}</div>
+        ${ph === "question" ? `<div style="display:flex;gap:1.2rem;align-items:center">${ctl((q.type === "buzz" && S.buzz && S.buzz.cur ? `<button class="btn good" data-a="right">Right (Y)</button><button class="btn bad" data-a="wrong">Wrong (N)</button>` : "") + (q.type === "tune" ? `<button class="btn" data-a="replay">Play again (R)</button>` : ""))}<div class="timer" id="timer"></div></div>` : ph === "reveal" ? ctl(q.type === "tune" ? `<button class="btn" data-a="replay">Play again (R)</button>` : "") : `<div></div>`}</div></div>`;
     } else if (ph === "scores") {
       const rk = ranked(), max = Math.max(1, ...rk.map(p => p.score));
       html = `<div class="stage">${top()}<div class="center"><div class="disp" style="font-size:4rem;color:var(--gold)">Scores after round ${S.ri + 1}</div>
-        <div class="board">${rk.map((p, i) => `<div class="brow"><span class="disp" style="font-size:2rem">${i + 1}</span><span class="nm">${esc(p.name)}</span><span><div class="bar" data-w="${Math.max(3, p.score / max * 100)}" style="width:0;background:${p.color}"></div></span><span class="sc">${p.score}</span></div>`).join("")}</div>
+        <div class="board">${rk.map((p, i) => `<div class="brow"><span class="disp" style="font-size:2rem">${i + 1}</span><span class="nm">${esc(p.name)}${p.joker != null && p.joker <= S.ri ? " 🃏" : ""}</span><span><div class="bar" data-w="${Math.max(3, p.score / max * 100)}" style="width:0;background:${p.color}"></div></span><span class="sc">${p.score}</span></div>`).join("")}</div>
       </div><div class="bottom"><div class="muted">Next up: ${esc(S.plan[S.ri + 1].title)}</div>${ctl()}</div></div>`;
     } else if (ph === "final") {
-      const rk = ranked(), pod = [rk[1], rk[0], rk[2]], hs = ["14rem", "20rem", "10rem"], ls_ = ["2nd", "1st", "3rd"];
-      html = `<div class="stage">${top()}<div class="center"><div class="disp" style="font-size:5rem;color:var(--gold)">${rk[0] ? esc(rk[0].name) + " wins!" : "Game over"}</div>
+      const rk = ranked(), pod = [rk[1], rk[0], rk[2]], hs = ["11rem", "16rem", "8rem"], ls_ = ["2nd", "1st", "3rd"], aw = awards();
+      html = `<div class="stage">${top()}<div class="center" style="gap:1.1rem"><div class="disp" style="font-size:4.4rem;color:var(--gold)">${rk[0] ? esc(rk[0].name) + " wins!" : "Game over"}</div>
         <div class="podium">${pod.map((p, i) => p ? `<div class="pod"><div class="pn">${esc(p.name)}</div><div class="ps">${p.score} pts</div><div class="blk" style="height:${hs[i]};background:${p.color}">${ls_[i]}</div></div>` : "").join("")}</div>
-        ${rk.length > 3 ? `<div class="muted" style="font-size:1.2rem">${rk.slice(3).map((p, i) => `${i + 4}. ${esc(p.name)} (${p.score})`).join(" · ")}</div>` : ""}
-      </div><div class="bottom"><div></div><div class="ctl" style="opacity:1"><button class="btn gold" data-a="next">Play again with new questions</button></div></div></div><canvas id="confetti"></canvas>`;
+        ${rk.length > 3 ? `<div class="muted" style="font-size:1.1rem">${rk.slice(3).map((p, i) => `${i + 4}. ${esc(p.name)} (${p.score})`).join(" · ")}</div>` : ""}
+        ${aw.length ? `<div class="awards">${aw.map(a => { const p = S.players[a.id]; return `<div class="award"><span class="ai">${a.icon}</span><div><b>${esc(a.title)}</b><div>${esc(p ? p.name : "")}</div><small>${esc(a.detail)}</small></div></div>`; }).join("")}</div>` : ""}
+      </div><div class="bottom"><div></div><div class="ctl" style="opacity:1">${musicBtn()}<button class="btn gold" data-a="next">Play again with new questions</button></div></div></div><canvas id="confetti"></canvas>`;
     }
-    const shellKey = ph + "|" + S.ri + "|" + S.qi + "|" + JSON.stringify(S.res ? 1 : 0);
+    const shellKey = ph + "|" + S.ri + "|" + S.qi;
     paint(app, html);
     if (ph === "lobby") { qr($("#qr-join"), joinUrl()); qr($("#qr-host"), hostUrl()); }
     if (ph === "scores") requestAnimationFrame(() => document.querySelectorAll(".bar").forEach(b => b.style.width = b.dataset.w + "%"));
@@ -822,17 +1156,23 @@ function tvMain() {
     const rev = ph === "reveal" ? S.res : null, ps = playersArr();
     let h = "";
     if (q.emoji) h += `<div class="emoji">${q.emoji}</div>`;
-    h += `<div class="qtext">${esc(q.text)}</div>`;
+    if (q.type === "tune") h += `<div class="eq ${ph === "question" || ph === "reveal" ? "on" : ""}">${Array.from({ length: 9 }, (_, i) => `<i style="animation-delay:${(i * 0.13) % 0.7}s"></i>`).join("")}</div>`;
+    if (q.quote) h += `<div class="quote">“${esc(q.quote)}”</div>`;
+    h += `<div class="qtext ${q.quote ? "small" : ""}">${esc(q.text)}</div>`;
     if (q.opts) {
-      h += `<div class="opts ${q.opts.length === 2 ? "two" : ""}" style="max-width:${q.opts.length === 2 ? "50rem" : "none"}">${q.opts.map((o, i) => {
-        const cls = rev && !rev.skipped ? (i === rev.correct ? "right" : "dim") : "";
+      const two = q.opts.length === 2, tf = q.type === "tf";
+      h += `<div class="opts ${two ? "two" : ""}" style="max-width:${two ? "56rem" : "none"}">${q.opts.map((o, i) => {
+        const cls = rev ? (i === rev.correct ? "right" : "dim") : ph === "suspense" ? "wait" : "";
         const who = rev ? ps.filter(p => rev.per[p.id] && rev.per[p.id].ans === i).map(p => `<span class="mini" style="background:${p.color}">${esc(initials(p.name))}</span>`).join("") : "";
-        return `<div class="opt o${q.opts.length === 2 ? (i ? 0 : 3) : i} ${cls}"><span class="let">${q.opts.length === 2 ? (i ? "✗" : "✓") : LET[i]}</span><span>${esc(o)}</span><span class="who">${who}</span></div>`;
+        const col = tf ? (i ? 0 : 3) : two ? (i ? 2 : 1) : i;
+        return `<div class="opt o${col} ${cls}"><span class="let">${tf ? (i ? "✗" : "✓") : LET[i]}</span><span>${esc(o)}</span><span class="who">${who}</span></div>`;
       }).join("")}</div>`;
     }
+    if (ph === "suspense") h += `<div class="rblurb drum">🥁 Drumroll…</div>`;
+    if (rev && rev.note) h += `<div class="note">${esc(rev.note)}</div>`;
     if (q.type === "number") {
-      if (!rev) h += `<div class="rblurb muted">Type your guess on your phone${q.unit ? ` (in ${esc(q.unit)})` : ""}</div>`;
-      else {
+      if (ph === "question") h += `<div class="rblurb muted">Type your guess on your phone${q.unit ? ` (in ${esc(q.unit)})` : ""}</div>`;
+      else if (rev) {
         h += `<div class="bigans">${esc(q.ansText)}</div><div class="glist">${(rev.order || []).map(id => {
           const p = S.players[id], x = rev.per[id]; if (!p) return "";
           return `<div class="grow"><span><span class="mini" style="background:${p.color}">${esc(initials(p.name))}</span> ${esc(p.name)}: ${Number(x.ans).toLocaleString("en-GB")}</span><span class="gain">${x.gain ? "+" + x.gain : ""}</span></div>`;
@@ -841,19 +1181,18 @@ function tvMain() {
     }
     if (q.type === "buzz") {
       if (!rev) {
-        if (S.buzz && S.buzz.cur) { const p = S.players[S.buzz.cur]; h += `<div class="buzzer" style="background:${p.color}">${esc(p.name)}!</div><div class="rblurb">Say your answer out loud</div>`; }
-        else h += `<div class="rblurb muted">${S.buzz && S.buzz.locked.length ? "Wrong! Anyone else? Buzz in!" : "Buzz in on your phone when you know it"}</div>`;
+        if (S.buzz && S.buzz.cur) { const p = S.players[S.buzz.cur]; h += `<div class="buzzer" style="background:${p.color}">${esc(p.name)}!</div><div class="rblurb">Say your answer out loud${S.buzz.steal ? " · steal for double points" : ""}</div>`; }
+        else h += `<div class="rblurb ${S.buzz && S.buzz.steal ? "" : "muted"}">${S.buzz && S.buzz.steal ? "Wrong! <b style=\"color:var(--gold)\">Steal it for double points</b>. Buzz in!" : "Buzz in on your phone when you know it"}</div>`;
       } else {
         const win = Object.keys(rev.per).find(id => rev.per[id].ok);
-        h += `<div class="bigans">${esc(q.ansText)}</div><div class="rblurb">${win && S.players[win] ? `Point to ${esc(S.players[win].name)}` : "Nobody got it"}</div>`;
+        h += `<div class="bigans">${esc(q.ansText)}</div><div class="rblurb">${win && S.players[win] ? `${rev.per[win].steal ? "Stolen by" : "Point to"} ${esc(S.players[win].name)} (+${rev.per[win].gain})` : "Nobody got it"}</div>`;
       }
     }
-    if (rev && rev.skipped) h += `<div class="rblurb muted">Skipped</div>`;
     return h;
   }
   function tickTimer() {
     const el = $("#timer"); if (!el || S.phase !== "question") return;
-    const tot = S.settings.timer * 1000, l = left(), sec = Math.ceil(l / 1000), frac = l / tot;
+    const tot = qTime(curQ()), l = left(), sec = Math.ceil(l / 1000), frac = l / tot;
     if (sec !== lastTick) {
       if (sec <= 5 && sec > 0 && S.pausedLeft == null) Sound.tick();
       lastTick = sec;
@@ -867,6 +1206,19 @@ function tvMain() {
     const bits = Array.from({ length: 160 }, () => ({ x: Math.random() * cv.width, y: -Math.random() * cv.height, v: 2 + Math.random() * 4, s: 6 + Math.random() * 8, c: COLORS[Math.floor(Math.random() * COLORS.length)], r: Math.random() * 6 }));
     let n = 0; (function f() { x.clearRect(0, 0, cv.width, cv.height); bits.forEach(b => { b.y += b.v; b.r += .1; x.fillStyle = b.c; x.save(); x.translate(b.x + Math.sin(b.r) * 10, b.y); x.rotate(b.r); x.fillRect(-b.s / 2, -b.s / 4, b.s, b.s / 2); x.restore(); }); if (n++ < 420 && $("#confetti")) requestAnimationFrame(f); else x.clearRect(0, 0, cv.width, cv.height); })();
   }
+  function snow(cv) {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const x = cv.getContext("2d");
+    const size = () => { cv.width = innerWidth; cv.height = innerHeight; }; size(); addEventListener("resize", size);
+    const flakes = Array.from({ length: 90 }, () => ({ x: Math.random(), y: Math.random(), r: 1 + Math.random() * 3, v: .0006 + Math.random() * .0012, w: Math.random() * 6 }));
+    (function f() {
+      if (!document.body.contains(cv)) return;
+      x.clearRect(0, 0, cv.width, cv.height); x.fillStyle = "rgba(255,255,255,.75)";
+      flakes.forEach(k => { k.y += k.v; k.w += .01; if (k.y > 1.02) { k.y = -.02; k.x = Math.random(); } x.beginPath(); x.arc((k.x + Math.sin(k.w) * .01) * cv.width, k.y * cv.height, k.r, 0, 6.3); x.fill(); });
+      requestAnimationFrame(f);
+    })();
+  }
+  function toggleMusic() { S.audio.music = !S.audio.music; Sound.setVol(S.audio.vol, S.audio.music); broadcast(); }
 
   // ----- input -----
   app.addEventListener("click", e => {
@@ -876,6 +1228,8 @@ function tvMain() {
       if (k === "open") { opened = true; wakeLock(); try { document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => { }); } catch (_) { } render(); return; }
       if (k === "next") next(); else if (k === "pause") pause(); else if (k === "skip") skip();
       else if (k === "right") judge(true); else if (k === "wrong") judge(false);
+      else if (k === "replay") playTune(true);
+      else if (k === "music") toggleMusic();
       else if (k === "savekey") { const v = ($("#ai-key") || {}).value; if (v) { ls.set("buzzin_key", v.trim()); toast("Key saved on this device"); render(); } }
       else if (k === "resetused") { ls.set("buzzin_used", []); toast("All questions are fresh again"); render(); }
       return;
@@ -886,17 +1240,21 @@ function tvMain() {
   document.addEventListener("keydown", e => {
     if (e.target.matches("input")) return;
     if (!opened) return;
+    Sound.init();
     if (e.key === " " || e.key === "Enter" || e.key === "ArrowRight") { e.preventDefault(); next(); }
     else if (e.key === "p" || e.key === "P") pause();
     else if (e.key === "y" || e.key === "Y") judge(true);
     else if (e.key === "n" || e.key === "N") judge(false);
+    else if (e.key === "r" || e.key === "R") playTune(true);
+    else if (e.key === "m" || e.key === "M") toggleMusic();
   });
 
   // ----- timers -----
   setInterval(() => {
     if (S.phase === "question" && S.pausedLeft == null && Date.now() >= S.qEnds) {
-      if (S.buzz && !S.buzz.cur) endQuestion(); else if (!S.buzz) endQuestion();
+      if (!S.buzz) endQuestion(); else if (!S.buzz.cur) endQuestion(true);
     }
+    if (S.phase === "final" && finalMusicAt && Date.now() > finalMusicAt) { finalMusicAt = 0; syncMusic(); }
     tickTimer();
   }, 200);
   setInterval(() => { if (T) T.send({ t: "state", s: pub() }); if (S.phase === "lobby") render(); }, 5000);
@@ -918,7 +1276,7 @@ function phoneMain(room, hostKey) {
   const idStore = LOCAL ? sessionStorage : localStorage;
   let pid = null; try { pid = idStore.getItem(pidKey); } catch (e) { }
   if (!pid) { pid = uid(); try { idStore.setItem(pidKey, pid); } catch (e) { } }
-  let s = null, T = null, H = null, conn = "connecting", myAns = {}, deadline = 0, lastKey = "", joined = !!ls.get("buzzin_joined_" + room, false), showJoin = false, pendingJoin = false;
+  let s = null, T = null, H = null, conn = "connecting", myAns = {}, lastKey = "", showJoin = false, pendingJoin = false;
   const isHost = !!hostKey;
   const me = () => s && s.players.find(p => p.id === pid);
 
@@ -928,12 +1286,14 @@ function phoneMain(room, hostKey) {
   function onMsg(m) {
     if (m.t === "state") {
       s = m.s;
-      if (s.q) { deadline = Date.now() + s.q.left; if (s.q.key !== lastKey) { lastKey = s.q.key; if (navigator.vibrate) navigator.vibrate(60); } }
+      document.body.classList.toggle("xmas", s.theme === "xmas");
+      if (s.q && s.q.key !== lastKey) { lastKey = s.q.key; if (navigator.vibrate) navigator.vibrate(60); }
       if (me()) pendingJoin = false;
       render();
     } else if (m.t === "hostinfo" && isHost) { H = m.h; render(); }
   }
 
+  const sitOut = () => s.round && s.round.kids && me() && !me().kid;
   function playerPane() {
     const p = me(), ph = s.phase;
     const needJoin = !p && (!isHost || s.hostMode === "play" || showJoin);
@@ -942,44 +1302,55 @@ function phoneMain(room, hostKey) {
       return `<div class="card"><h2>${isHost ? "Join as a player" : "Join the quiz"}</h2>
         <label>Your name or team name<input id="j-name" maxlength="24" placeholder="e.g. Kelly, or Team Nan" autocomplete="off"></label>
         <label>Playing with anyone who hasn't got a phone? (optional)<input id="j-mem" maxlength="60" placeholder="e.g. Nan and Grandad" autocomplete="off"></label>
+        <label class="check"><input type="checkbox" id="j-kid"><span>A child is playing on this phone <small>(they can answer in Kids' Corner)</small></span></label>
         <button class="btn gold big" data-a="join">Join</button></div>`;
     }
     if (!p) return "";
-    const hdr = `<div class="hd"><div class="disp">Buzz In</div><div class="me"><span class="mini" style="background:${p.color}">${esc(initials(p.name))}</span>${esc(p.name)} · ${p.score}</div></div>`;
+    const hdr = `<div class="hd"><div class="disp">Buzz In</div><div class="me"><span class="mini" style="background:${p.color}">${esc(initials(p.name))}</span>${esc(p.name)}${p.kid ? " 🧒" : ""} · ${p.score}</div></div>`;
     let body = "";
-    if (ph === "lobby") body = `<div class="grow1 center"><div class="result" style="color:${p.color}">You're in!</div><p class="muted">Look at the TV. The quiz starts when the host is ready.</p>${p.members ? `<p>Playing with ${esc(p.members)}</p>` : ""}</div>`;
+    if (ph === "lobby") body = `<div class="grow1 center"><div class="result" style="color:${p.color}">You're in!</div><p class="muted">Look at the TV. The quiz starts when the host is ready.</p>${p.members ? `<p>Playing with ${esc(p.members)}</p>` : ""}<p class="muted">🃏 You have one Joker to double your points on a round. You'll get the chance to play it before each round.</p></div>`;
     else if (ph === "loading") body = `<div class="grow1 center"><div class="spin"></div><p class="muted">Getting the questions ready…</p></div>`;
-    else if (ph === "intro") body = `<div class="grow1 center"><p class="muted">Round ${s.round.n} of ${s.round.of}</p><h2 style="color:var(--gold);font-size:48px">${esc(s.round.title)}</h2><p>${esc(s.round.blurb)}</p>${s.round.dbl ? `<p><b style="color:var(--gold)">Double points!</b></p>` : ""}</div>`;
-    else if (ph === "question") body = questionPane(p);
+    else if (ph === "intro") {
+      const ri = s.round.n - 1, can = !(s.round.kids && !p.kid);
+      const jk = p.joker === ri ? `<div class="jokercard on">🃏 Joker played! Double points this round.</div>`
+        : p.joker != null ? `<p class="muted">Joker used in round ${p.joker + 1}.</p>`
+        : can ? `<button class="btn big jokerbtn" data-a="joker">🃏 Play my Joker on this round<br><small>Double points. You only get one!</small></button>` : "";
+      body = `<div class="grow1 center"><p class="muted">Round ${s.round.n} of ${s.round.of}</p><h2 style="color:var(--gold);font-size:48px">${esc(s.round.title)}</h2><p>${esc(s.round.blurb)}</p>${s.round.kids ? `<p><b style="color:var(--b)">Kids only!</b> ${p.kid ? "This one's for you." : "Grown-ups sit this one out."}</p>` : ""}${s.round.dbl ? `<p><b style="color:var(--gold)">Double points!</b></p>` : ""}${jk}</div>`;
+    }
+    else if (ph === "question" || ph === "suspense") body = sitOut() ? `<div class="grow1 center"><div class="result" style="color:var(--b);font-size:52px">Kids only</div><p style="font-size:20px">Sit this one out. No whispering! 🤫</p></div>` : questionPane(p);
     else if (ph === "reveal") body = revealPane(p);
     else if (ph === "scores" || ph === "final") {
       const rk = s.players.slice().sort((a, b) => b.score - a.score), pos = rk.findIndex(x => x.id === pid) + 1;
       const ord = n => n + (["th", "st", "nd", "rd"][(n % 100 - 20) % 10] || ["th", "st", "nd", "rd"][n % 100] || "th");
-      body = `<div class="grow1 center"><p class="muted">${ph === "final" ? "Final position" : "After round " + s.round.n}</p><div class="result" style="color:${p.color}">${ord(pos)}</div><p style="font-size:22px;font-weight:700">${p.score} points</p>${ph === "final" && pos === 1 ? `<p style="font-size:22px">🏆 Winner!</p>` : ""}</div>`;
+      const mine = ph === "final" && s.awards ? s.awards.filter(a => a.id === pid) : [];
+      body = `<div class="grow1 center"><p class="muted">${ph === "final" ? "Final position" : "After round " + s.round.n}</p><div class="result" style="color:${p.color}">${ord(pos)}</div><p style="font-size:22px;font-weight:700">${p.score} points</p>${ph === "final" && pos === 1 ? `<p style="font-size:22px">🏆 Winner!</p>` : ""}
+        ${mine.map(a => `<div class="jokercard on">${a.icon} ${esc(a.title)}<br><small>${esc(a.detail)}</small></div>`).join("")}</div>`;
     }
     return hdr + body;
   }
   function questionPane(p) {
-    const q = s.q, a = myAns[q.key];
-    const head = `<p class="muted">${esc(s.round.title)} · Q${q.n}/${q.of}</p><div class="qsmall">${q.emoji ? `<div style="font-size:44px">${q.emoji}</div>` : ""}${esc(q.text)}</div>`;
-    if (s.round.type === "buzz") {
-      const locked = s.buzz && s.buzz.locked.includes(pid), cur = s.buzz && s.buzz.cur;
+    const q = s.q, a = myAns[q.key], t = q.type;
+    const head = `<p class="muted">${esc(s.round.title)} · Q${q.n}/${q.of}${p.joker === s.round.n - 1 ? " · 🃏 x2" : ""}</p><div class="qsmall">${q.emoji ? `<div style="font-size:44px">${q.emoji}</div>` : ""}${q.quote ? `<div class="pquote">“${esc(q.quote)}”</div>` : ""}${t === "tune" ? `<div class="pquote">🎵 Listen to the TV…</div>` : ""}${esc(q.text)}</div>`;
+    if (s.phase === "suspense") return `${head}<div class="grow1 center"><div class="result" style="color:var(--gold)">🥁</div><p style="font-size:20px">Drumroll…</p></div>`;
+    if (t === "buzz") {
+      const locked = s.buzz && s.buzz.locked.includes(pid), cur = s.buzz && s.buzz.cur, steal = s.buzz && s.buzz.steal;
       if (cur === pid) return `${head}<div class="grow1 center"><div class="result" style="color:var(--gold)">Your turn!</div><p>Say your answer out loud.</p></div>`;
-      return `${head}<div class="grow1 center"><button class="buzzbtn" data-a="buzz" ${locked || cur || q.paused ? "disabled" : ""}>Buzz</button>
-        <p class="muted">${locked ? "You're locked out of this one." : cur ? "Someone else buzzed…" : "First to buzz gets to answer"}</p></div>`;
+      return `${head}<div class="grow1 center"><button class="buzzbtn" data-a="buzz" ${locked || cur || q.paused ? "disabled" : ""}>${steal && !locked ? "Steal!" : "Buzz"}</button>
+        <p class="muted">${locked ? "You're locked out of this one." : cur ? "Someone else buzzed…" : steal ? "Steal it for double points!" : "First to buzz gets to answer"}</p></div>`;
     }
-    if (a != null) return `${head}<div class="grow1 center"><div class="result" style="color:${p.color}">Locked in</div><p style="font-size:20px">${s.round.type === "number" ? Number(a).toLocaleString("en-GB") : esc(q.opts[a])}</p><p class="muted">Waiting for everyone else…</p></div>`;
-    if (s.round.type === "number") return `${head}<div class="grow1"><input id="num-${q.key}" class="numin" type="number" inputmode="decimal" placeholder="?" autocomplete="off">${q.unit ? `<p class="center muted">${esc(q.unit)}</p>` : ""}<button class="btn gold big" data-a="num">Lock in my guess</button></div>`;
-    if (q.opts.length === 2) return `${head}<div class="grow1"><div class="tfb"><button class="ans o3" data-ans="0">True</button><button class="ans o0" data-ans="1">False</button></div></div>`;
+    if (a != null) return `${head}<div class="grow1 center"><div class="result" style="color:${p.color}">Locked in</div><p style="font-size:20px">${t === "number" ? Number(a).toLocaleString("en-GB") : esc(q.opts[a])}</p><p class="muted">Waiting for everyone else…</p></div>`;
+    if (t === "number") return `${head}<div class="grow1"><input id="num-${q.key}" class="numin" type="number" inputmode="decimal" placeholder="?" autocomplete="off">${q.unit ? `<p class="center muted">${esc(q.unit)}</p>` : ""}<button class="btn gold big" data-a="num">Lock in my guess</button></div>`;
+    if (t === "tf") return `${head}<div class="grow1"><div class="tfb"><button class="ans o3" data-ans="0">True</button><button class="ans o0" data-ans="1">False</button></div></div>`;
+    if (q.opts.length === 2) return `${head}<div class="grow1"><div class="tfb hl"><button class="ans o1" data-ans="0">${esc(q.opts[0])}</button><button class="ans o2" data-ans="1">${esc(q.opts[1])}</button></div></div>`;
     return `${head}<div class="answers">${q.opts.map((o, i) => `<button class="ans o${i}" data-ans="${i}"><span class="let">${LET[i]}</span>${esc(o)}</button>`).join("")}</div>`;
   }
   function revealPane(p) {
     const r = s.reveal || { per: {} }, mine = r.per[pid];
-    if (r.skipped) return `<div class="grow1 center"><p class="muted">Question skipped</p></div>`;
+    const ansLine = `<p class="muted">The answer was</p><p style="font-size:22px;font-weight:700">${esc(r.ansText)}</p>${r.note ? `<p class="muted">${esc(r.note)}</p>` : ""}`;
+    if (sitOut()) return `<div class="grow1 center"><p class="muted">Kids' round</p>${ansLine}</div>`;
     const ok = mine && mine.ok, gain = mine ? mine.gain : 0;
-    let ans = r.ansText;
-    return `<div class="grow1 center"><div class="result" style="color:${ok ? "var(--good)" : gain ? "var(--gold)" : "var(--bad)"}">${ok ? "Correct!" : gain ? "Close!" : mine ? "Not this time" : "No answer"}</div>
-      ${gain ? `<p style="font-size:26px;font-weight:800">+${gain}</p>` : ""}<p class="muted">The answer was</p><p style="font-size:22px;font-weight:700">${esc(ans)}</p></div>`;
+    return `<div class="grow1 center"><div class="result" style="color:${ok ? "var(--good)" : gain ? "var(--gold)" : "var(--bad)"}">${ok ? (mine.steal ? "Stolen!" : "Correct!") : gain ? "Close!" : mine ? "Not this time" : "No answer"}</div>
+      ${gain ? `<p style="font-size:26px;font-weight:800">+${gain}</p>` : ""}${ansLine}</div>`;
   }
   function hostBar() {
     if (!isHost) return "";
@@ -988,21 +1359,25 @@ function phoneMain(room, hostKey) {
     else if (ph === "loading") { lbl = "Loading"; row = `<button class="btn" disabled>Getting questions…</button>`; }
     else if (ph === "intro") { lbl = `Round ${s.round.n}: ${s.round.title}`; row = `<button class="btn gold" data-h="next">Start round</button>`; }
     else if (ph === "question") {
-      lbl = `Q${s.q.n}/${s.q.of} · ${s.answered ? s.answered.length : 0}/${s.players.length} answered`;
+      const elig = s.round.kids ? s.players.filter(x => x.kid).length : s.players.length;
+      lbl = `Q${s.q.n}/${s.q.of} · ${s.answered ? s.answered.length : 0}/${elig} answered`;
       if (s.buzz && s.buzz.cur) { const p = s.players.find(x => x.id === s.buzz.cur); lbl = `${p ? p.name : "Someone"} buzzed`; row = `<button class="btn good" data-h="right">Right</button><button class="btn bad" data-h="wrong">Wrong</button>`; }
-      else row = `<button class="btn" data-h="pause">${s.q.paused ? "Resume" : "Pause"}</button><button class="btn" data-h="skip">Skip</button><button class="btn gold" data-h="next">Reveal</button>`;
+      else row = `${s.q.type === "tune" ? `<button class="btn" data-h="replay">🎵 Again</button>` : `<button class="btn" data-h="pause">${s.q.paused ? "Resume" : "Pause"}</button>`}<button class="btn" data-h="skip">Skip</button><button class="btn gold" data-h="next">Reveal</button>`;
     }
+    else if (ph === "suspense") { lbl = "Drumroll…"; row = `<button class="btn" disabled>Revealing…</button>`; }
     else if (ph === "reveal") { lbl = `Q${s.q.n}/${s.q.of}`; row = `<button class="btn gold" data-h="next">Next</button>`; }
     else if (ph === "scores") { lbl = "Scores"; row = `<button class="btn gold" data-h="next">Next round</button>`; }
     else if (ph === "final") { lbl = "Game over"; row = `<button class="btn gold" data-h="next">Play again</button>`; }
     const key = H && H.ans ? `<div class="anskey">Answer: ${esc(H.ans)}</div>` : "";
-    return `<div class="hbar">${key}<div class="lbl"><span>Host</span><span>${esc(lbl)}</span></div><div class="row">${row}</div></div>`;
+    const au = s.audio || { music: true, vol: .8 };
+    const aud = `<div class="aud"><button data-h="music">♫ Music ${au.music ? "on" : "off"}</button><span>Volume</span><button data-h="voldown" aria-label="Volume down">−</button><b>${Math.round(au.vol * 100)}%</b><button data-h="volup" aria-label="Volume up">+</button></div>`;
+    return `<div class="hbar">${key}<div class="lbl"><span>Host</span><span>${esc(lbl)}</span></div><div class="row">${row}</div>${aud}</div>`;
   }
   function hostLobby() {
     if (!isHost || s.phase !== "lobby") return "";
     return `<div class="card"><h2>Game settings</h2><div class="setup" data-settings>${settingsHTML(s.settings, s.fresh, "ph")}</div>
       ${s.settings.rounds.includes("ai") ? `<p class="muted" style="font-size:14px">The Anything Round needs your Claude key saved on the TV screen.</p>` : ""}</div>
-      <div class="card"><h2>Players</h2><div class="plist">${s.players.map(p => `<div class="pi"><span class="mini" style="background:${p.color}">${esc(initials(p.name))}</span>${esc(p.name)}${p.members ? ` <span class="muted">+ ${esc(p.members)}</span>` : ""}<button class="x" data-kick="${p.id}">Remove</button></div>`).join("") || `<span class="muted">Nobody yet</span>`}</div></div>`;
+      <div class="card"><h2>Players</h2><div class="plist">${s.players.map(p => `<div class="pi"><span class="mini" style="background:${p.color}">${esc(initials(p.name))}</span>${esc(p.name)}${p.kid ? " 🧒" : ""}${p.members ? ` <span class="muted">+ ${esc(p.members)}</span>` : ""}<button class="x" data-kick="${p.id}">Remove</button></div>`).join("") || `<span class="muted">Nobody yet</span>`}</div></div>`;
   }
   function render() {
     if (!s) {
@@ -1020,11 +1395,12 @@ function phoneMain(room, hostKey) {
   function hostWatch() {
     const ph = s.phase;
     let b = `<div class="hd"><div class="disp">Buzz In</div><span class="muted">Host · ${esc(s.room)}</span></div>`;
-    if (s.q && (ph === "question" || ph === "reveal")) {
-      b += `<div class="card"><p class="muted">${esc(s.round.title)} · Q${s.q.n}/${s.q.of}</p><div class="qsmall">${s.q.emoji ? s.q.emoji + " " : ""}${esc(s.q.text)}</div>${s.q.opts ? `<p class="muted">${s.q.opts.map((o, i) => (s.q.opts.length === 2 ? "" : LET[i] + ": ") + esc(o)).join(" · ")}</p>` : ""}</div>`;
-    } else if (s.round) b += `<div class="card"><p class="muted">Round ${s.round.n} of ${s.round.of}</p><h2>${esc(s.round.title)}</h2></div>`;
+    if (s.q && (ph === "question" || ph === "suspense" || ph === "reveal")) {
+      b += `<div class="card"><p class="muted">${esc(s.round.title)} · Q${s.q.n}/${s.q.of}</p><div class="qsmall">${s.q.emoji ? s.q.emoji + " " : ""}${s.q.quote ? `“${esc(s.q.quote)}” ` : ""}${esc(s.q.text)}</div>${s.q.opts ? `<p class="muted">${s.q.opts.map((o, i) => (s.q.type === "tf" ? "" : LET[i] + ": ") + esc(o)).join(" · ")}</p>` : ""}</div>`;
+    } else if (s.round) b += `<div class="card"><p class="muted">Round ${s.round.n} of ${s.round.of}</p><h2>${esc(s.round.title)}</h2>${s.round.kids ? `<p>Kids only round</p>` : ""}</div>`;
     const rk = s.players.slice().sort((a, c) => c.score - a.score);
-    b += `<div class="card"><h2>Scores</h2><div class="plist">${rk.map(p => `<div class="pi"><span class="mini" style="background:${p.color}">${esc(initials(p.name))}</span>${esc(p.name)}<span style="margin-left:auto">${s.answered && s.answered.includes(p.id) ? "✓ " : ""}${p.score}</span></div>`).join("")}</div></div>`;
+    b += `<div class="card"><h2>Scores</h2><div class="plist">${rk.map(p => `<div class="pi"><span class="mini" style="background:${p.color}">${esc(initials(p.name))}</span>${esc(p.name)}${s.round && p.joker === s.round.n - 1 ? " 🃏" : ""}<span style="margin-left:auto">${s.answered && s.answered.includes(p.id) ? "✓ " : ""}${p.score}</span></div>`).join("")}</div></div>`;
+    if (ph === "final" && s.awards && s.awards.length) b += `<div class="card"><h2>Awards</h2><div class="plist">${s.awards.map(a => { const p = s.players.find(x => x.id === a.id); return `<div class="pi">${a.icon} <b>${esc(a.title)}</b> <span class="muted">${esc(p ? p.name : "")}</span></div>`; }).join("")}</div></div>`;
     return b;
   }
 
@@ -1033,16 +1409,23 @@ function phoneMain(room, hostKey) {
     const a = t.closest("[data-a]"), ans = t.closest("[data-ans]"), h = t.closest("[data-h]"), kick = t.closest("[data-kick]");
     if (a && a.dataset.a === "join") {
       const name = ($("#j-name").value || "").trim(); if (!name) { $("#j-name").focus(); return; }
-      send({ t: "join", name, members: $("#j-mem").value }); pendingJoin = true; showJoin = false; setTimeout(() => { if (!me()) { pendingJoin = false; render(); } }, 6000); wakeLock(); render(); return;
+      send({ t: "join", name, members: $("#j-mem").value, kid: $("#j-kid").checked }); pendingJoin = true; showJoin = false; setTimeout(() => { if (!me()) { pendingJoin = false; render(); } }, 6000); wakeLock(); render(); return;
     }
+    if (a && a.dataset.a === "joker") { send({ t: "joker" }); if (navigator.vibrate) navigator.vibrate([40, 40, 80]); return; }
     if (a && a.dataset.a === "buzz") { send({ t: "buzz", key: s.q.key }); if (navigator.vibrate) navigator.vibrate(120); return; }
     if (a && a.dataset.a === "num") {
       const v = $("#num-" + s.q.key).value; if (v === "" || !isFinite(Number(v))) return;
       myAns[s.q.key] = Number(v); send({ t: "answer", key: s.q.key, c: Number(v) }); render(); return;
     }
-    if (a && a.dataset.a === "showjoin") { showJoin = true; render(); return; }
     if (ans && s && s.phase === "question") { const i = Number(ans.dataset.ans); myAns[s.q.key] = i; send({ t: "answer", key: s.q.key, c: i }); if (navigator.vibrate) navigator.vibrate(30); render(); return; }
-    if (h) { const k = h.dataset.h; if (k === "right" || k === "wrong") cmd("judge", { ok: k === "right" }); else cmd(k); return; }
+    if (h) {
+      const k = h.dataset.h, au = s.audio || { music: true, vol: .8 };
+      if (k === "right" || k === "wrong") cmd("judge", { ok: k === "right" });
+      else if (k === "music") cmd("audio", { music: !au.music, vol: au.vol });
+      else if (k === "volup" || k === "voldown") cmd("audio", { music: au.music, vol: Math.round(Math.max(0, Math.min(1, au.vol + (k === "volup" ? .1 : -.1))) * 10) / 10 });
+      else cmd(k);
+      return;
+    }
     if (kick) { cmd("kick", { pid: kick.dataset.kick }); return; }
     if (isHost && s && s.phase === "lobby") { const patch = settingsClick(e, s.settings); if (patch) { Object.assign(s.settings, patch); cmd("settings", { patch }); render(); } }
   });

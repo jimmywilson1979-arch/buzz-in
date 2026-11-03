@@ -1,0 +1,1082 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090b14">
+<title>Buzz In</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@500;600;700;800&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+:root{
+  --bg:#090b14; --bg2:#10142a; --panel:#141936; --line:#262d55; --fg:#f3f5ff; --muted:#9097c0;
+  --gold:#ffc93c; --gold-ink:#1b1300; --good:#33d17a; --bad:#ff5d5d;
+  --a:#e5484d; --b:#3e8ef7; --c:#e3a90b; --d:#26a96c;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+input,select{font:inherit;color:var(--fg);background:var(--bg2);border:2px solid var(--line);border-radius:12px;padding:.7em .9em;width:100%;min-width:0}
+input:focus-visible,button:focus-visible,select:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.hidden{display:none!important}
+.disp{font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:.01em;line-height:.95}
+.muted{color:var(--muted)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4em;border-radius:14px;padding:.8em 1.2em;font-weight:700;font-size:1rem;background:var(--panel);border:2px solid var(--line)}
+.btn.gold{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
+.btn.good{background:var(--good);color:#04210f;border-color:var(--good)}
+.btn.bad{background:var(--bad);color:#2a0000;border-color:var(--bad)}
+.btn.big{font-size:1.25rem;padding:1em 1.4em;width:100%}
+.btn:disabled{opacity:.45;cursor:default}
+.chip{display:inline-flex;align-items:center;gap:.4em;padding:.45em .8em;border-radius:99px;border:2px solid var(--line);background:var(--bg2);font-weight:600;font-size:.9rem}
+.chip.on{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
+.chip.off{opacity:.5}
+.chip small{font-weight:500;opacity:.75}
+
+/* ============ TV ============ */
+body.tv{font-size:1.45vw;overflow:hidden;background:
+  radial-gradient(60vw 40vw at 50% -10%, #23307a 0%, transparent 70%),
+  radial-gradient(40vw 30vw at 100% 100%, #3a1450 0%, transparent 70%), var(--bg)}
+@media (max-aspect-ratio:4/3){body.tv{font-size:2.2vw}}
+.tv .stage{position:fixed;inset:0;padding:2.2rem 3rem;display:flex;flex-direction:column;gap:1.4rem}
+.tv .top{display:flex;align-items:center;justify-content:space-between;gap:1.5rem}
+.tv .brand{font-size:2rem;color:var(--gold)}
+.tv .crumbs{font-size:1.1rem;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.tv .conn{font-size:.8rem;color:var(--muted)}
+.tv .center{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:1.6rem;text-align:center;min-height:0}
+.tv .qtext{font-family:var(--display);font-weight:700;font-size:3.6rem;line-height:1.05;max-width:85%;text-wrap:balance}
+.tv .emoji{font-size:9rem;line-height:1;letter-spacing:.1em}
+.tv .opts{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;width:100%}
+.tv .opts.two{grid-template-columns:1fr 1fr}
+.tv .opt{position:relative;border-radius:1.2rem;padding:1.3rem 1.6rem;display:flex;align-items:center;gap:1.2rem;font-size:2rem;font-weight:700;text-align:left;min-height:6.5rem;transition:opacity .3s,transform .3s}
+.tv .opt .let{font-family:var(--display);font-weight:800;font-size:2.6rem;width:3.4rem;height:3.4rem;border-radius:.8rem;background:rgba(0,0,0,.22);display:grid;place-items:center;flex:none}
+.tv .opt .who{position:absolute;right:1rem;bottom:.6rem;display:flex;gap:.3rem}
+.tv .opt.dim{opacity:.22}
+.tv .opt.right{transform:scale(1.03);box-shadow:0 0 0 .35rem #fff, 0 0 3rem rgba(255,255,255,.35)}
+.o0{background:var(--a)}.o1{background:var(--b)}.o2{background:var(--c)}.o3{background:var(--d)}
+.tv .bottom{display:flex;align-items:center;justify-content:space-between;gap:1rem;min-height:3.4rem}
+.tv .dots{display:flex;gap:.6rem;flex-wrap:wrap}
+.dot{width:2.6rem;height:2.6rem;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:1rem;color:#111;border:.18rem solid transparent;opacity:.35;transition:opacity .2s,transform .2s}
+.dot.in{opacity:1;transform:scale(1.08);border-color:#fff}
+.mini{width:1.7rem;height:1.7rem;border-radius:50%;display:inline-grid;place-items:center;font-size:.75rem;font-weight:800;color:#111;border:2px solid #fff}
+.tv .timer{position:relative;width:6rem;height:6rem;flex:none}
+.tv .timer svg{width:100%;height:100%;transform:rotate(-90deg)}
+.tv .timer .num{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:2.6rem}
+.tv .ctl{display:flex;gap:.6rem;opacity:.55}
+.tv .ctl:hover{opacity:1}
+.tv .ctl .btn{font-size:.85rem;padding:.5em .9em}
+/* lobby */
+.tv .lobby{flex:1;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:2.4rem;min-height:0}
+.tv .joincard{display:flex;flex-direction:column;justify-content:center;gap:1.2rem}
+.tv .logo{font-size:7rem;color:var(--gold);text-shadow:0 .4rem 0 #7a4b00}
+.tv .code{font-family:var(--display);font-weight:800;font-size:6.5rem;letter-spacing:.18em;line-height:1}
+.tv .qrrow{display:flex;gap:1.6rem;align-items:center}
+.tv .qr{background:#fff;padding:.8rem;border-radius:1rem;width:13rem;height:13rem;flex:none}
+.tv .qr img,.tv .qr canvas{width:100%!important;height:100%!important}
+.tv .side{display:flex;flex-direction:column;gap:1.2rem;min-height:0}
+.tv .players{display:flex;flex-wrap:wrap;gap:.8rem;align-content:flex-start}
+.ptile{display:flex;align-items:center;gap:.7rem;background:var(--panel);border:2px solid var(--line);border-radius:1rem;padding:.6rem 1rem .6rem .6rem;font-weight:700;font-size:1.2rem;animation:pop .35s ease-out}
+.ptile .av{width:2.4rem;height:2.4rem;border-radius:50%;display:grid;place-items:center;color:#111;font-weight:800}
+.ptile small{display:block;font-weight:500;font-size:.8rem;color:var(--muted)}
+.ptile.off{opacity:.45}
+.tv .setup{background:rgba(20,25,54,.75);border:2px solid var(--line);border-radius:1.2rem;padding:1.2rem;display:flex;flex-direction:column;gap:.9rem;font-size:.9rem}
+.setrow{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+.setrow > b{min-width:7.5em;font-size:.85em;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.hostbox{display:flex;align-items:center;gap:1rem}
+.hostbox .qr{width:6.5rem;height:6.5rem;padding:.4rem}
+/* intro */
+.tv .rnum{font-size:1.6rem;color:var(--muted);letter-spacing:.2em}
+.tv .rtitle{font-size:8rem;color:var(--gold)}
+.tv .rblurb{font-size:2rem;color:var(--fg);max-width:70%}
+.tv .dbl{font-family:var(--display);font-weight:800;font-size:2.2rem;background:var(--gold);color:var(--gold-ink);padding:.2em .7em;border-radius:.4em;transform:rotate(-3deg)}
+/* reveal */
+.tv .bigans{font-family:var(--display);font-weight:800;font-size:6rem;color:var(--gold);line-height:1}
+.tv .glist{display:grid;grid-template-columns:repeat(auto-fill,minmax(18rem,1fr));gap:.7rem;width:100%;max-width:70rem}
+.grow{display:flex;align-items:center;justify-content:space-between;gap:.8rem;background:var(--panel);border-radius:.9rem;padding:.6rem 1rem;font-size:1.3rem;font-weight:700}
+.grow .gain{color:var(--good)}
+/* buzz */
+.tv .buzzer{font-family:var(--display);font-weight:800;font-size:7rem;padding:.2em .6em;border-radius:.3em;color:#111;animation:pop .3s ease-out}
+/* scores */
+.tv .board{width:100%;max-width:70rem;display:flex;flex-direction:column;gap:.7rem}
+.brow{display:grid;grid-template-columns:3rem minmax(0,14rem) 1fr 6rem;align-items:center;gap:1rem;font-size:1.5rem;font-weight:700}
+.brow .bar{height:2.4rem;border-radius:.6rem;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.brow .sc{text-align:right;font-family:var(--display);font-size:2rem;font-variant-numeric:tabular-nums}
+.brow .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* podium */
+.podium{display:flex;align-items:flex-end;gap:1.4rem;justify-content:center}
+.pod{display:flex;flex-direction:column;align-items:center;gap:.6rem;width:15rem}
+.pod .blk{width:100%;border-radius:1rem 1rem 0 0;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:4rem;color:rgba(0,0,0,.55)}
+.pod .pn{font-size:1.8rem;font-weight:800;text-align:center}
+.pod .ps{font-size:1.3rem;color:var(--muted)}
+#confetti{position:fixed;inset:0;pointer-events:none}
+.toast{position:fixed;left:50%;top:1.2rem;transform:translateX(-50%);background:var(--panel);border:2px solid var(--line);padding:.6rem 1.1rem;border-radius:99px;font-weight:600;z-index:50;font-size:.95rem}
+@keyframes pop{0%{transform:scale(.7)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ============ PHONE ============ */
+body.phone{font-size:16px}
+.ph{min-height:100%;display:flex;flex-direction:column;gap:16px;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.ph.withbar{padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+.ph .hd{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ph .hd .disp{font-size:26px;color:var(--gold)}
+.ph .me{display:flex;align-items:center;gap:8px;font-weight:700}
+.ph .card{background:var(--panel);border:2px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.ph h2{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:34px;line-height:1;margin:0}
+.ph p{margin:0;line-height:1.45}
+.ph label{display:flex;flex-direction:column;gap:6px;font-weight:600;font-size:14px;color:var(--muted)}
+.ph .grow1{flex:1;display:flex;flex-direction:column;justify-content:center;gap:16px}
+.ph .answers{display:grid;gap:12px}
+.ph .ans{border-radius:18px;padding:18px;font-size:20px;font-weight:700;display:flex;align-items:center;gap:14px;text-align:left;min-height:76px;color:#fff}
+.ph .ans .let{font-family:var(--display);font-weight:800;font-size:28px;width:44px;height:44px;border-radius:10px;background:rgba(0,0,0,.22);display:grid;place-items:center;flex:none}
+.ph .ans:active{transform:scale(.98)}
+.ph .tfb{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ph .tfb .ans{justify-content:center;min-height:140px;font-size:28px;font-family:var(--display);text-transform:uppercase}
+.ph .buzzbtn{width:72vw;max-width:300px;aspect-ratio:1;border-radius:50%;margin:0 auto;background:radial-gradient(circle at 35% 30%,#ff8a8a,#d81f2a 60%,#8a0c12);box-shadow:0 12px 0 #5a070b,0 18px 40px rgba(0,0,0,.5);font-family:var(--display);font-weight:800;font-size:56px;color:#fff;text-transform:uppercase}
+.ph .buzzbtn:active{transform:translateY(8px);box-shadow:0 4px 0 #5a070b}
+.ph .buzzbtn:disabled{filter:grayscale(1);opacity:.5}
+.ph .result{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:64px;line-height:1;text-align:center}
+.ph .center{text-align:center}
+.ph .qsmall{font-size:20px;font-weight:700;line-height:1.3}
+.ph .row{display:flex;gap:10px;flex-wrap:wrap}
+.ph .row > *{flex:1 1 auto}
+.ph .codein{font-family:var(--display);font-size:44px;font-weight:800;text-align:center;letter-spacing:.2em;text-transform:uppercase}
+.ph .numin{font-family:var(--display);font-size:44px;font-weight:800;text-align:center}
+.hbar{position:fixed;left:0;right:0;bottom:0;background:rgba(16,20,42,.97);border-top:2px solid var(--line);
+  padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:10px;z-index:20}
+.hbar .lbl{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700;display:flex;justify-content:space-between;gap:8px}
+.hbar .row{display:flex;gap:8px}
+.hbar .row .btn{flex:1;padding:.75em .6em}
+.anskey{background:#2a2200;border:2px solid var(--gold);color:var(--gold);border-radius:12px;padding:10px 12px;font-weight:700}
+.plist{display:flex;flex-direction:column;gap:8px}
+.plist .pi{display:flex;align-items:center;gap:10px;background:var(--bg2);border-radius:12px;padding:8px 10px;font-weight:600}
+.plist .pi .x{margin-left:auto;color:var(--muted);font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:8px}
+.ph .setup{display:flex;flex-direction:column;gap:12px}
+.ph .setrow > b{min-width:100%}
+.spin{width:28px;height:28px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--gold);animation:spin 1s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* landing */
+.land{max-width:520px;margin:0 auto}
+.land .logo{font-size:64px;color:var(--gold);text-shadow:0 5px 0 #7a4b00;text-align:center;margin-top:24px}
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ===== QUESTION PACKS =====
+// mc/emoji: [question, correct, wrong1, wrong2, wrong3]
+// tf: [statement, true|false]
+// number: [question, answer, unit]
+// buzz: [question, answer]
+const PACKS = {
+  gk: { title: "General Knowledge", type: "mc", blurb: "A bit of everything to warm up.", qs: [
+    ["What is the capital of Australia?", "Canberra", "Sydney", "Melbourne", "Perth"],
+    ["Which element has the chemical symbol Au?", "Gold", "Silver", "Copper", "Aluminium"],
+    ["What is the longest river in the UK?", "River Severn", "River Thames", "River Wye", "River Trent"],
+    ["How many sides does a hexagon have?", "6", "5", "7", "8"],
+    ["Which planet is known as the Red Planet?", "Mars", "Venus", "Jupiter", "Mercury"],
+    ["What is the smallest country in the world?", "Vatican City", "Monaco", "San Marino", "Liechtenstein"],
+    ["Who painted the Mona Lisa?", "Leonardo da Vinci", "Michelangelo", "Vincent van Gogh", "Pablo Picasso"],
+    ["What is the largest ocean on Earth?", "Pacific", "Atlantic", "Indian", "Arctic"],
+    ["What is the hardest natural substance?", "Diamond", "Granite", "Iron", "Quartz"],
+    ["In which city does the Welsh Parliament (the Senedd) sit?", "Cardiff", "Swansea", "Wrexham", "Newport"],
+    ["What is the national animal of Scotland?", "Unicorn", "Stag", "Golden eagle", "Highland cow"],
+    ["How many strings does a standard guitar have?", "6", "4", "5", "8"],
+    ["Which gas do plants take in from the air?", "Carbon dioxide", "Oxygen", "Nitrogen", "Helium"],
+    ["In which year did the Second World War end?", "1945", "1918", "1939", "1950"],
+    ["What is the currency of Japan?", "Yen", "Yuan", "Won", "Ringgit"],
+    ["What is the highest mountain in Wales?", "Yr Wyddfa (Snowdon)", "Pen y Fan", "Cadair Idris", "Tryfan"],
+    ["What does 'www' stand for in a web address?", "World Wide Web", "Wide World Web", "Web World Wide", "World Web Wire"],
+    ["What is the largest organ of the human body?", "Skin", "Liver", "Brain", "Lungs"],
+    ["Which bird is a symbol of peace?", "Dove", "Robin", "Swan", "Owl"],
+    ["How many players does a netball team have on court?", "7", "5", "9", "11"],
+  ]},
+  kids: { title: "Kids' Corner", type: "mc", blurb: "Easy ones. Let the little ones answer!", qs: [
+    ["What colour do you get when you mix blue and yellow?", "Green", "Purple", "Orange", "Brown"],
+    ["How many legs does a spider have?", "8", "6", "4", "10"],
+    ["What does a caterpillar turn into?", "A butterfly", "A bee", "A spider", "A ladybird"],
+    ["Which animal says 'moo'?", "Cow", "Sheep", "Pig", "Horse"],
+    ["How many days are there in a week?", "7", "5", "6", "10"],
+    ["What is the biggest planet in our solar system?", "Jupiter", "Earth", "Mars", "Saturn"],
+    ["What do bees make?", "Honey", "Milk", "Jam", "Bread"],
+    ["Which is the fastest land animal?", "Cheetah", "Lion", "Horse", "Rabbit"],
+    ["What do we call frozen water?", "Ice", "Steam", "Rain", "Fog"],
+    ["What colour is a ripe banana?", "Yellow", "Blue", "Red", "Purple"],
+    ["Which shape has three sides?", "Triangle", "Square", "Circle", "Rectangle"],
+    ["What is a baby sheep called?", "Lamb", "Calf", "Kid", "Foal"],
+    ["How many months are there in a year?", "12", "10", "7", "52"],
+    ["What is the opposite of hot?", "Cold", "Warm", "Wet", "Fast"],
+    ["Which animal has a very long neck?", "Giraffe", "Elephant", "Zebra", "Hippo"],
+    ["What do pandas mostly eat?", "Bamboo", "Fish", "Carrots", "Bananas"],
+    ["What colour is Santa's suit?", "Red", "Green", "Blue", "Yellow"],
+    ["What is 5 + 5?", "10", "8", "55", "12"],
+  ]},
+  xmas: { title: "Christmas Cracker", type: "mc", blurb: "Festive facts, films and traditions.", qs: [
+    ["Which country started the tradition of decorated Christmas trees?", "Germany", "England", "Norway", "Canada"],
+    ["Including Rudolph, how many reindeer pull Santa's sleigh?", "9", "8", "10", "12"],
+    ["What is the name of the Grinch's dog?", "Max", "Buddy", "Rex", "Scruffy"],
+    ["In Home Alone, where is the family flying to?", "Paris", "London", "Rome", "New York"],
+    ["Who wrote 'A Christmas Carol'?", "Charles Dickens", "Jane Austen", "Roald Dahl", "Lewis Carroll"],
+    ["What is Scrooge's first name?", "Ebenezer", "Jacob", "Bob", "Fred"],
+    ["How do you say 'Merry Christmas' in Welsh?", "Nadolig Llawen", "Blwyddyn Newydd Dda", "Iechyd Da", "Bore Da"],
+    ["Which plant do people kiss under at Christmas?", "Mistletoe", "Holly", "Ivy", "Poinsettia"],
+    ["On the first day of Christmas, what did my true love give to me?", "A partridge in a pear tree", "Two turtle doves", "Five gold rings", "A golden goose"],
+    ["Which band had a 1984 hit with 'Last Christmas'?", "Wham!", "Slade", "Wizzard", "Duran Duran"],
+    ["Who had the original hit with 'White Christmas'?", "Bing Crosby", "Frank Sinatra", "Elvis Presley", "Dean Martin"],
+    ["What colour are mistletoe berries?", "White", "Red", "Purple", "Orange"],
+    ["What date is Boxing Day?", "26 December", "24 December", "27 December", "1 January"],
+    ["In which year was the Queen's Christmas message first shown on TV?", "1957", "1952", "1966", "1972"],
+    ["What was traditionally hidden in a Christmas pudding for luck?", "A coin", "A ring", "A button", "A bean"],
+    ["In the film 'The Snowman', where do the boy and the snowman fly to?", "The North Pole", "Lapland", "The Moon", "London"],
+    ["What three gifts did the Wise Men bring?", "Gold, frankincense and myrrh", "Gold, silver and bronze", "Myrrh, spices and silk", "Gold, oil and bread"],
+    ["Which country sends London the Trafalgar Square Christmas tree each year?", "Norway", "Sweden", "Finland", "Denmark"],
+    ["In 'The Nightmare Before Christmas', who is the Pumpkin King?", "Jack Skellington", "Oogie Boogie", "Sally", "Zero"],
+  ]},
+  telly: { title: "Telly & Films", type: "mc", blurb: "Box sets, classics and Saturday nights.", qs: [
+    ["Which bear came from 'darkest Peru'?", "Paddington", "Winnie the Pooh", "Baloo", "Rupert"],
+    ["In Gavin & Stacey, which town is Stacey from?", "Barry", "Swansea", "Cardiff", "Newport"],
+    ["Who played Jack in the film Titanic?", "Leonardo DiCaprio", "Brad Pitt", "Matt Damon", "Johnny Depp"],
+    ["In Only Fools and Horses, what is Del Boy's surname?", "Trotter", "Butcher", "Boycie", "Bishop"],
+    ["What is the coffee shop called in Friends?", "Central Perk", "The Grind", "Java Joe's", "Monica's"],
+    ["What type of fish is Nemo?", "Clownfish", "Goldfish", "Angelfish", "Pufferfish"],
+    ["What is Doctor Who's time machine called?", "The TARDIS", "The Delorean", "The Time Ship", "The Vortex"],
+    ["Which city is Doctor Who mostly made in?", "Cardiff", "London", "Manchester", "Bristol"],
+    ["What is Shrek?", "An ogre", "A troll", "A giant", "A goblin"],
+    ["In which village does Postman Pat deliver the post?", "Greendale", "Trumpton", "Camberwick Green", "Balamory"],
+    ["Which TV family lives at 742 Evergreen Terrace?", "The Simpsons", "The Griffins", "The Flintstones", "The Belchers"],
+    ["Who directed the film Jaws?", "Steven Spielberg", "George Lucas", "James Cameron", "Ridley Scott"],
+    ["In Toy Story, what is the cowboy called?", "Woody", "Buzz", "Jessie", "Rex"],
+    ["Which TV show is set in a big white baking tent?", "The Great British Bake Off", "MasterChef", "Come Dine With Me", "Saturday Kitchen"],
+    ["What colour is the Teletubby Po?", "Red", "Yellow", "Green", "Purple"],
+    ["Which Hogwarts house is Harry Potter sorted into?", "Gryffindor", "Slytherin", "Hufflepuff", "Ravenclaw"],
+    ["In Frozen, what is the snowman called?", "Olaf", "Sven", "Kristoff", "Hans"],
+  ]},
+  music: { title: "Music", type: "mc", blurb: "Bands, singers and instruments.", qs: [
+    ["Freddie Mercury was the lead singer of which band?", "Queen", "Genesis", "The Who", "Wham!"],
+    ["Which Welsh singer is famous for 'It's Not Unusual'?", "Tom Jones", "Shirley Bassey", "Bonnie Tyler", "Shakin' Stevens"],
+    ["How many Beatles were there?", "4", "3", "5", "6"],
+    ["Who is known as the 'King of Pop'?", "Michael Jackson", "Elvis Presley", "Prince", "Justin Timberlake"],
+    ["Liam and Noel Gallagher were in which band?", "Oasis", "Blur", "Pulp", "Kasabian"],
+    ["Which country did ABBA come from?", "Sweden", "Norway", "Denmark", "Finland"],
+    ["Which Welsh band had the hit 'A Design for Life'?", "Manic Street Preachers", "Stereophonics", "Super Furry Animals", "Feeder"],
+    ["Who is known as the 'Queen of Pop'?", "Madonna", "Kylie Minogue", "Beyoncé", "Cher"],
+    ["How many strings does a violin have?", "4", "5", "6", "3"],
+    ["Who sang 'Rocket Man'?", "Elton John", "David Bowie", "Rod Stewart", "Phil Collins"],
+    ["Which Spice Girl was 'Posh Spice'?", "Victoria", "Geri", "Emma", "Mel B"],
+    ["Ed Sheeran's albums are named after what?", "Maths symbols", "Colours", "Planets", "Numbers in Irish"],
+    ["Which Welsh singer had a 2008 hit with 'Mercy'?", "Duffy", "Marina", "Charlotte Church", "Katherine Jenkins"],
+    ["Which Welsh band had the hit 'Have a Nice Day'?", "Stereophonics", "Feeder", "Catatonia", "Manic Street Preachers"],
+    ["Which city is Adele from?", "London", "Manchester", "Liverpool", "Birmingham"],
+    ["Which Welsh singer became famous as a child with the album 'Voice of an Angel'?", "Charlotte Church", "Katherine Jenkins", "Duffy", "Aled Jones"],
+  ]},
+  sport: { title: "Sport", type: "mc", blurb: "Pitches, courses and the 19th hole.", qs: [
+    ["How many players are on a football team on the pitch?", "11", "10", "12", "9"],
+    ["In which sport would you use a shuttlecock?", "Badminton", "Squash", "Tennis", "Table tennis"],
+    ["How many points is a try worth in rugby union?", "5", "3", "4", "7"],
+    ["Which country has won the most men's football World Cups?", "Brazil", "Germany", "Italy", "Argentina"],
+    ["What colour jersey does the leader of the Tour de France wear?", "Yellow", "Green", "Pink", "Polka dot"],
+    ["What is the highest score with three darts?", "180", "150", "170", "200"],
+    ["Which Welsh cyclist won the 2018 Tour de France?", "Geraint Thomas", "Mark Cavendish", "Chris Froome", "Bradley Wiggins"],
+    ["What surface is Wimbledon played on?", "Grass", "Clay", "Hard court", "Carpet"],
+    ["In snooker, how many points is the black ball worth?", "7", "5", "6", "10"],
+    ["Which sport is played at Lord's?", "Cricket", "Rugby", "Tennis", "Golf"],
+    ["How many holes are there on a standard golf course?", "18", "9", "12", "21"],
+    ["At which course is the Grand National run?", "Aintree", "Cheltenham", "Ascot", "Chepstow"],
+    ["In which city is the Principality Stadium?", "Cardiff", "Swansea", "Newport", "Llanelli"],
+    ["What is the maximum break in snooker (normally)?", "147", "155", "100", "180"],
+    ["Which horse won the Grand National three times?", "Red Rum", "Tiger Roll", "Desert Orchid", "Arkle"],
+    ["In chess, which piece can only move diagonally?", "Bishop", "Rook", "Knight", "King"],
+    ["How many players are on a rugby union team on the pitch?", "15", "13", "11", "7"],
+  ]},
+  food: { title: "Food & Drink", type: "mc", blurb: "For the ones who came for the buffet.", qs: [
+    ["What is the main ingredient of guacamole?", "Avocado", "Pea", "Cucumber", "Courgette"],
+    ["Bara brith is a type of what?", "Fruit loaf", "Cheese", "Soup", "Sausage"],
+    ["Which country does paella come from?", "Spain", "Italy", "Portugal", "Mexico"],
+    ["Which nut is used to make marzipan?", "Almond", "Walnut", "Hazelnut", "Cashew"],
+    ["Which fruit is dried to make a prune?", "Plum", "Grape", "Apricot", "Fig"],
+    ["Which spice is the most expensive by weight?", "Saffron", "Vanilla", "Cinnamon", "Paprika"],
+    ["What is tofu made from?", "Soya beans", "Rice", "Chickpeas", "Wheat"],
+    ["Which vegetable is used to make sauerkraut?", "Cabbage", "Onion", "Cucumber", "Carrot"],
+    ["What is laverbread made from?", "Seaweed", "Leeks", "Oats", "Cockles"],
+    ["Which pastry is used to make profiteroles?", "Choux", "Puff", "Filo", "Shortcrust"],
+    ["Which drink is made from fermented apples?", "Cider", "Perry", "Mead", "Sherry"],
+    ["Malbec wine is most famously from which country?", "Argentina", "Spain", "Australia", "Chile"],
+    ["Which country does halloumi come from?", "Cyprus", "Greece", "Turkey", "Italy"],
+    ["Welsh cakes are traditionally cooked on a what?", "Bakestone", "Oven tray", "Barbecue", "Toaster"],
+    ["Welsh rarebit is cheese on what?", "Toast", "Crumpets", "Potatoes", "Pasta"],
+    ["What colour is the inside of a pistachio?", "Green", "White", "Brown", "Yellow"],
+  ]},
+  tf: { title: "True or False", type: "tf", blurb: "Just two buttons. Anyone can play.", qs: [
+    ["A group of crows is called a 'murder'.", true],
+    ["Bananas are berries.", true],
+    ["Strawberries are true berries.", false],
+    ["You can see the Great Wall of China from the Moon with the naked eye.", false],
+    ["There are more sheep than people in Wales.", true],
+    ["Goldfish only have a three-second memory.", false],
+    ["Lightning never strikes the same place twice.", false],
+    ["A day on Venus is longer than its year.", true],
+    ["Mount Everest is the tallest mountain measured from base to peak.", false],
+    ["Sharks are mammals.", false],
+    ["Hay-on-Wye is known as the 'Town of Books'.", true],
+    ["An ostrich's eye is bigger than its brain.", true],
+    ["The Eiffel Tower gets slightly taller in summer.", true],
+    ["Penguins live at the North Pole.", false],
+    ["A tomato is a fruit.", true],
+    ["Bats are blind.", false],
+    ["Mince pies originally had meat in them.", true],
+    ["Rudolph the Red-Nosed Reindeer first appeared in a 1939 booklet.", true],
+  ]},
+  emoji: { title: "Emoji Films", type: "emoji", blurb: "Guess the film from the emojis.", qs: [
+    ["🦁👑", "The Lion King", "Madagascar", "Jungle Book", "Tarzan"],
+    ["❄️👸⛄", "Frozen", "Snow White", "Brave", "Tangled"],
+    ["🚢🧊💔", "Titanic", "Jaws", "Pirates of the Caribbean", "Poseidon"],
+    ["🦈🏖️🎣", "Jaws", "Finding Nemo", "Moana", "Shark Tale"],
+    ["🐠🔍🌊", "Finding Nemo", "The Little Mermaid", "Shark Tale", "Moana"],
+    ["🏠🎈👴", "Up", "Home Alone", "Coco", "Inside Out"],
+    ["👻🔫🚒", "Ghostbusters", "Casper", "Beetlejuice", "Men in Black"],
+    ["💍🧙‍♂️🌋", "The Lord of the Rings", "Harry Potter", "The Hobbit", "Narnia"],
+    ["🦖🏝️🚙", "Jurassic Park", "King Kong", "Godzilla", "The Land Before Time"],
+    ["🤖❤️🌱", "WALL-E", "Big Hero 6", "Robots", "The Iron Giant"],
+    ["🏠👦🎄🪤", "Home Alone", "Elf", "The Polar Express", "Jingle All the Way"],
+    ["🐭👨‍🍳🇫🇷", "Ratatouille", "Stuart Little", "Flushed Away", "The Rescuers"],
+    ["🧸🤠🚀", "Toy Story", "Cars", "Monsters Inc", "Bolt"],
+    ["👽🚲🌕", "E.T.", "Close Encounters", "Men in Black", "Paul"],
+    ["🍫🏭🎫", "Charlie and the Chocolate Factory", "Chocolat", "Wonka", "Matilda"],
+    ["⚡👓🧙", "Harry Potter", "The Wizard of Oz", "Fantastic Beasts", "Merlin"],
+    ["🧝🎅🗽", "Elf", "The Santa Clause", "Arthur Christmas", "Miracle on 34th Street"],
+    ["🚗⚡🏁", "Cars", "Fast & Furious", "Herbie", "Turbo"],
+    ["🐧🕺❄️", "Happy Feet", "Penguins of Madagascar", "Surf's Up", "Ice Age"],
+    ["🦍🏙️✈️", "King Kong", "Rampage", "Planet of the Apes", "Mighty Joe Young"],
+  ]},
+  closest: { title: "Closest Wins", type: "number", blurb: "Type a number. Nearest guess takes the points.", qs: [
+    ["How tall is the Eiffel Tower, in metres?", 330, "metres"],
+    ["In which year did the Titanic sink?", 1912, ""],
+    ["How tall is Yr Wyddfa (Snowdon), in metres?", 1085, "metres"],
+    ["How many bones are in an adult human body?", 206, "bones"],
+    ["In which year was the first Harry Potter book published?", 1997, ""],
+    ["How many keys are on a standard piano?", 88, "keys"],
+    ["How many minutes are there in a week?", 10080, "minutes"],
+    ["In which year did the Berlin Wall fall?", 1989, ""],
+    ["In which year did people first walk on the Moon?", 1969, ""],
+    ["At what temperature does water boil, in Fahrenheit?", 212, "°F"],
+    ["In which year was Queen Elizabeth II crowned?", 1953, ""],
+    ["In 'The Twelve Days of Christmas', how many gifts are given in total?", 364, "gifts"],
+    ["In which year did Celtic Manor host the Ryder Cup?", 2010, ""],
+    ["In which year did Cardiff's Millennium Stadium open?", 1999, ""],
+    ["How many hearts does an octopus have?", 3, "hearts"],
+    ["How many seconds are there in an hour?", 3600, "seconds"],
+    ["In which year was the first Christmas card sent in the UK?", 1843, ""],
+    ["How tall is Big Ben's tower, in metres?", 96, "metres"],
+    ["How long is the Wales Coast Path, in miles?", 870, "miles"],
+  ]},
+  buzz: { title: "Buzzer Round", type: "buzz", blurb: "First to buzz answers out loud. Wrong answers lock you out.", qs: [
+    ["What is the capital of Canada?", "Ottawa"],
+    ["Which planet is famous for its rings?", "Saturn"],
+    ["Who wrote Romeo and Juliet?", "William Shakespeare"],
+    ["What is the square root of 144?", "12"],
+    ["Which animal is called the 'ship of the desert'?", "Camel"],
+    ["What is the largest country in the world by area?", "Russia"],
+    ["Name the four countries of the UK.", "England, Scotland, Wales, Northern Ireland"],
+    ["What is H2O better known as?", "Water"],
+    ["Who wrote 'The Very Hungry Caterpillar'?", "Eric Carle"],
+    ["Which city hosted the 2012 Olympics?", "London"],
+    ["Which ocean lies between Europe and America?", "Atlantic"],
+    ["What is the tallest animal in the world?", "Giraffe"],
+    ["Who was the first person to walk on the Moon?", "Neil Armstrong"],
+    ["What is the longest river in the world?", "The Nile"],
+    ["What is the Welsh flag's dragon called in Welsh?", "Y Ddraig Goch"],
+    ["How many sides does a 50p coin have?", "7"],
+    ["What do you call a word that reads the same backwards, like 'level'?", "A palindrome"],
+  ]},
+};
+
+// ===== CONFIG (filled in at deploy) =====
+const SUPA_URL = "https://uqwlmegbelyqtbegxqlz.supabase.co";
+const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxd2xtZWdiZWx5cXRiZWd4cWx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3NTYzNzAsImV4cCI6MjEwNzMzMjM3MH0.bSeF8_kwKqSrEj3n8Ku2OeSU8E5nMqJj0hcfgXb8cW0";
+const CLAUDE_MODEL = "claude-sonnet-4-6";
+
+const P = new URLSearchParams(location.search);
+const LOCAL = P.has("local");
+const $ = s => document.querySelector(s);
+const app = $("#app");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const COLORS = ["#ff6b6b", "#4dabff", "#ffd43b", "#51e08a", "#c792ff", "#ff9f43", "#3ee6d6", "#ff7ac0", "#b5e853", "#a5b4cc", "#ffb4a2", "#8ce99a"];
+const LET = ["A", "B", "C", "D"];
+const ROUND_ORDER = ["gk", "kids", "xmas", "emoji", "tf", "closest", "telly", "music", "sport", "food", "buzz", "ai", "family"];
+const DEFAULT_ROUNDS = ["gk", "kids", "emoji", "closest", "xmas", "buzz"];
+const EXTRA = {
+  ai: { title: "Anything Round", type: "mc", blurb: "Claude writes a round on any topic you choose." },
+  family: { title: "Family Round", type: "mc", blurb: "Your own questions and photos. Coming next." },
+};
+const roundInfo = id => PACKS[id] || EXTRA[id];
+
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const uid = () => Math.random().toString(36).slice(2, 10);
+const roomCode = () => Array.from({ length: 4 }, () => "ABCDEFGHJKLMNPQRSTUVWXYZ"[Math.floor(Math.random() * 24)]).join("");
+const ls = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } },
+  del(k) { try { localStorage.removeItem(k); } catch (e) { } },
+};
+const initials = n => (n || "?").trim().split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
+const baseUrl = () => location.origin + location.pathname;
+const withLocal = u => LOCAL ? u + "&local=1" : u;
+
+function toast(msg, ms = 2500) {
+  const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t);
+  setTimeout(() => t.remove(), ms);
+}
+
+// Re-render without losing typing or focus
+function paint(el, html) {
+  const act = document.activeElement, aid = act && act.id, sel = act && act.selectionStart;
+  const vals = {}; el.querySelectorAll("input[id]").forEach(i => { if (i.type !== "checkbox") vals[i.id] = i.value; });
+  el.innerHTML = html;
+  for (const id in vals) { const i = document.getElementById(id); if (i && !i.dataset.fresh) i.value = vals[id]; }
+  if (aid) { const n = document.getElementById(aid); if (n) { n.focus(); try { if (sel != null) n.setSelectionRange(sel, sel); } catch (e) { } } }
+}
+
+async function wakeLock() { try { if (navigator.wakeLock) await navigator.wakeLock.request("screen"); } catch (e) { } }
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") wakeLock(); });
+
+// ===== SOUND (generated, no audio files) =====
+const Sound = {
+  ctx: null, on: true,
+  init() { try { this.ctx = this.ctx || new (window.AudioContext || window.webkitAudioContext)(); if (this.ctx.state === "suspended") this.ctx.resume(); } catch (e) { } },
+  tone(f, d, type = "sine", v = .15, when = 0) {
+    if (!this.on || !this.ctx) return;
+    const c = this.ctx, o = c.createOscillator(), g = c.createGain(), t = c.currentTime + when;
+    o.type = type; o.frequency.value = f; g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + d + .05);
+  },
+  tick() { this.tone(1200, .06, "square", .04); },
+  join() { this.tone(660, .12, "triangle", .12); this.tone(990, .15, "triangle", .12, .08); },
+  good() { [523, 659, 784, 1047].forEach((f, i) => this.tone(f, .22, "triangle", .14, i * .09)); },
+  bad() { this.tone(200, .35, "sawtooth", .07); this.tone(150, .4, "sawtooth", .07, .15); },
+  buzz() { this.tone(180, .5, "square", .14); this.tone(184, .5, "square", .1); },
+  whoosh() { [300, 450, 600, 800].forEach((f, i) => this.tone(f, .12, "sine", .08, i * .05)); },
+  fanfare() { [[523, 0], [659, .15], [784, .3], [1047, .45], [784, .7], [1047, .85]].forEach(([f, w]) => this.tone(f, .35, "triangle", .16, w)); },
+};
+
+// ===== TRANSPORT =====
+async function connect(room, onMsg, onStatus) {
+  if (LOCAL) {
+    const bc = new BroadcastChannel("buzzin-" + room);
+    bc.onmessage = e => onMsg(e.data);
+    onStatus && onStatus("ok");
+    return { send: m => bc.postMessage(m) };
+  }
+  if (!window.supabase || SUPA_URL.startsWith("%%")) throw new Error("Live sync isn't set up yet.");
+  const sb = window.supabase.createClient(SUPA_URL, SUPA_KEY, { realtime: { params: { eventsPerSecond: 30 } } });
+  const ch = sb.channel("buzzin-" + room, { config: { broadcast: { self: false } } });
+  ch.on("broadcast", { event: "m" }, ({ payload }) => onMsg(payload));
+  await new Promise((res, rej) => {
+    let done = false;
+    ch.subscribe(st => {
+      if (st === "SUBSCRIBED") { onStatus && onStatus("ok"); if (!done) { done = true; res(); } }
+      else if (st === "CHANNEL_ERROR" || st === "TIMED_OUT" || st === "CLOSED") { onStatus && onStatus("lost"); if (!done) { done = true; rej(new Error(st)); } }
+    });
+  });
+  return { send: m => ch.send({ type: "broadcast", event: "m", payload: m }) };
+}
+
+// ===== SETTINGS UI (shared by TV and host phone) =====
+function settingsHTML(st, fresh, where) {
+  const chips = ROUND_ORDER.map(id => {
+    const r = roundInfo(id), on = st.rounds.includes(id), dis = id === "family";
+    const f = fresh && fresh[id] != null ? `<small>${fresh[id]} new</small>` : "";
+    return `<button class="chip ${on ? "on" : ""} ${dis ? "off" : ""}" data-round="${id}" ${dis ? "disabled" : ""}>${esc(r.title)} ${dis ? "<small>soon</small>" : f}</button>`;
+  }).join("");
+  const pick = (k, vals, fmt) => vals.map(v => `<button class="chip ${st[k] === v ? "on" : ""}" data-set="${k}" data-val="${v}">${fmt ? fmt(v) : v}</button>`).join("");
+  return `<div class="setrow"><b>Rounds (in order)</b>${chips}</div>
+    <div class="setrow"><b>Questions</b>${pick("perRound", [4, 5, 6, 8, 10], v => v + " per round")}</div>
+    <div class="setrow"><b>Timer</b>${pick("timer", [15, 20, 30], v => v + " sec")}</div>
+    <div class="setrow"><b>Host</b>${pick("hostMode", ["host", "play"], v => v === "host" ? "Host only (sees answers)" : "Host & play")}</div>
+    ${st.rounds.includes("ai") ? `<div class="setrow"><b>Anything topic</b><input id="ai-topic-${where}" data-aitopic placeholder="e.g. Gavin & Stacey, 80s toys, Wales" value="${esc(st.aiTopic || "")}" style="flex:1 1 14em"></div>` : ""}
+    <div class="setrow"><b>Order</b><span class="muted">Tap rounds to add or remove them. The last round scores double.</span></div>`;
+}
+function settingsClick(e, st) {
+  const b = e.target.closest("[data-round],[data-set]"); if (!b) return null;
+  if (b.dataset.round) {
+    const id = b.dataset.round; let r = st.rounds.slice();
+    r = r.includes(id) ? r.filter(x => x !== id) : r.concat(id);
+    r.sort((a, c) => ROUND_ORDER.indexOf(a) - ROUND_ORDER.indexOf(c));
+    if (r.length && r.includes("buzz")) { r = r.filter(x => x !== "buzz"); r.splice(Math.max(0, r.length - 1), 0, "buzz"); }
+    return { rounds: r };
+  }
+  const k = b.dataset.set, raw = b.dataset.val;
+  return { [k]: isNaN(raw) ? raw : Number(raw) };
+}
+
+// ======================================================================
+// TV — runs the game
+// ======================================================================
+function tvMain() {
+  document.body.className = "tv";
+  const resumeCode = P.get("tv");
+  let S = resumeCode ? ls.get("buzzin_tv", null) : null;
+  if (!S || S.room !== resumeCode || Date.now() - (S.saved || 0) > 12 * 3600e3) S = null;
+  if (!S) {
+    S = {
+      room: roomCode(), token: uid() + uid(), phase: "lobby", players: {}, order: [],
+      settings: { rounds: DEFAULT_ROUNDS.slice(), perRound: 5, timer: 20, hostMode: "host", aiTopic: "" },
+      plan: [], ri: 0, qi: 0, answers: {}, res: null, buzz: null, qEnds: 0, pausedLeft: null, qStart: 0, started: false,
+    };
+  }
+  history.replaceState(null, "", "?tv=" + S.room + (LOCAL ? "&local=1" : ""));
+  let T = null, conn = "connecting", lastShell = "", lastTick = -1, opened = !!S.started;
+
+  const used = () => new Set(ls.get("buzzin_used", []));
+  const freshCounts = () => { const u = used(), o = {}; for (const id in PACKS) o[id] = PACKS[id].qs.filter((q, i) => !u.has(id + i)).length; return o; };
+  const save = () => { S.saved = Date.now(); ls.set("buzzin_tv", S); };
+  const playersArr = () => S.order.filter(id => S.players[id]).map(id => S.players[id]);
+  const curRound = () => S.plan[S.ri];
+  const curQ = () => curRound() && curRound().qs[S.qi];
+  const qkey = () => (S.gid || "g") + "-" + S.ri + "-" + S.qi;
+  const left = () => S.pausedLeft != null ? S.pausedLeft : Math.max(0, S.qEnds - Date.now());
+
+  function pub() {
+    const r = curRound(), q = curQ();
+    const o = {
+      room: S.room, phase: S.phase, hostMode: S.settings.hostMode, settings: S.settings,
+      players: playersArr().map(p => ({ id: p.id, name: p.name, members: p.members, color: p.color, score: p.score, on: Date.now() - p.seen < 20000 })),
+    };
+    if (S.phase === "lobby") o.fresh = freshCounts();
+    if (r) o.round = { n: S.ri + 1, of: S.plan.length, id: r.id, title: r.title, type: r.type, blurb: r.blurb, dbl: r.dbl };
+    if (q && (S.phase === "question" || S.phase === "reveal")) {
+      o.q = { n: S.qi + 1, of: r.qs.length, key: qkey(), text: q.text, emoji: q.emoji, opts: q.opts, unit: q.unit, left: left(), paused: S.pausedLeft != null, total: S.settings.timer * 1000 };
+      o.answered = Object.keys(S.answers);
+      if (S.buzz) o.buzz = { cur: S.buzz.cur, locked: S.buzz.locked };
+    }
+    if (S.phase === "reveal" && S.res) o.reveal = S.res;
+    return o;
+  }
+  function hostInfo() {
+    const q = curQ(); if (!q || !(S.phase === "question" || S.phase === "intro")) return null;
+    const showAns = S.settings.hostMode === "host" || (q.type === "buzz" && S.buzz && S.buzz.cur);
+    return { ans: showAns ? q.ansText : null };
+  }
+  function broadcast() {
+    save();
+    if (T) { T.send({ t: "state", s: pub() }); T.send({ t: "hostinfo", h: hostInfo() }); }
+    render();
+  }
+
+  // ----- game flow -----
+  function buildQuestion(type, raw, id) {
+    if (type === "mc" || type === "emoji") {
+      const opts = shuffle([raw[1], raw[2], raw[3], raw[4]]);
+      return { id, type, text: type === "emoji" ? "Which film is this?" : raw[0], emoji: type === "emoji" ? raw[0] : null, opts, correct: opts.indexOf(raw[1]), ansText: raw[1] };
+    }
+    if (type === "tf") return { id, type, text: raw[0], opts: ["True", "False"], correct: raw[1] ? 0 : 1, ansText: raw[1] ? "True" : "False" };
+    if (type === "number") return { id, type, text: raw[0], answer: raw[1], unit: raw[2], ansText: raw[1].toLocaleString("en-GB") + (raw[2] ? " " + raw[2] : "") };
+    if (type === "buzz") return { id, type, text: raw[0], ansText: raw[1] };
+  }
+  function pickQs(id, n) {
+    const p = PACKS[id], u = used();
+    let idx = p.qs.map((q, i) => i).filter(i => !u.has(id + i));
+    if (idx.length < n) { // pack used up: recycle the oldest
+      const all = ls.get("buzzin_used", []).filter(x => !x.startsWith(id)); ls.set("buzzin_used", all);
+      idx = p.qs.map((q, i) => i);
+    }
+    return shuffle(idx).slice(0, n).map(i => buildQuestion(p.type, p.qs[i], id + i));
+  }
+  async function aiRound(topic, n) {
+    const key = ls.get("buzzin_key", "");
+    if (!key || !topic) throw new Error("no key or topic");
+    const prompt = `Write ${n} multiple-choice pub quiz questions about "${topic}" for a family quiz night in Wales, UK. Mix easy and medium. Facts must be accurate and not time-sensitive. Each question needs exactly one correct answer and three plausible wrong answers, all short (under 6 words). Reply with ONLY a JSON array, no other text: [{"q":"...","a":"correct","w":["wrong1","wrong2","wrong3"]}]`;
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+      body: JSON.stringify({ model: CLAUDE_MODEL, max_tokens: 2500, messages: [{ role: "user", content: prompt }] }),
+    });
+    if (!r.ok) throw new Error("API " + r.status);
+    const j = await r.json(); const txt = j.content.map(c => c.text || "").join("");
+    const arr = JSON.parse(txt.slice(txt.indexOf("["), txt.lastIndexOf("]") + 1));
+    return arr.slice(0, n).map((x, i) => buildQuestion("mc", [x.q, x.a, x.w[0], x.w[1], x.w[2]], "ai" + Date.now() + i));
+  }
+  async function startGame() {
+    if (!playersArr().length) { toast("Nobody's joined yet. Scan the code to join."); return; }
+    const rounds = S.settings.rounds.filter(id => id !== "family");
+    if (!rounds.length) { toast("Pick at least one round."); return; }
+    S.phase = "loading"; broadcast();
+    const plan = [];
+    for (const id of rounds) {
+      const info = roundInfo(id);
+      let qs, title = info.title, blurb = info.blurb;
+      if (id === "ai") {
+        try { qs = await aiRound(S.settings.aiTopic, S.settings.perRound); title = S.settings.aiTopic; blurb = "A round written just for tonight."; }
+        catch (e) { toast("Couldn't write the Anything Round, so it's General Knowledge instead."); qs = pickQs("gk", S.settings.perRound); title = "General Knowledge"; blurb = PACKS.gk.blurb; }
+      } else qs = pickQs(id, id === "buzz" ? Math.min(S.settings.perRound + 2, 8) : S.settings.perRound);
+      plan.push({ id, title, type: qs[0] ? qs[0].type : info.type, blurb, qs });
+    }
+    plan[plan.length - 1].dbl = plan.length > 1;
+    S.plan = plan; S.ri = 0; S.qi = 0; S.started = true; S.gid = uid().slice(0, 4);
+    playersArr().forEach(p => p.score = 0);
+    S.phase = "intro"; Sound.whoosh(); broadcast();
+  }
+  function startQuestion() {
+    const q = curQ();
+    S.answers = {}; S.res = null; S.pausedLeft = null;
+    S.buzz = q.type === "buzz" ? { cur: null, locked: [] } : null;
+    S.qStart = Date.now(); S.qEnds = Date.now() + S.settings.timer * 1000;
+    S.phase = "question"; broadcast();
+  }
+  function endQuestion() {
+    if (S.phase !== "question") return;
+    const q = curQ(), r = curRound(), mult = r.dbl ? 2 : 1, res = { correct: q.correct, ansText: q.ansText, answer: q.answer, per: {} };
+    const ps = playersArr();
+    if (q.type === "number") {
+      const guesses = ps.filter(p => S.answers[p.id]).map(p => ({ p, g: Number(S.answers[p.id].c), d: Math.abs(Number(S.answers[p.id].c) - q.answer) })).sort((a, b) => a.d - b.d);
+      const dists = [...new Set(guesses.map(x => x.d))];
+      guesses.forEach(x => {
+        const rank = dists.indexOf(x.d); let gain = rank === 0 ? 100 : rank === 1 ? 50 : 0;
+        if (x.d === 0) gain += 50; gain *= mult; x.p.score += gain;
+        res.per[x.p.id] = { ans: x.g, gain, ok: rank === 0 };
+      });
+      res.order = guesses.map(x => x.p.id);
+    } else if (q.type === "buzz") {
+      // scored during judging
+      Object.assign(res.per, S.buzzRes || {});
+    } else {
+      ps.forEach(p => {
+        const a = S.answers[p.id]; if (!a) return;
+        const ok = a.c === q.correct;
+        const speed = Math.max(0, 1 - a.ms / (S.settings.timer * 1000));
+        const gain = ok ? Math.round((100 + 50 * speed) * mult) : 0;
+        p.score += gain; res.per[p.id] = { ans: a.c, gain, ok };
+      });
+    }
+    S.buzzRes = null;
+    const anyRight = Object.values(res.per).some(x => x.ok);
+    anyRight ? Sound.good() : Sound.bad();
+    // remember used questions
+    const u = ls.get("buzzin_used", []); if (!u.includes(q.id)) { u.push(q.id); ls.set("buzzin_used", u); }
+    S.res = res; S.phase = "reveal"; broadcast();
+  }
+  function next() {
+    Sound.init();
+    if (S.phase === "lobby") return startGame();
+    if (S.phase === "intro") return startQuestion();
+    if (S.phase === "question") return endQuestion();
+    if (S.phase === "reveal") {
+      if (S.qi < curRound().qs.length - 1) { S.qi++; return startQuestion(); }
+      S.phase = S.ri < S.plan.length - 1 ? "scores" : "final";
+      if (S.phase === "final") Sound.fanfare();
+      return broadcast();
+    }
+    if (S.phase === "scores") { S.ri++; S.qi = 0; S.phase = "intro"; Sound.whoosh(); return broadcast(); }
+    if (S.phase === "final") { S.phase = "lobby"; S.plan = []; S.started = false; playersArr().forEach(p => p.score = 0); return broadcast(); }
+  }
+  function pause() {
+    if (S.phase !== "question") return;
+    if (S.pausedLeft != null) { S.qEnds = Date.now() + S.pausedLeft; S.pausedLeft = null; }
+    else S.pausedLeft = left();
+    broadcast();
+  }
+  function skip() {
+    if (S.phase === "question" || S.phase === "reveal") {
+      if (S.phase === "question") { S.res = { per: {}, skipped: true }; }
+      if (S.qi < curRound().qs.length - 1) { S.qi++; return startQuestion(); }
+      S.phase = S.ri < S.plan.length - 1 ? "scores" : "final"; broadcast();
+    }
+  }
+  function judge(ok) {
+    if (S.phase !== "question" || !S.buzz || !S.buzz.cur) return;
+    const p = S.players[S.buzz.cur], mult = curRound().dbl ? 2 : 1;
+    S.buzzRes = S.buzzRes || {};
+    if (ok) {
+      const gain = 100 * mult; p.score += gain; S.buzzRes[p.id] = { gain, ok: true };
+      S.buzz.cur = null; endQuestion();
+    } else {
+      S.buzzRes[p.id] = { gain: 0, ok: false };
+      S.buzz.locked.push(p.id); S.buzz.cur = null;
+      S.qEnds = Date.now() + (S.pausedLeft ?? 8000); S.pausedLeft = null; Sound.bad();
+      const remaining = playersArr().filter(x => !S.buzz.locked.includes(x.id));
+      if (!remaining.length) return endQuestion();
+      broadcast();
+    }
+  }
+
+  // ----- messages -----
+  function onMsg(m) {
+    if (!m || !m.t) return;
+    const p = m.pid && S.players[m.pid];
+    if (m.t === "hello") { if (p) p.seen = Date.now(); T.send({ t: "state", s: pub() }); if (m.host) T.send({ t: "hostinfo", h: hostInfo() }); return; }
+    if (m.t === "join") {
+      const name = String(m.name || "").trim().slice(0, 24); if (!name) return;
+      if (!S.players[m.pid]) {
+        S.players[m.pid] = { id: m.pid, name, members: String(m.members || "").trim().slice(0, 60), color: COLORS[S.order.length % COLORS.length], score: 0, seen: Date.now() };
+        S.order.push(m.pid); Sound.join();
+      } else Object.assign(S.players[m.pid], { name, members: String(m.members || "").trim().slice(0, 60), seen: Date.now() });
+      return broadcast();
+    }
+    if (m.t === "answer" && p && S.phase === "question" && m.key === qkey() && !S.answers[m.pid]) {
+      const q = curQ(); if (q.type === "buzz") return;
+      let c = m.c; if (q.type === "number") { c = Number(c); if (!isFinite(c)) return; }
+      S.answers[m.pid] = { c, ms: Date.now() - S.qStart }; p.seen = Date.now();
+      Sound.tick();
+      const active = playersArr().filter(x => Date.now() - x.seen < 20000);
+      if (active.every(x => S.answers[x.id])) { const k = qkey(); setTimeout(() => { if (qkey() === k) endQuestion(); }, 700); }
+      return broadcast();
+    }
+    if (m.t === "buzz" && p && S.phase === "question" && S.buzz && !S.buzz.cur && !S.buzz.locked.includes(m.pid) && m.key === qkey() && S.pausedLeft == null) {
+      S.buzz.cur = m.pid; S.pausedLeft = left(); Sound.buzz(); return broadcast();
+    }
+    if (m.t === "cmd" && m.k === S.token) {
+      if (m.cmd === "next") next();
+      else if (m.cmd === "pause") pause();
+      else if (m.cmd === "skip") skip();
+      else if (m.cmd === "judge") judge(!!m.ok);
+      else if (m.cmd === "kick") { delete S.players[m.pid]; S.order = S.order.filter(x => x !== m.pid); broadcast(); }
+      else if (m.cmd === "settings" && S.phase === "lobby") { Object.assign(S.settings, m.patch || {}); broadcast(); }
+      else if (m.cmd === "lobby") { S.phase = "lobby"; S.plan = []; S.started = false; playersArr().forEach(x => x.score = 0); broadcast(); }
+    }
+  }
+
+  // ----- rendering -----
+  const joinUrl = () => withLocal(baseUrl() + "?join=" + S.room);
+  const hostUrl = () => withLocal(baseUrl() + "?host=" + S.room + "&k=" + S.token);
+  function qr(el, text) {
+    if (!el) return; el.innerHTML = "";
+    try { new QRCode(el, { text, width: 512, height: 512, correctLevel: QRCode.CorrectLevel.M }); } catch (e) { el.textContent = text; }
+  }
+  const ptile = p => `<div class="ptile ${Date.now() - p.seen < 20000 ? "" : "off"}"><span class="av" style="background:${p.color}">${esc(initials(p.name))}</span><span>${esc(p.name)}${p.members ? `<small>with ${esc(p.members)}</small>` : ""}</span></div>`;
+  const ranked = () => playersArr().slice().sort((a, b) => b.score - a.score);
+  const ctl = (extra = "") => `<div class="ctl">${extra}<button class="btn" data-a="pause">${S.pausedLeft != null ? "Resume" : "Pause"} (P)</button><button class="btn" data-a="skip">Skip</button><button class="btn gold" data-a="next">Next (Space)</button></div>`;
+  const top = () => {
+    const r = curRound();
+    return `<div class="top"><div class="brand disp">Buzz In</div>
+      <div class="crumbs">${r ? `Round ${S.ri + 1} of ${S.plan.length} · ${esc(r.title)}${S.phase === "question" || S.phase === "reveal" ? ` · Q${S.qi + 1}/${r.qs.length}` : ""}` : ""}</div>
+      <div class="conn">${conn === "ok" ? "Room " + S.room : conn === "lost" ? "Reconnecting…" : "Connecting…"}</div></div>`;
+  };
+
+  function render() {
+    if (!opened) {
+      app.innerHTML = `<div class="stage"><div class="center"><div class="logo disp">Buzz In</div>
+        <p class="rblurb muted">Family quiz night. Put this screen on the TV, then press start.</p>
+        <button class="btn gold big" style="max-width:24rem" data-a="open">Open the lobby</button>
+        <p class="muted" style="font-size:.9rem">This switches on the sound and keeps the screen awake.</p></div></div>`;
+      return;
+    }
+    const ph = S.phase, q = curQ(), r = curRound();
+    let html = "";
+    if (ph === "lobby") {
+      const hasKey = !!ls.get("buzzin_key", "");
+      html = `<div class="stage">${top().replace('<div class="brand disp">Buzz In</div>', '<div></div>')}
+      <div class="lobby">
+        <div class="joincard">
+          <div class="logo disp">Buzz In</div>
+          <div class="qrrow"><div class="qr" id="qr-join"></div>
+            <div><div class="muted" style="font-size:1.2rem;font-weight:600">Scan to join, or enter the code</div><div class="code">${S.room}</div>
+            <div class="muted" style="font-size:.95rem">One phone per player or team. No phone? Join a team with someone who has one.</div></div></div>
+        </div>
+        <div class="side">
+          <div class="disp" style="font-size:2.2rem">Who's playing · ${playersArr().length}</div>
+          <div class="players">${playersArr().map(ptile).join("") || `<span class="muted" style="font-size:1.2rem">Waiting for the first player…</span>`}</div>
+          <div class="setup" data-settings>${settingsHTML(S.settings, freshCounts(), "tv")}
+            ${S.settings.rounds.includes("ai") && !hasKey ? `<div class="setrow"><b>Claude key</b><input id="ai-key" type="password" placeholder="Paste your Anthropic API key (stays on this device)" style="flex:1 1 14em"><button class="btn" data-a="savekey">Save</button></div>` : ""}
+            <div class="hostbox"><div class="qr" id="qr-host"></div><div><b>Host controls on your phone</b><div class="muted">Scan with the host's phone to run the game from the sofa.</div></div>
+              <div style="margin-left:auto;display:flex;flex-direction:column;gap:.5rem"><button class="btn gold" data-a="next">Start the quiz</button><button class="btn" data-a="resetused" style="font-size:.8rem">Reset used questions</button></div></div>
+          </div>
+        </div>
+      </div></div>`;
+    } else if (ph === "loading") {
+      html = `<div class="stage">${top()}<div class="center"><div class="spin" style="width:4rem;height:4rem;border-width:.4rem"></div><div class="rblurb">Getting the questions ready…</div></div></div>`;
+    } else if (ph === "intro") {
+      html = `<div class="stage">${top()}<div class="center">
+        <div class="rnum disp">Round ${S.ri + 1}</div><div class="rtitle disp">${esc(r.title)}</div>
+        <div class="rblurb">${esc(r.blurb)}</div>${r.dbl ? `<div class="dbl">Final round · double points</div>` : ""}
+      </div><div class="bottom"><div></div>${ctl()}</div></div>`;
+    } else if (ph === "question" || ph === "reveal") {
+      html = `<div class="stage">${top()}<div class="center">${questionBody(q, ph)}</div>
+        <div class="bottom"><div class="dots">${playersArr().map(p => `<span class="dot ${S.answers[p.id] || (S.buzz && (S.buzz.locked.includes(p.id) || S.buzz.cur === p.id)) ? "in" : ""}" style="background:${p.color}" title="${esc(p.name)}">${esc(initials(p.name))}</span>`).join("")}</div>
+        ${ph === "question" ? `<div style="display:flex;gap:1.2rem;align-items:center">${ctl(q.type === "buzz" && S.buzz && S.buzz.cur ? `<button class="btn good" data-a="right">Right (Y)</button><button class="btn bad" data-a="wrong">Wrong (N)</button>` : "")}<div class="timer" id="timer"></div></div>` : ctl()}</div></div>`;
+    } else if (ph === "scores") {
+      const rk = ranked(), max = Math.max(1, ...rk.map(p => p.score));
+      html = `<div class="stage">${top()}<div class="center"><div class="disp" style="font-size:4rem;color:var(--gold)">Scores after round ${S.ri + 1}</div>
+        <div class="board">${rk.map((p, i) => `<div class="brow"><span class="disp" style="font-size:2rem">${i + 1}</span><span class="nm">${esc(p.name)}</span><span><div class="bar" data-w="${Math.max(3, p.score / max * 100)}" style="width:0;background:${p.color}"></div></span><span class="sc">${p.score}</span></div>`).join("")}</div>
+      </div><div class="bottom"><div class="muted">Next up: ${esc(S.plan[S.ri + 1].title)}</div>${ctl()}</div></div>`;
+    } else if (ph === "final") {
+      const rk = ranked(), pod = [rk[1], rk[0], rk[2]], hs = ["14rem", "20rem", "10rem"], ls_ = ["2nd", "1st", "3rd"];
+      html = `<div class="stage">${top()}<div class="center"><div class="disp" style="font-size:5rem;color:var(--gold)">${rk[0] ? esc(rk[0].name) + " wins!" : "Game over"}</div>
+        <div class="podium">${pod.map((p, i) => p ? `<div class="pod"><div class="pn">${esc(p.name)}</div><div class="ps">${p.score} pts</div><div class="blk" style="height:${hs[i]};background:${p.color}">${ls_[i]}</div></div>` : "").join("")}</div>
+        ${rk.length > 3 ? `<div class="muted" style="font-size:1.2rem">${rk.slice(3).map((p, i) => `${i + 4}. ${esc(p.name)} (${p.score})`).join(" · ")}</div>` : ""}
+      </div><div class="bottom"><div></div><div class="ctl" style="opacity:1"><button class="btn gold" data-a="next">Play again with new questions</button></div></div></div><canvas id="confetti"></canvas>`;
+    }
+    const shellKey = ph + "|" + S.ri + "|" + S.qi + "|" + JSON.stringify(S.res ? 1 : 0);
+    paint(app, html);
+    if (ph === "lobby") { qr($("#qr-join"), joinUrl()); qr($("#qr-host"), hostUrl()); }
+    if (ph === "scores") requestAnimationFrame(() => document.querySelectorAll(".bar").forEach(b => b.style.width = b.dataset.w + "%"));
+    if (ph === "final" && lastShell !== shellKey) confetti();
+    lastShell = shellKey; lastTick = -1; tickTimer();
+  }
+  function questionBody(q, ph) {
+    const rev = ph === "reveal" ? S.res : null, ps = playersArr();
+    let h = "";
+    if (q.emoji) h += `<div class="emoji">${q.emoji}</div>`;
+    h += `<div class="qtext">${esc(q.text)}</div>`;
+    if (q.opts) {
+      h += `<div class="opts ${q.opts.length === 2 ? "two" : ""}" style="max-width:${q.opts.length === 2 ? "50rem" : "none"}">${q.opts.map((o, i) => {
+        const cls = rev && !rev.skipped ? (i === rev.correct ? "right" : "dim") : "";
+        const who = rev ? ps.filter(p => rev.per[p.id] && rev.per[p.id].ans === i).map(p => `<span class="mini" style="background:${p.color}">${esc(initials(p.name))}</span>`).join("") : "";
+        return `<div class="opt o${q.opts.length === 2 ? (i ? 0 : 3) : i} ${cls}"><span class="let">${q.opts.length === 2 ? (i ? "✗" : "✓") : LET[i]}</span><span>${esc(o)}</span><span class="who">${who}</span></div>`;
+      }).join("")}</div>`;
+    }
+    if (q.type === "number") {
+      if (!rev) h += `<div class="rblurb muted">Type your guess on your phone${q.unit ? ` (in ${esc(q.unit)})` : ""}</div>`;
+      else {
+        h += `<div class="bigans">${esc(q.ansText)}</div><div class="glist">${(rev.order || []).map(id => {
+          const p = S.players[id], x = rev.per[id]; if (!p) return "";
+          return `<div class="grow"><span><span class="mini" style="background:${p.color}">${esc(initials(p.name))}</span> ${esc(p.name)}: ${Number(x.ans).toLocaleString("en-GB")}</span><span class="gain">${x.gain ? "+" + x.gain : ""}</span></div>`;
+        }).join("") || `<span class="muted">No guesses</span>`}</div>`;
+      }
+    }
+    if (q.type === "buzz") {
+      if (!rev) {
+        if (S.buzz && S.buzz.cur) { const p = S.players[S.buzz.cur]; h += `<div class="buzzer" style="background:${p.color}">${esc(p.name)}!</div><div class="rblurb">Say your answer out loud</div>`; }
+        else h += `<div class="rblurb muted">${S.buzz && S.buzz.locked.length ? "Wrong! Anyone else? Buzz in!" : "Buzz in on your phone when you know it"}</div>`;
+      } else {
+        const win = Object.keys(rev.per).find(id => rev.per[id].ok);
+        h += `<div class="bigans">${esc(q.ansText)}</div><div class="rblurb">${win && S.players[win] ? `Point to ${esc(S.players[win].name)}` : "Nobody got it"}</div>`;
+      }
+    }
+    if (rev && rev.skipped) h += `<div class="rblurb muted">Skipped</div>`;
+    return h;
+  }
+  function tickTimer() {
+    const el = $("#timer"); if (!el || S.phase !== "question") return;
+    const tot = S.settings.timer * 1000, l = left(), sec = Math.ceil(l / 1000), frac = l / tot;
+    if (sec !== lastTick) {
+      if (sec <= 5 && sec > 0 && S.pausedLeft == null) Sound.tick();
+      lastTick = sec;
+    }
+    const c = 2 * Math.PI * 45, col = frac < .25 ? "var(--bad)" : "var(--gold)";
+    el.innerHTML = `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="var(--line)" stroke-width="9"/><circle cx="50" cy="50" r="45" fill="none" stroke="${col}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - frac)}"/></svg><div class="num">${S.pausedLeft != null ? "II" : sec}</div>`;
+  }
+  function confetti() {
+    const cv = $("#confetti"); if (!cv || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const x = cv.getContext("2d"); cv.width = innerWidth; cv.height = innerHeight;
+    const bits = Array.from({ length: 160 }, () => ({ x: Math.random() * cv.width, y: -Math.random() * cv.height, v: 2 + Math.random() * 4, s: 6 + Math.random() * 8, c: COLORS[Math.floor(Math.random() * COLORS.length)], r: Math.random() * 6 }));
+    let n = 0; (function f() { x.clearRect(0, 0, cv.width, cv.height); bits.forEach(b => { b.y += b.v; b.r += .1; x.fillStyle = b.c; x.save(); x.translate(b.x + Math.sin(b.r) * 10, b.y); x.rotate(b.r); x.fillRect(-b.s / 2, -b.s / 4, b.s, b.s / 2); x.restore(); }); if (n++ < 420 && $("#confetti")) requestAnimationFrame(f); else x.clearRect(0, 0, cv.width, cv.height); })();
+  }
+
+  // ----- input -----
+  app.addEventListener("click", e => {
+    const a = e.target.closest("[data-a]");
+    if (a) {
+      const k = a.dataset.a; Sound.init();
+      if (k === "open") { opened = true; wakeLock(); try { document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => { }); } catch (_) { } render(); return; }
+      if (k === "next") next(); else if (k === "pause") pause(); else if (k === "skip") skip();
+      else if (k === "right") judge(true); else if (k === "wrong") judge(false);
+      else if (k === "savekey") { const v = ($("#ai-key") || {}).value; if (v) { ls.set("buzzin_key", v.trim()); toast("Key saved on this device"); render(); } }
+      else if (k === "resetused") { ls.set("buzzin_used", []); toast("All questions are fresh again"); render(); }
+      return;
+    }
+    if (S.phase === "lobby") { const patch = settingsClick(e, S.settings); if (patch) { Object.assign(S.settings, patch); broadcast(); } }
+  });
+  app.addEventListener("change", e => { if (e.target.matches("[data-aitopic]")) { S.settings.aiTopic = e.target.value.trim(); broadcast(); } });
+  document.addEventListener("keydown", e => {
+    if (e.target.matches("input")) return;
+    if (!opened) return;
+    if (e.key === " " || e.key === "Enter" || e.key === "ArrowRight") { e.preventDefault(); next(); }
+    else if (e.key === "p" || e.key === "P") pause();
+    else if (e.key === "y" || e.key === "Y") judge(true);
+    else if (e.key === "n" || e.key === "N") judge(false);
+  });
+
+  // ----- timers -----
+  setInterval(() => {
+    if (S.phase === "question" && S.pausedLeft == null && Date.now() >= S.qEnds) {
+      if (S.buzz && !S.buzz.cur) endQuestion(); else if (!S.buzz) endQuestion();
+    }
+    tickTimer();
+  }, 200);
+  setInterval(() => { if (T) T.send({ t: "state", s: pub() }); if (S.phase === "lobby") render(); }, 5000);
+
+  render();
+  connect(S.room, onMsg, s => { conn = s; if (s === "ok" && T) T.send({ t: "state", s: pub() }); render(); })
+    .then(t => { T = t; conn = "ok"; broadcast(); })
+    .catch(err => { conn = "lost"; toast("Can't connect: " + err.message, 6000); render(); });
+}
+
+// ======================================================================
+// PHONE — player and/or host controller
+// ======================================================================
+function phoneMain(room, hostKey) {
+  document.body.className = "phone";
+  room = room.toUpperCase();
+  const pidKey = "buzzin_pid_" + room;
+  // each tab gets its own player when testing locally; real phones remember their player so they can rejoin
+  const idStore = LOCAL ? sessionStorage : localStorage;
+  let pid = null; try { pid = idStore.getItem(pidKey); } catch (e) { }
+  if (!pid) { pid = uid(); try { idStore.setItem(pidKey, pid); } catch (e) { } }
+  let s = null, T = null, H = null, conn = "connecting", myAns = {}, deadline = 0, lastKey = "", joined = !!ls.get("buzzin_joined_" + room, false), showJoin = false, pendingJoin = false;
+  const isHost = !!hostKey;
+  const me = () => s && s.players.find(p => p.id === pid);
+
+  function send(m) { if (T) T.send(Object.assign({ pid }, m)); }
+  function cmd(c, extra) { send(Object.assign({ t: "cmd", k: hostKey, cmd: c }, extra || {})); }
+
+  function onMsg(m) {
+    if (m.t === "state") {
+      s = m.s;
+      if (s.q) { deadline = Date.now() + s.q.left; if (s.q.key !== lastKey) { lastKey = s.q.key; if (navigator.vibrate) navigator.vibrate(60); } }
+      if (me()) pendingJoin = false;
+      render();
+    } else if (m.t === "hostinfo" && isHost) { H = m.h; render(); }
+  }
+
+  function playerPane() {
+    const p = me(), ph = s.phase;
+    const needJoin = !p && (!isHost || s.hostMode === "play" || showJoin);
+    if (needJoin && pendingJoin) return `<div class="grow1 center"><div class="spin"></div><p class="muted">Joining…</p></div>`;
+    if (needJoin) {
+      return `<div class="card"><h2>${isHost ? "Join as a player" : "Join the quiz"}</h2>
+        <label>Your name or team name<input id="j-name" maxlength="24" placeholder="e.g. Kelly, or Team Nan" autocomplete="off"></label>
+        <label>Playing with anyone who hasn't got a phone? (optional)<input id="j-mem" maxlength="60" placeholder="e.g. Nan and Grandad" autocomplete="off"></label>
+        <button class="btn gold big" data-a="join">Join</button></div>`;
+    }
+    if (!p) return "";
+    const hdr = `<div class="hd"><div class="disp">Buzz In</div><div class="me"><span class="mini" style="background:${p.color}">${esc(initials(p.name))}</span>${esc(p.name)} · ${p.score}</div></div>`;
+    let body = "";
+    if (ph === "lobby") body = `<div class="grow1 center"><div class="result" style="color:${p.color}">You're in!</div><p class="muted">Look at the TV. The quiz starts when the host is ready.</p>${p.members ? `<p>Playing with ${esc(p.members)}</p>` : ""}</div>`;
+    else if (ph === "loading") body = `<div class="grow1 center"><div class="spin"></div><p class="muted">Getting the questions ready…</p></div>`;
+    else if (ph === "intro") body = `<div class="grow1 center"><p class="muted">Round ${s.round.n} of ${s.round.of}</p><h2 style="color:var(--gold);font-size:48px">${esc(s.round.title)}</h2><p>${esc(s.round.blurb)}</p>${s.round.dbl ? `<p><b style="color:var(--gold)">Double points!</b></p>` : ""}</div>`;
+    else if (ph === "question") body = questionPane(p);
+    else if (ph === "reveal") body = revealPane(p);
+    else if (ph === "scores" || ph === "final") {
+      const rk = s.players.slice().sort((a, b) => b.score - a.score), pos = rk.findIndex(x => x.id === pid) + 1;
+      const ord = n => n + (["th", "st", "nd", "rd"][(n % 100 - 20) % 10] || ["th", "st", "nd", "rd"][n % 100] || "th");
+      body = `<div class="grow1 center"><p class="muted">${ph === "final" ? "Final position" : "After round " + s.round.n}</p><div class="result" style="color:${p.color}">${ord(pos)}</div><p style="font-size:22px;font-weight:700">${p.score} points</p>${ph === "final" && pos === 1 ? `<p style="font-size:22px">🏆 Winner!</p>` : ""}</div>`;
+    }
+    return hdr + body;
+  }
+  function questionPane(p) {
+    const q = s.q, a = myAns[q.key];
+    const head = `<p class="muted">${esc(s.round.title)} · Q${q.n}/${q.of}</p><div class="qsmall">${q.emoji ? `<div style="font-size:44px">${q.emoji}</div>` : ""}${esc(q.text)}</div>`;
+    if (s.round.type === "buzz") {
+      const locked = s.buzz && s.buzz.locked.includes(pid), cur = s.buzz && s.buzz.cur;
+      if (cur === pid) return `${head}<div class="grow1 center"><div class="result" style="color:var(--gold)">Your turn!</div><p>Say your answer out loud.</p></div>`;
+      return `${head}<div class="grow1 center"><button class="buzzbtn" data-a="buzz" ${locked || cur || q.paused ? "disabled" : ""}>Buzz</button>
+        <p class="muted">${locked ? "You're locked out of this one." : cur ? "Someone else buzzed…" : "First to buzz gets to answer"}</p></div>`;
+    }
+    if (a != null) return `${head}<div class="grow1 center"><div class="result" style="color:${p.color}">Locked in</div><p style="font-size:20px">${s.round.type === "number" ? Number(a).toLocaleString("en-GB") : esc(q.opts[a])}</p><p class="muted">Waiting for everyone else…</p></div>`;
+    if (s.round.type === "number") return `${head}<div class="grow1"><input id="num-${q.key}" class="numin" type="number" inputmode="decimal" placeholder="?" autocomplete="off">${q.unit ? `<p class="center muted">${esc(q.unit)}</p>` : ""}<button class="btn gold big" data-a="num">Lock in my guess</button></div>`;
+    if (q.opts.length === 2) return `${head}<div class="grow1"><div class="tfb"><button class="ans o3" data-ans="0">True</button><button class="ans o0" data-ans="1">False</button></div></div>`;
+    return `${head}<div class="answers">${q.opts.map((o, i) => `<button class="ans o${i}" data-ans="${i}"><span class="let">${LET[i]}</span>${esc(o)}</button>`).join("")}</div>`;
+  }
+  function revealPane(p) {
+    const r = s.reveal || { per: {} }, mine = r.per[pid];
+    if (r.skipped) return `<div class="grow1 center"><p class="muted">Question skipped</p></div>`;
+    const ok = mine && mine.ok, gain = mine ? mine.gain : 0;
+    let ans = r.ansText;
+    return `<div class="grow1 center"><div class="result" style="color:${ok ? "var(--good)" : gain ? "var(--gold)" : "var(--bad)"}">${ok ? "Correct!" : gain ? "Close!" : mine ? "Not this time" : "No answer"}</div>
+      ${gain ? `<p style="font-size:26px;font-weight:800">+${gain}</p>` : ""}<p class="muted">The answer was</p><p style="font-size:22px;font-weight:700">${esc(ans)}</p></div>`;
+  }
+  function hostBar() {
+    if (!isHost) return "";
+    const ph = s.phase; let row = "", lbl = "";
+    if (ph === "lobby") { lbl = `${s.players.length} joined`; row = `<button class="btn gold" data-h="next">Start the quiz</button>`; }
+    else if (ph === "loading") { lbl = "Loading"; row = `<button class="btn" disabled>Getting questions…</button>`; }
+    else if (ph === "intro") { lbl = `Round ${s.round.n}: ${s.round.title}`; row = `<button class="btn gold" data-h="next">Start round</button>`; }
+    else if (ph === "question") {
+      lbl = `Q${s.q.n}/${s.q.of} · ${s.answered ? s.answered.length : 0}/${s.players.length} answered`;
+      if (s.buzz && s.buzz.cur) { const p = s.players.find(x => x.id === s.buzz.cur); lbl = `${p ? p.name : "Someone"} buzzed`; row = `<button class="btn good" data-h="right">Right</button><button class="btn bad" data-h="wrong">Wrong</button>`; }
+      else row = `<button class="btn" data-h="pause">${s.q.paused ? "Resume" : "Pause"}</button><button class="btn" data-h="skip">Skip</button><button class="btn gold" data-h="next">Reveal</button>`;
+    }
+    else if (ph === "reveal") { lbl = `Q${s.q.n}/${s.q.of}`; row = `<button class="btn gold" data-h="next">Next</button>`; }
+    else if (ph === "scores") { lbl = "Scores"; row = `<button class="btn gold" data-h="next">Next round</button>`; }
+    else if (ph === "final") { lbl = "Game over"; row = `<button class="btn gold" data-h="next">Play again</button>`; }
+    const key = H && H.ans ? `<div class="anskey">Answer: ${esc(H.ans)}</div>` : "";
+    return `<div class="hbar">${key}<div class="lbl"><span>Host</span><span>${esc(lbl)}</span></div><div class="row">${row}</div></div>`;
+  }
+  function hostLobby() {
+    if (!isHost || s.phase !== "lobby") return "";
+    return `<div class="card"><h2>Game settings</h2><div class="setup" data-settings>${settingsHTML(s.settings, s.fresh, "ph")}</div>
+      ${s.settings.rounds.includes("ai") ? `<p class="muted" style="font-size:14px">The Anything Round needs your Claude key saved on the TV screen.</p>` : ""}</div>
+      <div class="card"><h2>Players</h2><div class="plist">${s.players.map(p => `<div class="pi"><span class="mini" style="background:${p.color}">${esc(initials(p.name))}</span>${esc(p.name)}${p.members ? ` <span class="muted">+ ${esc(p.members)}</span>` : ""}<button class="x" data-kick="${p.id}">Remove</button></div>`).join("") || `<span class="muted">Nobody yet</span>`}</div></div>`;
+  }
+  function render() {
+    if (!s) {
+      paint(app, `<div class="ph"><div class="grow1 center"><div class="logo disp" style="font-size:56px;color:var(--gold)">Buzz In</div>
+        ${conn === "lost" ? `<p>Can't reach game <b>${esc(room)}</b>. Check the code on the TV.</p><a class="btn" href="${esc(baseUrl())}">Enter a different code</a>` : `<div class="spin"></div><p class="muted">Joining game ${esc(room)}…</p>`}</div></div>`);
+      return;
+    }
+    const hostOnlyView = isHost && s.hostMode === "host" && !me() && !showJoin && s.phase !== "lobby";
+    let main = "";
+    if (hostOnlyView) main = hostWatch();
+    else if (isHost && s.phase === "lobby" && !me() && !showJoin && s.hostMode === "host") main = `<div class="hd"><div class="disp">Buzz In</div><span class="muted">Room ${esc(s.room)}</span></div>`;
+    else main = playerPane();
+    paint(app, `<div class="ph ${isHost ? "withbar" : ""}">${main}${hostLobby()}</div>${hostBar()}`);
+  }
+  function hostWatch() {
+    const ph = s.phase;
+    let b = `<div class="hd"><div class="disp">Buzz In</div><span class="muted">Host · ${esc(s.room)}</span></div>`;
+    if (s.q && (ph === "question" || ph === "reveal")) {
+      b += `<div class="card"><p class="muted">${esc(s.round.title)} · Q${s.q.n}/${s.q.of}</p><div class="qsmall">${s.q.emoji ? s.q.emoji + " " : ""}${esc(s.q.text)}</div>${s.q.opts ? `<p class="muted">${s.q.opts.map((o, i) => (s.q.opts.length === 2 ? "" : LET[i] + ": ") + esc(o)).join(" · ")}</p>` : ""}</div>`;
+    } else if (s.round) b += `<div class="card"><p class="muted">Round ${s.round.n} of ${s.round.of}</p><h2>${esc(s.round.title)}</h2></div>`;
+    const rk = s.players.slice().sort((a, c) => c.score - a.score);
+    b += `<div class="card"><h2>Scores</h2><div class="plist">${rk.map(p => `<div class="pi"><span class="mini" style="background:${p.color}">${esc(initials(p.name))}</span>${esc(p.name)}<span style="margin-left:auto">${s.answered && s.answered.includes(p.id) ? "✓ " : ""}${p.score}</span></div>`).join("")}</div></div>`;
+    return b;
+  }
+
+  app.addEventListener("click", e => {
+    const t = e.target;
+    const a = t.closest("[data-a]"), ans = t.closest("[data-ans]"), h = t.closest("[data-h]"), kick = t.closest("[data-kick]");
+    if (a && a.dataset.a === "join") {
+      const name = ($("#j-name").value || "").trim(); if (!name) { $("#j-name").focus(); return; }
+      send({ t: "join", name, members: $("#j-mem").value }); pendingJoin = true; showJoin = false; setTimeout(() => { if (!me()) { pendingJoin = false; render(); } }, 6000); wakeLock(); render(); return;
+    }
+    if (a && a.dataset.a === "buzz") { send({ t: "buzz", key: s.q.key }); if (navigator.vibrate) navigator.vibrate(120); return; }
+    if (a && a.dataset.a === "num") {
+      const v = $("#num-" + s.q.key).value; if (v === "" || !isFinite(Number(v))) return;
+      myAns[s.q.key] = Number(v); send({ t: "answer", key: s.q.key, c: Number(v) }); render(); return;
+    }
+    if (a && a.dataset.a === "showjoin") { showJoin = true; render(); return; }
+    if (ans && s && s.phase === "question") { const i = Number(ans.dataset.ans); myAns[s.q.key] = i; send({ t: "answer", key: s.q.key, c: i }); if (navigator.vibrate) navigator.vibrate(30); render(); return; }
+    if (h) { const k = h.dataset.h; if (k === "right" || k === "wrong") cmd("judge", { ok: k === "right" }); else cmd(k); return; }
+    if (kick) { cmd("kick", { pid: kick.dataset.kick }); return; }
+    if (isHost && s && s.phase === "lobby") { const patch = settingsClick(e, s.settings); if (patch) { Object.assign(s.settings, patch); cmd("settings", { patch }); render(); } }
+  });
+  app.addEventListener("change", e => { if (isHost && e.target.matches("[data-aitopic]")) cmd("settings", { patch: { aiTopic: e.target.value.trim() } }); });
+
+  render();
+  connect(room, onMsg, st => { conn = st; if (st === "ok" && T) send({ t: "hello", host: isHost }); if (!s) render(); })
+    .then(t => { T = t; conn = "ok"; send({ t: "hello", host: isHost }); setTimeout(() => { if (!s) { conn = "lost"; render(); } }, 8000); })
+    .catch(() => { conn = "lost"; render(); });
+  setInterval(() => send({ t: "hello", host: isHost }), 6000);
+}
+
+// ======================================================================
+// LANDING
+// ======================================================================
+function landing() {
+  document.body.className = "phone";
+  const saved = ls.get("buzzin_tv", null), canResume = saved && saved.phase !== "final" && Date.now() - (saved.saved || 0) < 12 * 3600e3;
+  app.innerHTML = `<div class="ph land"><div class="logo disp">Buzz In</div><p class="center muted">Family quiz night. The TV shows the questions, phones are the buzzers.</p>
+    <div class="card"><h2>Joining a game?</h2><input id="code" class="codein" maxlength="4" placeholder="CODE" autocomplete="off" autocapitalize="characters"><button class="btn gold big" data-a="go">Join</button></div>
+    <div class="card"><h2>Hosting?</h2><p class="muted">Open this on the device connected to the TV.</p>
+      <a class="btn big" href="${withLocal("?tv")}">This is the TV screen</a>
+      ${canResume ? `<a class="btn big" href="${withLocal("?tv=" + saved.room)}">Resume game ${esc(saved.room)}</a>` : ""}</div></div>`;
+  const go = () => { const c = ($("#code").value || "").trim().toUpperCase(); if (c.length === 4) location.href = withLocal("?join=" + c); };
+  app.addEventListener("click", e => { if (e.target.closest("[data-a=go]")) go(); });
+  $("#code").addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+}
+
+// ===== ROUTE =====
+if (P.has("tv")) tvMain();
+else if (P.get("join")) phoneMain(P.get("join"));
+else if (P.get("host")) phoneMain(P.get("host"), P.get("k"));
+else landing();
+
+</script>
+</body>
+</html>

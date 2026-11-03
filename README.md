@@ -4,6 +4,10 @@ Family quiz night. The TV shows the questions and everyone's phone is their buzz
 
 **Play:** https://jimmywilson1979-arch.github.io/buzz-in/
 
+## Getting it on the TV
+Step-by-step guides for each kind of TV (Chromecast, HDMI, Samsung, LG, Fire TV, Xbox, Apple TV, Android, Roku, Sky Glass):
+https://jimmywilson1979-arch.github.io/buzz-in/?tvhelp
+
 ## How to run a game
 1. On the laptop or Chromebook, open the link in Chrome and choose **This is the TV screen**.
 2. Cast the tab to the TV (Chrome menu → Cast → Shield), or plug the laptop in with HDMI.

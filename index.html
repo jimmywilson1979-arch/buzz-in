@@ -246,6 +246,25 @@ body.phone.xmas{background:#0b0f0d}
 .tv .appicon.tvicon{width:9rem;height:9rem;border-radius:2rem;margin:0}
 a.btn{color:var(--fg);text-decoration:none}
 
+/* ===== TV setup guide ===== */
+.tvhelp h2{margin:0}
+.tvhelp .card p{margin:0}
+.tvhelp .card ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:8px;line-height:1.45}
+.tvg{padding:0;gap:0;overflow:hidden}
+.tvgh{display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;text-align:left}
+.tvgh .tvgi{font-size:28px;flex:none;width:36px;text-align:center}
+.tvgh span:nth-child(2){flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.tvgh b{font-size:17px}
+.tvgh em{font-style:normal;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:var(--gold);color:var(--gold-ink);border-radius:99px;padding:2px 8px;align-self:flex-start}
+.tvgh small{color:var(--muted);font-size:13px}
+.tvgh .chev{font-size:24px;color:var(--muted);flex:none}
+.tvg.open{border-color:var(--gold)}
+.tvgb{display:flex;flex-direction:column;gap:12px;padding:0 16px 16px}
+.tvgb .need{background:var(--bg2);border-radius:10px;padding:10px 12px;font-size:15px}
+.tvgb .tips{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--muted)}
+.tvgb .tips b{color:var(--fg)}
+.ph .card.tvg{padding:0;gap:0}
+
 </style>
 </head>
 <body>
@@ -1280,7 +1299,8 @@ function tvMain() {
       app.innerHTML = `<div class="stage"><div class="center"><img class="appicon tvicon" src="icon-192.png" alt=""><div class="logo disp">Buzz In</div>
         <p class="rblurb muted">Family quiz night. Put this screen on the TV, then press start.</p>
         <button class="btn gold big" style="max-width:24rem" data-a="open">Open the lobby</button>
-        <p class="muted" style="font-size:.9rem">This switches on the music and keeps the screen awake.</p></div></div>`;
+        <p class="muted" style="font-size:.9rem">This switches on the music and keeps the screen awake.</p>
+        <p class="muted" style="font-size:.9rem">Not on the TV yet? Open <b>${SITE}</b> on your phone and tap "How do I get it on my TV?"</p></div></div>`;
       return;
     }
     const ph = S.phase, q = curQ(), r = curRound();
@@ -1666,6 +1686,96 @@ function familyPage() {
 }
 
 // ======================================================================
+// TV SETUP GUIDE  (?tvhelp, or ?tvhelp=samsung to open one device)
+// ======================================================================
+const SITE = "jimmywilson1979-arch.github.io/buzz-in";
+const TV_GUIDES = [
+  { id: "cast", icon: "📡", title: "Chromecast or Google TV", sub: "Also Sony, Philips, TCL, Hisense and Nvidia Shield TVs with Google Cast", best: true,
+    need: "A laptop or Chromebook with Google Chrome, on the same Wi-Fi as the TV.",
+    steps: ["On the laptop, open Chrome and go to <b>" + SITE + "</b>.", "Click <b>This is the TV screen</b>.", "Click the three dots <b>⋮</b> at the top right of Chrome, then <b>Cast, save and share</b>, then <b>Cast…</b>", "Pick your TV or Chromecast from the list. The quiz appears on the TV.", "Press <b>Open the lobby</b> on the laptop. Sound comes out of the TV."],
+    tips: ["Keep the laptop plugged in and leave that tab open. You can run the game from the host phone.", "If the TV isn't in the list, check the laptop and TV are on the same Wi-Fi."] },
+  { id: "hdmi", icon: "🔌", title: "Laptop with an HDMI cable", sub: "Works with any TV that has an HDMI socket", best: true,
+    need: "A laptop and an HDMI cable (some newer laptops need a USB-C to HDMI adapter).",
+    steps: ["Plug the cable into the laptop and into a spare HDMI socket on the TV.", "Switch the TV to that HDMI input with the <b>Source</b> or <b>Input</b> button on the remote.", "Windows: press <b>Windows key + P</b> and choose <b>Duplicate</b>. Mac: it usually mirrors by itself.", "Open <b>" + SITE + "</b> in the browser and tap <b>This is the TV screen</b>.", "Press <b>Open the lobby</b>. If the sound comes out of the laptop, pick the TV as the sound output."],
+    tips: ["The most reliable option. No Wi-Fi casting to go wrong.", "Press F11 (Windows) for full screen."] },
+  { id: "samsung", icon: "📺", title: "Samsung smart TV", sub: "Use the TV's own web browser",
+    need: "Just the TV remote, plus the host phone to run the game.",
+    steps: ["Press the <b>Home</b> (or Smart TV) button on the remote.", "Open the <b>Internet</b> (web browser) app. If it's not on the home row, look in <b>Apps</b>.", "Select the address bar and type <b>" + SITE + "</b>, then press Enter.", "Choose <b>This is the TV screen</b>, then <b>Open the lobby</b>.", "Scan the small host QR code with your phone and run the game from there."],
+    tips: ["Typing with the remote is slow. You only need to do it once: add the page as a bookmark for next time.", "Got a Samsung phone? You can also mirror it instead: see Android phone or tablet."] },
+  { id: "lg", icon: "📺", title: "LG smart TV", sub: "Use the TV's own web browser",
+    need: "Just the TV remote, plus the host phone to run the game.",
+    steps: ["Press the <b>Home</b> button on the remote.", "Open the <b>Web Browser</b> app.", "Select the address bar, type <b>" + SITE + "</b> and press Enter.", "Choose <b>This is the TV screen</b>, then <b>Open the lobby</b>.", "Scan the small host QR code with your phone and run the game from there."],
+    tips: ["The LG Magic Remote works like a mouse pointer, which makes this easy.", "Bookmark the page so you don't have to type it next time."] },
+  { id: "fire", icon: "🔥", title: "Amazon Fire TV or Fire Stick", sub: "Use the Silk browser",
+    need: "The Fire TV remote, plus the host phone to run the game.",
+    steps: ["On the Fire TV home screen, look for <b>Silk Browser</b> (sometimes called <b>Internet</b>). If it's not there, search for <b>Silk</b> and install it (free).", "Open it, select the address bar and type <b>" + SITE + "</b>.", "Choose <b>This is the TV screen</b>, then <b>Open the lobby</b>.", "Scan the small host QR code with your phone and run the game from there."],
+    tips: ["Say \"Alexa, open Silk\" into the remote to find it quickly.", "From a Windows laptop you can mirror instead: hold the Home button on the Fire remote, choose <b>Mirroring</b>, then press Windows key + K on the laptop."] },
+  { id: "xbox", icon: "🎮", title: "Xbox", sub: "Use Microsoft Edge on the console",
+    need: "An Xbox One or Series X/S and a controller.",
+    steps: ["Open <b>Microsoft Edge</b> from My games & apps.", "Select the address bar and type <b>" + SITE + "</b>.", "Choose <b>This is the TV screen</b>, then <b>Open the lobby</b>.", "Scan the small host QR code with your phone and run the game from there."],
+    tips: ["PlayStation doesn't have a proper web browser, so use one of the other options instead."] },
+  { id: "apple", icon: "🍎", title: "Apple TV, iPhone or iPad", sub: "AirPlay screen mirroring",
+    need: "An iPhone or iPad (or a Mac) on the same Wi-Fi as an Apple TV or AirPlay TV. Use a spare device, because it has to stay on the quiz screen.",
+    steps: ["On the spare iPhone or iPad, open Safari and go to <b>" + SITE + "</b>.", "Tap <b>This is the TV screen</b> and turn the device sideways.", "Open <b>Control Centre</b> (swipe down from the top right), tap <b>Screen Mirroring</b> and pick the TV.", "If a code appears on the TV, type it on the device.", "Tap <b>Open the lobby</b>. Everyone joins on their own phones."],
+    tips: ["Many Samsung, LG and Sony TVs support AirPlay too, as do 4K Roku devices.", "Plug the device into a charger and turn on Do Not Disturb so messages don't pop up on the TV."] },
+  { id: "android", icon: "📱", title: "Android phone or tablet", sub: "Screen mirroring (Smart View, Screen Cast)",
+    need: "A spare Android phone or tablet, because it has to stay on the quiz screen. Works with most smart TVs, Chromecast, Roku and Fire TV.",
+    steps: ["On the spare device, open Chrome and go to <b>" + SITE + "</b>, then tap <b>This is the TV screen</b>.", "Turn it sideways and swipe down twice from the top to open Quick Settings.", "Tap <b>Smart View</b> (Samsung) or <b>Cast</b> / <b>Screen Cast</b> (other brands) and pick the TV.", "Tap <b>Start now</b>. On some TVs you need to press <b>Allow</b> with the remote.", "Tap <b>Open the lobby</b>. Everyone joins on their own phones."],
+    tips: ["Plug the device into a charger and turn on Do Not Disturb so messages don't appear on the TV.", "Turn on auto-rotate so the quiz fills the screen."] },
+  { id: "roku", icon: "🟣", title: "Roku", sub: "Screen mirroring from Android or Windows",
+    need: "A Windows laptop or a spare Android phone or tablet on the same Wi-Fi.",
+    steps: ["Open <b>" + SITE + "</b> on the laptop or device and tap <b>This is the TV screen</b>.", "Windows: press <b>Windows key + K</b> and pick the Roku. Android: open Quick Settings and tap <b>Smart View</b> or <b>Screen Cast</b>.", "On the TV, choose <b>Allow</b> (or <b>Always allow</b>).", "Press <b>Open the lobby</b>."],
+    tips: ["iPhones can use AirPlay with 4K Roku devices: see Apple TV, iPhone or iPad."] },
+  { id: "sky", icon: "☁️", title: "Sky Glass or Sky Stream", sub: "No web browser, so use the HDMI socket",
+    need: "A laptop and HDMI cable, or a Chromecast or Fire TV Stick plugged into the Sky Glass HDMI socket.",
+    steps: ["Plug a laptop (see Laptop with an HDMI cable), Chromecast or Fire TV Stick into an HDMI socket on the TV.", "Switch the TV to that input.", "Follow the steps for that device."],
+    tips: ["Some people get AirPlay working from an iPhone on newer Sky Glass sets (Control Centre → Screen Mirroring). It isn't reliable on every set, so have a plan B."] },
+  { id: "other", icon: "❓", title: "Something else", sub: "Any TV, any brand",
+    need: "Any device with a web browser that can show its screen on the TV.",
+    steps: ["Look for a <b>web browser</b> app on the TV. If there is one, open <b>" + SITE + "</b> and choose <b>This is the TV screen</b>.", "If not, plug in a laptop with an HDMI cable. That works with any TV.", "Or mirror a spare phone or tablet: most TVs accept Smart View, Screen Cast, Miracast or AirPlay."],
+    tips: ["Phones join over Wi-Fi or mobile data, so they don't have to be on the TV's network."] },
+];
+function tvHelp() {
+  document.body.className = "phone";
+  let open = P.get("tvhelp") || "";
+  const card = g => `<div class="card tvg ${open === g.id ? "open" : ""}" id="g-${g.id}">
+      <button class="tvgh" data-g="${g.id}" aria-expanded="${open === g.id}"><span class="tvgi">${g.icon}</span><span><b>${esc(g.title)}</b>${g.best ? `<em>Easiest</em>` : ""}<small>${esc(g.sub)}</small></span><span class="chev">${open === g.id ? "−" : "+"}</span></button>
+      ${open === g.id ? `<div class="tvgb"><p class="need"><b>You'll need:</b> ${g.need}</p><ol>${g.steps.map(x => `<li>${x}</li>`).join("")}</ol>
+        ${g.tips.length ? `<div class="tips">${g.tips.map(x => `<p>💡 ${x}</p>`).join("")}</div>` : ""}
+        <button class="btn" data-copy="${g.id}">Copy link to these steps</button></div>` : ""}
+    </div>`;
+  const draw = () => {
+    app.innerHTML = `<div class="ph land tvhelp"><div class="hd"><div class="disp">Buzz In</div><a class="muted" href="${esc(withLocal(baseUrl() + "?"))}">Back</a></div>
+      <div><h2>Get it on your TV</h2><p class="muted" style="margin-top:8px">One device shows the quiz on the TV. Everyone else just scans the code with their own phone.</p></div>
+      <div class="card"><b>Quickest way to choose</b>
+        <p>Got a laptop? Use <b>Chromecast</b> if the TV has Google Cast, or an <b>HDMI cable</b> for any TV.</p>
+        <p>No laptop? Use the <b>TV's own web browser</b> (Samsung, LG, Fire TV, Xbox), or mirror a spare phone or tablet.</p></div>
+      ${TV_GUIDES.map(card).join("")}
+      <div class="card"><h2 style="font-size:26px">Before the big day</h2><ol>
+        <li>Try it once at the house you'll play at, a day or two before.</li>
+        <li>Open <b>${SITE}</b>, tap <b>This is the TV screen</b> and check it fills the TV.</li>
+        <li>Press <b>Open the lobby</b> and check you can hear the music.</li>
+        <li>Scan the code with one phone to check it joins.</li></ol></div>
+      <div class="card"><h2 style="font-size:26px">If something's not right</h2>
+        <p><b>No sound:</b> press Open the lobby (sound only starts after a tap), check the TV isn't muted, and check the music is on in the host controls.</p>
+        <p><b>Phones can't join:</b> check the 4-letter code on the TV and that the phone has internet.</p>
+        <p><b>The screen went to sleep:</b> keep the laptop or tablet plugged in. Refresh the page and it carries on where it left off.</p>
+        <p><b>The quiz is tiny or cut off:</b> make the browser full screen (F11 on Windows) or turn the tablet sideways.</p></div>
+    </div>`;
+    if (open) { const el = document.getElementById("g-" + open); if (el) el.scrollIntoView({ block: "start" }); }
+  };
+  app.addEventListener("click", async e => {
+    const g = e.target.closest("[data-g]"), c = e.target.closest("[data-copy]");
+    if (g) { open = open === g.dataset.g ? "" : g.dataset.g; history.replaceState(null, "", "?tvhelp" + (open ? "=" + open : "") + (LOCAL ? "&local=1" : "")); draw(); return; }
+    if (c) {
+      const url = baseUrl() + "?tvhelp=" + c.dataset.copy;
+      try { await navigator.clipboard.writeText(url); toast("Link copied. Send it to whoever's setting up the TV."); } catch (err) { toast(url, 6000); }
+    }
+  });
+  draw();
+}
+
+// ======================================================================
 // LANDING
 // ======================================================================
 function landing() {
@@ -1675,6 +1785,7 @@ function landing() {
     <div class="card"><h2>Joining a game?</h2><input id="code" class="codein" maxlength="4" placeholder="CODE" autocomplete="off" autocapitalize="characters"><button class="btn gold big" data-a="go">Join</button></div>
     <div class="card"><h2>Hosting?</h2><p class="muted">Open this on the device connected to the TV.</p>
       <a class="btn big" href="${withLocal("?tv")}">This is the TV screen</a>
+      <a class="btn big" href="${withLocal("?tvhelp")}">How do I get it on my TV?</a>
       ${canResume ? `<a class="btn big" href="${withLocal("?tv=" + saved.room)}">Resume game ${esc(saved.room)}</a>` : ""}</div>
     <div class="card"><h2>Family Round</h2><p class="muted">Set up questions and photos about your family on the phone you'll host with.</p>
       <a class="btn big" href="${withLocal("?family=1")}">Set up the Family Round</a></div></div>`;
@@ -1686,6 +1797,7 @@ function landing() {
 // ===== ROUTE =====
 if (P.has("tv")) tvMain();
 else if (P.has("family")) familyPage();
+else if (P.has("tvhelp")) tvHelp();
 else if (P.get("join")) phoneMain(P.get("join"));
 else if (P.get("host")) phoneMain(P.get("host"), P.get("k"));
 else landing();

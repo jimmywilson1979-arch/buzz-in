@@ -27,6 +27,13 @@ Question types: Who's in the photo?, Guess the year (photo, closest wins), Quest
 Questions and photos stay on that phone and are sent to the TV over the live connection when you host.
 Once played they're marked as used, so a second game skips the Family Round.
 
+## Kids' game
+Choose **Kids' game** under "Who's playing" in the lobby (TV or host phone). Every round is just for
+the kids: only phones ticked "A child is playing" can answer, and only kids appear on the scoreboard.
+Grown-ups can join to watch along, or just host. It defaults to a 30-second timer and has its own rounds:
+Kids' Corner, Animal Antics, Christmas Elves, Nursery Rhyme Tunes, Cartoon Emojis, Kids' True or False,
+Bigger or Smaller and Kids' Odd One Out.
+
 ## Extras
 - One Joker per player to double their points on a round.
 - Original background music, drumroll reveals and a winner's fanfare. Music and volume on the host phone.

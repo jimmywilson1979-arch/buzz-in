@@ -94,6 +94,7 @@ body.tv{font-size:1.45vw;overflow:hidden;background:
 .tv .qr{background:#fff;padding:.8rem;border-radius:1rem;width:13rem;height:13rem;flex:none}
 .tv .qr img,.tv .qr canvas{width:100%!important;height:100%!important}
 .tv .side{display:flex;flex-direction:column;gap:1.2rem;min-height:0}
+.side .setup{overflow-y:auto;min-height:0;flex:0 1 auto}
 .tv .players{display:flex;flex-wrap:wrap;gap:.8rem;align-content:flex-start}
 .ptile{display:flex;align-items:center;gap:.7rem;background:var(--panel);border:2px solid var(--line);border-radius:1rem;padding:.6rem 1rem .6rem .6rem;font-weight:700;font-size:1.2rem;animation:pop .35s ease-out}
 .ptile .av{width:2.4rem;height:2.4rem;border-radius:50%;display:grid;place-items:center;color:#111;font-weight:800}
@@ -601,6 +602,8 @@ const COLORS = ["#ff6b6b", "#4dabff", "#ffd43b", "#51e08a", "#c792ff", "#ff9f43"
 const LET = ["A", "B", "C", "D"];
 const ROUND_ORDER = ["gk", "kids", "xmas", "tune", "emoji", "lines", "tf", "hl", "odd", "closest", "telly", "music", "sport", "food", "buzz", "ai", "family"];
 const DEFAULT_ROUNDS = ["gk", "kids", "tune", "xmas", "lines", "closest", "buzz"];
+const KIDS_ORDER = ["kids", "kanimal", "kxmas", "ktune", "kemoji", "ktf", "khl", "kodd"];
+const KIDS_DEFAULT = ["kids", "kanimal", "ktune", "kemoji", "ktf", "kxmas"];
 const EXTRA = {
   ai: { title: "Anything Round", type: "mc", blurb: "Claude writes a round on any topic you choose." },
   family: { title: "Family Round", type: "mc", blurb: "Questions about your own family. How well do you know each other?" },
@@ -762,6 +765,139 @@ function makeFamEditor(onChange) {
 }
 
 async function wakeLock() { try { if (navigator.wakeLock) await navigator.wakeLock.request("screen"); } catch (e) { } }
+// ===== KIDS' GAME PACKS (only used when "Kids' game" is chosen in the lobby) =====
+PACKS.kanimal = { title: "Animal Antics", type: "mc", blurb: "All about animals. Kids only!", qs: [
+  ["Which animal is called the king of the jungle?", "Lion", "Tiger", "Elephant", "Bear"],
+  ["What is a baby dog called?", "Puppy", "Kitten", "Calf", "Foal"],
+  ["What is a baby cat called?", "Kitten", "Puppy", "Cub", "Lamb"],
+  ["What is a baby sheep called?", "Lamb", "Chick", "Calf", "Piglet"],
+  ["Which animal has a long trunk?", "Elephant", "Giraffe", "Hippo", "Rhino"],
+  ["Which animal has black and white stripes?", "Zebra", "Horse", "Panda", "Tiger"],
+  ["Which animal says 'oink'?", "Pig", "Cow", "Duck", "Dog"],
+  ["What do bees make?", "Honey", "Milk", "Jam", "Butter"],
+  ["Which bird can't fly but is great at swimming?", "Penguin", "Parrot", "Owl", "Robin"],
+  ["Which animal hops and carries its baby in a pouch?", "Kangaroo", "Rabbit", "Frog", "Monkey"],
+  ["Which is the tallest animal?", "Giraffe", "Elephant", "Horse", "Camel"],
+  ["Where does a fish live?", "In water", "In a tree", "Underground", "In a nest"],
+  ["What does a frog start life as?", "A tadpole", "A caterpillar", "A chick", "A puppy"],
+  ["Which animal is famous for being very slow?", "Snail", "Cheetah", "Rabbit", "Horse"],
+  ["How many legs does a bird have?", "2", "4", "6", "8"],
+  ["Which animal sleeps hanging upside down?", "Bat", "Owl", "Cat", "Squirrel"],
+  ["What colour is a polar bear?", "White", "Brown", "Black", "Orange"],
+  ["Which animal has a long neck and spots?", "Giraffe", "Leopard", "Zebra", "Cheetah"],
+]};
+PACKS.kemoji = { title: "Cartoon Emojis", type: "emoji", blurb: "Guess the cartoon film from the emojis.", qs: [
+  ["🐠🔍", "Finding Nemo", "Shark Tale", "The Little Mermaid", "Moana"],
+  ["🤠🚀🧸", "Toy Story", "Cars", "Up", "Monsters, Inc."],
+  ["🏠🎈👴", "Up", "Toy Story", "Coco", "Inside Out"],
+  ["🚗⚡🏁", "Cars", "Planes", "Turbo", "Zootropolis"],
+  ["👹🚪😱", "Monsters, Inc.", "Shrek", "Coco", "Hotel Transylvania"],
+  ["🐼🥋", "Kung Fu Panda", "Zootropolis", "Madagascar", "The Jungle Book"],
+  ["🧜‍♀️🐚", "The Little Mermaid", "Moana", "Finding Nemo", "Frozen"],
+  ["🍯🐻🎈", "Winnie the Pooh", "Paddington", "Brave", "The Jungle Book"],
+  ["🐻🧳🍊", "Paddington", "Winnie the Pooh", "Brave", "The Gruffalo"],
+  ["🟢👹🐴", "Shrek", "Monsters, Inc.", "The Grinch", "Tangled"],
+  ["🐘👂✈️", "Dumbo", "Bambi", "The Jungle Book", "Madagascar"],
+  ["🦌🐰🌸", "Bambi", "Frozen", "The Lion King", "Robin Hood"],
+  ["🐀👨‍🍳🍝", "Ratatouille", "Stuart Little", "Lady and the Tramp", "Cars"],
+  ["🤖🌱🚀", "Wall-E", "Big Hero 6", "Toy Story", "Robots"],
+  ["🧠😀😢😡", "Inside Out", "Up", "Coco", "Encanto"],
+  ["🏰👸🍎", "Snow White", "Cinderella", "Sleeping Beauty", "Tangled"],
+  ["👠🎃🕛", "Cinderella", "Snow White", "Frozen", "Beauty and the Beast"],
+  ["🌹👹🏰", "Beauty and the Beast", "Shrek", "Sleeping Beauty", "Brave"],
+  ["💇‍♀️🗼🦎", "Tangled", "Brave", "Frozen", "Moana"],
+  ["🦁👑", "The Lion King", "Madagascar", "The Jungle Book", "Robin Hood"],
+  ["❄️👸⛄", "Frozen", "Snow White", "Brave", "Tangled"],
+]};
+PACKS.ktf = { title: "Kids' True or False", type: "tf", blurb: "Just two buttons. True or false?", qs: [
+  ["Cows say moo.", true],
+  ["Fish can climb trees.", false],
+  ["The Sun is a star.", true],
+  ["Penguins live at the North Pole.", false],
+  ["Spiders have 8 legs.", true],
+  ["Carrots grow under the ground.", true],
+  ["Snowmen melt when it gets warm.", true],
+  ["Ripe tomatoes are blue.", false],
+  ["Dogs can fly.", false],
+  ["Bananas turn yellow when they're ripe.", true],
+  ["There are 7 days in a week.", true],
+  ["The Moon is made of cheese.", false],
+  ["Ice is frozen water.", true],
+  ["Elephants are smaller than mice.", false],
+  ["Owls are awake at night.", true],
+  ["Santa's sleigh is pulled by reindeer.", true],
+  ["A triangle has 4 sides.", false],
+  ["Plants need water to grow.", true],
+]};
+PACKS.khl = { title: "Bigger or Smaller", type: "hl", blurb: "Two choices. Which one is it?", qs: [
+  ["Which is bigger?", "An elephant", "A mouse", 0, "An elephant can weigh as much as five cars!"],
+  ["Which is taller?", "A giraffe", "A door", 0, "A giraffe can be more than twice as tall as a door."],
+  ["Which is faster?", "A cheetah", "A tortoise", 0, "A cheetah can run about 70 mph. A tortoise walks less than 1 mph."],
+  ["Which has more legs?", "A spider", "A dog", 0, "A spider has 8 legs. A dog has 4."],
+  ["Which is bigger?", "The Sun", "The Earth", 0, "You could fit about a million Earths inside the Sun!"],
+  ["Which is heavier?", "A blue whale", "A bus", 0, "A blue whale weighs more than 10 double-decker buses."],
+  ["Which has more wheels?", "A bike", "A car", 1, "A car has 4 wheels. A bike has 2."],
+  ["Which was bigger?", "A T. rex", "A chicken", 0, "A T. rex was about 12 metres long. Chickens are related to dinosaurs, though!"],
+  ["Which lives longer?", "A tortoise", "A hamster", 0, "Tortoises can live over 100 years. Hamsters live about 2 or 3."],
+  ["Which is bigger?", "A football", "A tennis ball", 0, "A football is about three times wider than a tennis ball."],
+  ["Which has more days?", "A week", "A month", 1, "A week has 7 days. A month has about 30."],
+  ["Which is higher?", "A mountain", "A tree", 0, "Mountains can be thousands of metres high. The tallest trees are about 115 metres."],
+]};
+PACKS.kodd = { title: "Kids' Odd One Out", type: "odd", blurb: "Four answers. Tap the one that doesn't belong.", qs: [
+  ["Cat", "Apple", "Banana", "Orange", "The rest are fruits."],
+  ["Car", "Dog", "Cat", "Rabbit", "The rest are animals."],
+  ["Spoon", "Red", "Blue", "Green", "The rest are colours."],
+  ["Fish", "Robin", "Owl", "Eagle", "The rest are birds."],
+  ["Banana", "Hat", "Scarf", "Gloves", "The rest keep you warm in winter."],
+  ["Circle", "Square", "Triangle", "Rectangle", "The rest have straight sides."],
+  ["Pizza", "Bus", "Train", "Car", "The rest are things you can ride in."],
+  ["7", "2", "4", "6", "The rest are even numbers."],
+  ["Teddy", "Sun", "Moon", "Stars", "The rest are up in the sky."],
+  ["Lion", "Shark", "Dolphin", "Octopus", "The rest live in the sea."],
+  ["Carrot", "Strawberry", "Cherry", "Raspberry", "The rest are red fruits."],
+  ["Bed", "Snowman", "Snowflake", "Icicle", "The rest are made of snow or ice."],
+  ["Pencil", "Guitar", "Drum", "Piano", "The rest are musical instruments."],
+  ["Elsa", "Woody", "Buzz", "Jessie", "The rest are from Toy Story."],
+  ["Dog", "Butterfly", "Bee", "Ladybird", "The rest are insects."],
+  ["Hammer", "Cup", "Plate", "Bowl", "The rest go on the table at dinner."],
+  ["Wellies", "Sandals", "Swimsuit", "Sunglasses", "The rest are for sunny days."],
+]};
+PACKS.kxmas = { title: "Christmas Elves", type: "mc", blurb: "Christmas questions for the little ones.", qs: [
+  ["What colour is Santa's suit?", "Red", "Green", "Blue", "Yellow"],
+  ["What goes on top of a Christmas tree?", "A star or an angel", "A hat", "A sock", "A carrot"],
+  ["Where does Santa live?", "The North Pole", "The South Pole", "The Moon", "Spain"],
+  ["Which animals pull Santa's sleigh?", "Reindeer", "Horses", "Dogs", "Cows"],
+  ["What is a snowman's nose usually made of?", "A carrot", "A banana", "A sausage", "A pencil"],
+  ["What does Santa say?", "Ho ho ho!", "Ha ha ha!", "Hee hee hee!", "Boo!"],
+  ["Who helps Santa make the toys?", "Elves", "Fairies", "Pirates", "Dragons"],
+  ["What do children hang up on Christmas Eve?", "A stocking", "A coat", "A picture", "A towel"],
+  ["Which reindeer has a shiny red nose?", "Rudolph", "Dasher", "Comet", "Blitzen"],
+  ["What date is Christmas Day?", "25th December", "1st January", "31st October", "14th February"],
+  ["What do we leave out for Santa?", "A mince pie", "Fish fingers", "Crisps", "An ice lolly"],
+  ["Which of these is a Christmas plant?", "Holly", "Daisy", "Sunflower", "Tulip"],
+  ["How does Santa get into the house?", "Down the chimney", "Through the cat flap", "Through the letterbox", "By bus"],
+  ["What do you pull at Christmas dinner that goes bang?", "A cracker", "A balloon", "A sock", "A spoon"],
+  ["What falls from the sky when it's very cold?", "Snow", "Sweets", "Leaves", "Feathers"],
+]};
+// Nursery rhymes reuse the melodies from Name That Tune, with kid-friendly wrong answers
+{
+  const tq = t => PACKS.tune.qs.find(q => q[0] === t);
+  const k = (t, w1, w2, w3) => { const q = tq(t); return [q[0], q[1], w1, w2, w3, q[5]]; };
+  PACKS.ktune = { title: "Nursery Rhyme Tunes", type: "tune", blurb: "Listen to the TV. Which song is it?", qs: [
+    k("Twinkle Twinkle Little Star", "Mary Had a Little Lamb", "Humpty Dumpty", "Row, Row, Row Your Boat"),
+    k("Mary Had a Little Lamb", "Twinkle Twinkle Little Star", "Old MacDonald Had a Farm", "London Bridge Is Falling Down"),
+    k("Old MacDonald Had a Farm", "Baa Baa Black Sheep", "Mary Had a Little Lamb", "Frère Jacques"),
+    k("Row, Row, Row Your Boat", "London Bridge Is Falling Down", "Twinkle Twinkle Little Star", "Frère Jacques"),
+    k("Jingle Bells", "We Wish You a Merry Christmas", "Happy Birthday", "Old MacDonald Had a Farm"),
+    k("We Wish You a Merry Christmas", "Jingle Bells", "Happy Birthday", "Twinkle Twinkle Little Star"),
+    k("Happy Birthday", "Twinkle Twinkle Little Star", "Jingle Bells", "Row, Row, Row Your Boat"),
+    ["Frère Jacques", "C4:1 D4:1 E4:1 C4:1 C4:1 D4:1 E4:1 C4:1 E4:1 F4:1 G4:2 E4:1 F4:1 G4:2", "London Bridge Is Falling Down", "Row, Row, Row Your Boat", "Old MacDonald Had a Farm", 130],
+    ["London Bridge Is Falling Down", "G4:1.5 A4:.5 G4:1 F4:1 E4:1 F4:1 G4:2 D4:1 E4:1 F4:2 E4:1 F4:1 G4:2 G4:1.5 A4:.5 G4:1 F4:1 E4:1 F4:1 G4:2 D4:2 G4:2 E4:1 C4:3", "Frère Jacques", "Mary Had a Little Lamb", "Twinkle Twinkle Little Star", 150],
+    ["Incy Wincy Spider", "G3:.5 C4:1 C4:.5 C4:1 D4:.5 E4:1.5 E4:1 E4:.5 D4:1 C4:.5 D4:1 E4:.5 C4:1.5", "Humpty Dumpty", "Twinkle Twinkle Little Star", "Row, Row, Row Your Boat", 170],
+    ["Pop Goes the Weasel", "C4:1 C4:.5 D4:1 D4:.5 E4:.5 G4:.5 E4:.5 C4:1 G3:.5 C4:1 C4:.5 D4:1 D4:.5 E4:1.5 C4:1", "Old MacDonald Had a Farm", "Frère Jacques", "London Bridge Is Falling Down", 170],
+  ]};
+}
+
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") wakeLock(); });
 
 // ===== SOUND & MUSIC (all generated in the browser, no audio files) =====
@@ -918,30 +1054,41 @@ async function connect(room, onMsg, onStatus) {
 
 // ===== SETTINGS UI (shared by TV and host phone) =====
 function settingsHTML(st, fresh, where, famCount) {
-  const chips = ROUND_ORDER.map(id => {
-    const r = roundInfo(id), on = st.rounds.includes(id), dis = id === "family" && !famCount;
+  const kg = st.mode === "kids", list = kg ? (st.kidRounds || KIDS_DEFAULT) : st.rounds;
+  const chips = (kg ? KIDS_ORDER : ROUND_ORDER).map(id => {
+    const r = roundInfo(id), on = list.includes(id), dis = id === "family" && !famCount;
     const f = fresh && fresh[id] != null ? `<small>${fresh[id]} new</small>` : "";
     return `<button class="chip ${on ? "on" : ""} ${dis ? "off" : ""}" data-round="${id}" ${dis ? "disabled" : ""}>${esc(r.title)} ${dis ? "<small>set up on host phone</small>" : f}</button>`;
   }).join("");
   const pick = (k, vals, fmt) => vals.map(v => `<button class="chip ${st[k] === v ? "on" : ""}" data-set="${k}" data-val="${v}">${fmt ? fmt(v) : v}</button>`).join("");
-  return `<div class="setrow"><b>Rounds (in order)</b>${chips}</div>
+  return `<div class="setrow"><b>Who's playing</b>${pick("mode", ["all", "kids"], v => v === "kids" ? "🧒 Kids' game (grown-ups watch)" : "Everyone")}</div>
+    <div class="setrow"><b>Rounds (in order)</b>${chips}</div>
     <div class="setrow"><b>Questions</b>${pick("perRound", [4, 5, 6, 8, 10], v => v + " per round")}</div>
-    <div class="setrow"><b>Timer</b>${pick("timer", [15, 20, 30], v => v + " sec")}</div>
+    <div class="setrow"><b>Timer</b>${pick("timer", [15, 20, 30, 45], v => v + " sec")}</div>
     <div class="setrow"><b>Host</b>${pick("hostMode", ["host", "play"], v => v === "host" ? "Host only (sees answers)" : "Host & play")}</div>
     <div class="setrow"><b>Look</b>${pick("theme", ["auto", "classic", "xmas"], v => ({ auto: "Auto (Christmas in December)", classic: "Classic", xmas: "Christmas" })[v])}</div>
-    ${st.rounds.includes("ai") ? `<div class="setrow"><b>Anything topic</b><input id="ai-topic-${where}" data-aitopic placeholder="e.g. Gavin & Stacey, 80s toys, Wales" value="${esc(st.aiTopic || "")}" style="flex:1 1 14em"></div>` : ""}
+    ${!kg && st.rounds.includes("ai") ? `<div class="setrow"><b>Anything topic</b><input id="ai-topic-${where}" data-aitopic placeholder="e.g. Gavin & Stacey, 80s toys, Wales" value="${esc(st.aiTopic || "")}" style="flex:1 1 14em"></div>` : ""}
+    ${kg && where !== "tv" ? `<div class="setrow"><b>Kids' game</b><span class="muted">Every round is just for the kids. Only phones ticked "A child is playing" can answer, and only kids are on the scoreboard. Grown-ups can join to watch along or just host. Easy questions, a longer timer and no buzzer round.</span></div>` : ""}
     <div class="setrow"><b>How it works</b><span class="muted">Tap rounds to add or remove them. Kids' Corner is for kids only and is skipped if no kids join. The Family Round uses questions set up on the host's phone and is skipped once they've all been played. Everyone gets one Joker to double a round. The last round scores double.</span></div>`;
 }
 function settingsClick(e, st) {
   const b = e.target.closest("[data-round],[data-set]"); if (!b) return null;
   if (b.dataset.round) {
-    const id = b.dataset.round; let r = st.rounds.slice();
+    const id = b.dataset.round;
+    if (st.mode === "kids") {
+      let r = (st.kidRounds || KIDS_DEFAULT).slice();
+      r = r.includes(id) ? r.filter(x => x !== id) : r.concat(id);
+      r.sort((a, c) => KIDS_ORDER.indexOf(a) - KIDS_ORDER.indexOf(c));
+      return { kidRounds: r };
+    }
+    let r = st.rounds.slice();
     r = r.includes(id) ? r.filter(x => x !== id) : r.concat(id);
     r.sort((a, c) => ROUND_ORDER.indexOf(a) - ROUND_ORDER.indexOf(c));
     if (r.length && r.includes("buzz")) { r = r.filter(x => x !== "buzz"); r.splice(Math.max(0, r.length - 1), 0, "buzz"); }
     return { rounds: r };
   }
   const k = b.dataset.set, raw = b.dataset.val;
+  if (k === "mode") return raw === "kids" ? { mode: "kids", timer: Math.max(30, st.timer || 0) } : { mode: "all", timer: Math.min(st.timer || 20, 20) };
   return { [k]: isNaN(raw) ? raw : Number(raw) };
 }
 const isChoice = t => ["mc", "emoji", "lines", "tune", "odd", "hl", "tf"].includes(t);
@@ -957,12 +1104,12 @@ function tvMain() {
   if (!S) {
     S = {
       room: roomCode(), token: uid() + uid(), phase: "lobby", players: {}, order: [],
-      settings: { rounds: DEFAULT_ROUNDS.slice(), perRound: 5, timer: 20, hostMode: "host", aiTopic: "", theme: "auto" },
+      settings: { rounds: DEFAULT_ROUNDS.slice(), kidRounds: KIDS_DEFAULT.slice(), mode: "all", perRound: 5, timer: 20, hostMode: "host", aiTopic: "", theme: "auto" },
       audio: { music: true, vol: .8 },
       plan: [], ri: 0, qi: 0, answers: {}, res: null, buzz: null, qEnds: 0, pausedLeft: null, qStart: 0, started: false,
     };
   }
-  S.settings.theme = S.settings.theme || "auto"; S.audio = S.audio || { music: true, vol: .8 };
+  S.settings.theme = S.settings.theme || "auto"; S.settings.mode = S.settings.mode || "all"; S.settings.kidRounds = S.settings.kidRounds || KIDS_DEFAULT.slice(); S.audio = S.audio || { music: true, vol: .8 };
   Sound.setVol(S.audio.vol, S.audio.music);
   history.replaceState(null, "", "?tv=" + S.room + (LOCAL ? "&local=1" : ""));
   let T = null, conn = "connecting", lastShell = "", lastTick = -1, opened = !!S.started, tuneTimers = [], suspenseTimer = null, finalMusicAt = 0;
@@ -991,7 +1138,7 @@ function tvMain() {
       players: playersArr().map(p => ({ id: p.id, name: p.name, members: p.members, kid: !!p.kid, joker: p.joker ?? null, color: p.color, score: p.score, on: Date.now() - p.seen < 20000 })),
     };
     if (S.phase === "lobby") o.fresh = freshCounts();
-    o.famCount = Object.keys(fam).length;
+    o.famCount = Object.keys(fam).length; o.kg = !!(S.started ? S.kg : S.settings.mode === "kids");
     if (r) o.round = { n: S.ri + 1, of: S.plan.length, id: r.id, title: r.title, type: r.type, blurb: r.blurb, dbl: r.dbl, kids: !!r.kids };
     if (q && (S.phase === "question" || S.phase === "suspense" || S.phase === "reveal")) {
       o.q = { n: S.qi + 1, of: r.qs.length, key: qkey(), type: q.type, text: q.text, emoji: q.emoji, quote: q.quote, photo: !!q.photo, opts: q.opts, unit: q.unit, left: left(), paused: S.pausedLeft != null, total: qTime(q) };
@@ -1065,8 +1212,10 @@ function tvMain() {
   // ----- game flow -----
   async function startGame() {
     if (!playersArr().length) { toast("Nobody's joined yet. Scan the code to join."); return; }
-    let rounds = S.settings.rounds.slice();
-    if (rounds.includes("kids") && !playersArr().some(p => p.kid)) { rounds = rounds.filter(id => id !== "kids"); toast("No kids have joined, so Kids' Corner is skipped."); }
+    const kidsGame = S.settings.mode === "kids";
+    let rounds = (kidsGame ? (S.settings.kidRounds || KIDS_DEFAULT) : S.settings.rounds).slice();
+    if (kidsGame && !playersArr().some(p => p.kid)) { toast("It's a kids' game, but no kids have joined yet. Tick \"A child is playing\" when joining."); return; }
+    if (!kidsGame && rounds.includes("kids") && !playersArr().some(p => p.kid)) { rounds = rounds.filter(id => id !== "kids"); toast("No kids have joined, so Kids' Corner is skipped."); }
     if (!rounds.length) { toast("Pick at least one round."); return; }
     S.phase = "loading"; broadcast();
     const plan = [];
@@ -1081,11 +1230,11 @@ function tvMain() {
         try { qs = await aiRound(S.settings.aiTopic, S.settings.perRound); title = S.settings.aiTopic; blurb = "A round written just for tonight."; }
         catch (e) { toast("Couldn't write the Anything Round, so it's General Knowledge instead."); qs = pickQs("gk", S.settings.perRound); title = "General Knowledge"; blurb = PACKS.gk.blurb; }
       } else qs = pickQs(id, id === "buzz" ? Math.min(S.settings.perRound + 2, 8) : S.settings.perRound);
-      plan.push({ id, title, type: qs[0] ? qs[0].type : info.type, blurb, qs, kids: id === "kids" });
+      plan.push({ id, title, type: qs[0] ? qs[0].type : info.type, blurb, qs, kids: kidsGame || id === "kids" });
     }
     if (!plan.length) { toast("No rounds left to play. Pick some more rounds."); S.phase = "lobby"; return broadcast(); }
     plan[plan.length - 1].dbl = plan.length > 1;
-    S.plan = plan; S.ri = 0; S.qi = 0; S.started = true; S.gid = uid().slice(0, 4);
+    S.plan = plan; S.ri = 0; S.qi = 0; S.started = true; S.kg = kidsGame; S.gid = uid().slice(0, 4);
     playersArr().forEach(p => { p.score = 0; p.joker = null; p.st = { fast: [], close1: 0, close2: 0, buzz: 0, joker: 0 }; });
     S.phase = "intro"; Sound.whoosh(); broadcast();
   }
@@ -1195,7 +1344,7 @@ function tvMain() {
     }
   }
   function awards() {
-    const ps = playersArr().filter(p => p.st); const out = [];
+    const ps = playersArr().filter(p => p.st && (!S.kg || p.kid)); const out = [];
     const best = (f) => { let b = null, bv = null; ps.forEach(p => { const v = f(p); if (v != null && (bv == null || v > bv)) { bv = v; b = p; } }); return b ? { p: b, v: bv } : null; };
     const fast = best(p => p.st.fast.length >= 2 ? -p.st.fast.reduce((a, c) => a + c, 0) / p.st.fast.length : null);
     if (fast) out.push({ icon: "⚡", title: "Fastest Finger", id: fast.p.id, detail: `${(-fast.v / 1000).toFixed(1)}s average on right answers` });
@@ -1267,7 +1416,7 @@ function tvMain() {
     try { new QRCode(el, { text, width: 512, height: 512, correctLevel: QRCode.CorrectLevel.M }); } catch (e) { el.textContent = text; }
   }
   const ptile = p => `<div class="ptile ${Date.now() - p.seen < 20000 ? "" : "off"}"><span class="av" style="background:${p.color}">${esc(initials(p.name))}</span><span>${esc(p.name)}${p.kid ? " 🧒" : ""}${p.members ? `<small>with ${esc(p.members)}</small>` : ""}</span></div>`;
-  const ranked = () => playersArr().slice().sort((a, b) => b.score - a.score);
+  const ranked = () => playersArr().filter(p => !S.kg || p.kid).sort((a, b) => b.score - a.score);
   const musicBtn = () => `<button class="btn" data-a="music">♫ ${S.audio.music ? "On" : "Off"} (M)</button>`;
   const ctl = (extra = "") => `<div class="ctl">${extra}${musicBtn()}${S.phase === "question" && !(S.buzz && S.buzz.cur) ? `<button class="btn" data-a="pause">${S.pausedLeft != null ? "Resume" : "Pause"} (P)</button>` : ""}<button class="btn" data-a="skip">Skip</button><button class="btn gold" data-a="next">Next (Space)</button></div>`;
   const top = () => {
@@ -1332,7 +1481,7 @@ function tvMain() {
       html = `<div class="stage">${top()}<div class="center">
         <div class="rnum disp">Round ${S.ri + 1}</div><div class="rtitle disp">${esc(r.title)}</div>
         <div class="rblurb">${esc(r.blurb)}</div>
-        ${r.kids ? `<div class="dbl" style="background:var(--b);color:#fff">Kids only! Grown-ups sit this one out</div>` : ""}
+        ${r.kids ? `<div class="dbl" style="background:var(--b);color:#fff">${S.kg ? "Kids' game · grown-ups cheer them on" : "Kids only! Grown-ups sit this one out"}</div>` : ""}
         ${r.dbl ? `<div class="dbl">Final round · double points</div>` : ""}
         <div class="jokers">${jokers.map(p => `<span class="jk" style="border-color:${p.color}">🃏 ${esc(p.name)} plays their Joker!</span>`).join("")}</div>
         <div class="muted" style="font-size:1.1rem">Want double points on this round? Play your Joker on your phone now.</div>
@@ -1529,7 +1678,7 @@ function phoneMain(room, hostKey) {
       return `<div class="card"><h2>${isHost ? "Join as a player" : "Join the quiz"}</h2>
         <label>Your name or team name<input id="j-name" maxlength="24" placeholder="e.g. Kelly, or Team Nan" autocomplete="off"></label>
         <label>Playing with anyone who hasn't got a phone? (optional)<input id="j-mem" maxlength="60" placeholder="e.g. Nan and Grandad" autocomplete="off"></label>
-        <label class="check"><input type="checkbox" id="j-kid"><span>A child is playing on this phone <small>(they can answer in Kids' Corner)</small></span></label>
+        <label class="check"><input type="checkbox" id="j-kid" ${s && s.kg ? "checked" : ""}><span>A child is playing on this phone <small>${s && s.kg ? "(it's a kids' game, so only kids can answer)" : "(they can answer in Kids' Corner)"}</small></span></label>
         <button class="btn gold big" data-a="join">Join</button></div>`;
     }
     if (!p) return "";
@@ -1542,12 +1691,16 @@ function phoneMain(room, hostKey) {
       const jk = p.joker === ri ? `<div class="jokercard on">🃏 Joker played! Double points this round.</div>`
         : p.joker != null ? `<p class="muted">Joker used in round ${p.joker + 1}.</p>`
         : can ? `<button class="btn big jokerbtn" data-a="joker">🃏 Play my Joker on this round<br><small>Double points. You only get one!</small></button>` : "";
-      body = `<div class="grow1 center"><p class="muted">Round ${s.round.n} of ${s.round.of}</p><h2 style="color:var(--gold);font-size:48px">${esc(s.round.title)}</h2><p>${esc(s.round.blurb)}</p>${s.round.kids ? `<p><b style="color:var(--b)">Kids only!</b> ${p.kid ? "This one's for you." : "Grown-ups sit this one out."}</p>` : ""}${s.round.dbl ? `<p><b style="color:var(--gold)">Double points!</b></p>` : ""}${jk}</div>`;
+      body = `<div class="grow1 center"><p class="muted">Round ${s.round.n} of ${s.round.of}</p><h2 style="color:var(--gold);font-size:48px">${esc(s.round.title)}</h2><p>${esc(s.round.blurb)}</p>${s.round.kids ? (s.kg ? `<p><b style="color:var(--b)">Kids' game!</b> ${p.kid ? "Get ready!" : "Cheer them on."}</p>` : `<p><b style="color:var(--b)">Kids only!</b> ${p.kid ? "This one's for you." : "Grown-ups sit this one out."}</p>`) : ""}${s.round.dbl ? `<p><b style="color:var(--gold)">Double points!</b></p>` : ""}${jk}</div>`;
     }
-    else if (ph === "question" || ph === "suspense") body = sitOut() ? `<div class="grow1 center"><div class="result" style="color:var(--b);font-size:52px">Kids only</div><p style="font-size:20px">Sit this one out. No whispering! 🤫</p></div>` : questionPane(p);
+    else if (ph === "question" || ph === "suspense") body = sitOut() ? `<div class="grow1 center"><div class="result" style="color:var(--b);font-size:52px">${s.kg ? "Kids' game" : "Kids only"}</div><p style="font-size:20px">${s.kg ? "Cheer them on, but no whispering the answers! 🤫" : "Sit this one out. No whispering! 🤫"}</p></div>` : questionPane(p);
     else if (ph === "reveal") body = revealPane(p);
+    else if ((ph === "scores" || ph === "final") && s.kg && !p.kid) {
+      const rk = s.players.filter(x => x.kid).sort((a, b) => b.score - a.score);
+      body = `<div class="grow1 center"><p class="muted">${ph === "final" ? "Game over" : "After round " + s.round.n}</p><div class="result" style="color:var(--gold);font-size:44px">${rk[0] ? esc(rk[0].name) + (ph === "final" ? " wins!" : " is winning!") : "Kids' game"}</div><p class="muted">Look at the TV for the scores.</p></div>`;
+    }
     else if (ph === "scores" || ph === "final") {
-      const rk = s.players.slice().sort((a, b) => b.score - a.score), pos = rk.findIndex(x => x.id === pid) + 1;
+      const rk = s.players.filter(x => !s.kg || x.kid).sort((a, b) => b.score - a.score), pos = rk.findIndex(x => x.id === pid) + 1;
       const ord = n => n + (["th", "st", "nd", "rd"][(n % 100 - 20) % 10] || ["th", "st", "nd", "rd"][n % 100] || "th");
       const mine = ph === "final" && s.awards ? s.awards.filter(a => a.id === pid) : [];
       body = `<div class="grow1 center"><p class="muted">${ph === "final" ? "Final position" : "After round " + s.round.n}</p><div class="result" style="color:${p.color}">${ord(pos)}</div><p style="font-size:22px;font-weight:700">${p.score} points</p>${ph === "final" && pos === 1 ? `<p style="font-size:22px">🏆 Winner!</p>` : ""}

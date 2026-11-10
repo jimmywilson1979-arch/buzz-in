@@ -94,6 +94,19 @@ body.tv{font-size:1.45vw;overflow:hidden;background:
 .tv .qr{background:#fff;padding:.8rem;border-radius:1rem;width:13rem;height:13rem;flex:none}
 .tv .qr img,.tv .qr canvas{width:100%!important;height:100%!important}
 .tv .side{display:flex;flex-direction:column;gap:1.2rem;min-height:0}
+.gatebox{display:flex;flex-direction:column;align-items:center;gap:1rem;width:min(30rem,90vw)}
+.gatebox input{font-family:var(--display);font-size:3rem;font-weight:800;text-align:center;letter-spacing:.25em;text-transform:uppercase;padding:.3em .5em}
+.gatemsg{color:#ff8a8a;font-weight:700;font-size:1.1rem;text-align:center;min-height:1.4em}
+.adm .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.adm .row > *{flex:1 1 auto}
+.adm .code{font-family:var(--display);font-size:28px;font-weight:800;letter-spacing:.12em;color:var(--gold)}
+.adm .item{background:var(--bg2);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.adm .tag{display:inline-block;border-radius:8px;padding:1px 8px;font-size:12px;font-weight:700;background:var(--line)}
+.adm .tag.on{background:#2f9e5b;color:#fff}.adm .tag.off{background:#a33;color:#fff}.adm .tag.live{background:var(--b);color:#fff}
+.adm .big{font-size:20px;font-weight:800}
+.adm .lockstate{border-radius:14px;padding:14px;text-align:center;font-weight:800;font-size:20px}
+.adm .lockstate.open{background:rgba(47,158,91,.18);border:2px solid #2f9e5b}
+.adm .lockstate.locked{background:rgba(255,80,80,.15);border:2px solid #d44}
 .side .setup{overflow-y:auto;min-height:0;flex:0 1 auto}
 .tv .players{display:flex;flex-wrap:wrap;gap:.8rem;align-content:flex-start}
 .ptile{display:flex;align-items:center;gap:.7rem;background:var(--panel);border:2px solid var(--line);border-radius:1rem;padding:.6rem 1rem .6rem .6rem;font-weight:700;font-size:1.2rem;animation:pop .35s ease-out}
@@ -619,6 +632,13 @@ const ls = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } },
   del(k) { try { localStorage.removeItem(k); } catch (e) { } },
 };
+// Supabase RPC (host lock, sign-ups, admin)
+async function rpc(fn, args) {
+  const r = await fetch(SUPA_URL + "/rest/v1/rpc/" + fn, { method: "POST", headers: { "content-type": "application/json", apikey: SUPA_KEY, authorization: "Bearer " + SUPA_KEY }, body: JSON.stringify(args || {}) });
+  if (!r.ok) throw new Error("rpc " + r.status);
+  const t = await r.text(); return t ? JSON.parse(t) : null;
+}
+const deviceId = () => { let d = ls.get("buzzin_dev", ""); if (!d) { d = uid() + uid(); ls.set("buzzin_dev", d); } return d; };
 const initials = n => (n || "?").trim().split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
 const baseUrl = () => location.origin + location.pathname;
 const withLocal = u => LOCAL ? u + "&local=1" : u;
@@ -1113,6 +1133,20 @@ function tvMain() {
   Sound.setVol(S.audio.vol, S.audio.music);
   history.replaceState(null, "", "?tv=" + S.room + (LOCAL ? "&local=1" : ""));
   let T = null, conn = "connecting", lastShell = "", lastTick = -1, opened = !!S.started, tuneTimers = [], suspenseTimer = null, finalMusicAt = 0;
+  // Host lock: when switched on in the admin page, this screen needs a host code before it can open the lobby
+  let gate = opened ? { st: "ok" } : { st: "checking" }, gateCode = ls.get("buzzin_hostcode", "");
+  async function checkGate(code, silent) {
+    try {
+      const r = await rpc("buzzin_host_check", { p_code: code || "", p_device: deviceId() });
+      if (r && r.ok) { gate = { st: "ok", locked: !!r.locked }; if (r.locked) { gateCode = code; ls.set("buzzin_hostcode", code); } }
+      else if (!silent) gate = { st: "need", reason: r && r.reason };
+    } catch (e) { if (!silent) gate = { st: "ok" }; }
+    if (!silent) render();
+  }
+  checkGate(gateCode, opened);
+  setInterval(() => { if (gate.locked && gateCode) rpc("buzzin_host_ping", { p_code: gateCode, p_device: deviceId() }).catch(() => { }); }, 60000);
+  const GATE_MSG = { need: "", bad: "That code isn't right. Check it and try again.", expired: "That code has expired.", inuse: "That code is already running a game on another screen. Finish that game first, or try again in a few minutes." };
+  function unlock() { const v = (($("#hostcode") || {}).value || "").trim(); if (!v) return; gate = { st: "checking" }; render(); checkGate(v); }
   let fam = {}; // family questions received from the host phone (kept on this device)
   IDB.all("tvfam").then(list => { list.forEach(q => fam[q.qid] = q); render(); });
   let famBroadcastT = null;
@@ -1444,6 +1478,19 @@ function tvMain() {
 
   function render() {
     syncTheme(); syncMusic();
+    if (!opened && gate.st === "checking") {
+      paint(app, `<div class="stage"><div class="center"><img class="appicon tvicon" src="icon-192.png" alt=""><div class="logo disp">Buzz In</div><div class="spin"></div></div></div>`);
+      return;
+    }
+    if (!opened && gate.st === "need") {
+      paint(app, `<div class="stage"><div class="center"><div class="logo disp">Buzz In</div>
+        <div class="gatebox"><p class="rblurb">Enter your host code to start a game.</p>
+        <input id="hostcode" maxlength="8" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <div class="gatemsg">${esc(GATE_MSG[gate.reason] || "")}</div>
+        <button class="btn gold big" data-a="unlock">Unlock</button>
+        <p class="muted" style="font-size:.9rem;text-align:center">Players don't need a code, only the screen running the game. This screen remembers it for next time.</p></div></div></div>`);
+      return;
+    }
     if (!opened) {
       app.innerHTML = `<div class="stage"><div class="center"><img class="appicon tvicon" src="icon-192.png" alt=""><div class="logo disp">Buzz In</div>
         <p class="rblurb muted">Family quiz night. Put this screen on the TV, then press start.</p>
@@ -1585,7 +1632,8 @@ function tvMain() {
     const a = e.target.closest("[data-a]");
     if (a) {
       const k = a.dataset.a; Sound.init();
-      if (k === "open") { opened = true; wakeLock(); try { document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => { }); } catch (_) { } render(); return; }
+      if (k === "unlock") { unlock(); return; }
+      if (k === "open") { if (gate.st !== "ok") return; opened = true; wakeLock(); try { document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => { }); } catch (_) { } render(); return; }
       if (k === "next") next(); else if (k === "pause") pause(); else if (k === "skip") skip();
       else if (k === "right") judge(true); else if (k === "wrong") judge(false);
       else if (k === "replay") playTune(true);
@@ -1598,6 +1646,7 @@ function tvMain() {
   });
   app.addEventListener("change", e => { if (e.target.matches("[data-aitopic]")) { S.settings.aiTopic = e.target.value.trim(); broadcast(); } });
   document.addEventListener("keydown", e => {
+    if (e.target.id === "hostcode" && e.key === "Enter") { e.preventDefault(); unlock(); return; }
     if (e.target.matches("input")) return;
     if (!opened) return;
     Sound.init();
@@ -1670,6 +1719,14 @@ function phoneMain(room, hostKey) {
   }
 
   const sitOut = () => s.round && s.round.kids && me() && !me().kid;
+  let leadMsg = "", leadBusy = false;
+  const leadCard = () => ls.get("buzzin_lead", false)
+    ? `<div class="card"><p style="margin:0">✅ Thanks! We'll let you know about Buzz In.</p></div>`
+    : `<div class="card"><h2>Want Buzz In for your own party?</h2><p class="muted" style="margin:0">Leave your email and we'll let you know when you can get it.</p>
+      <input id="l-email" type="email" inputmode="email" placeholder="you@example.com" autocomplete="email">
+      ${leadMsg ? `<p style="margin:0;color:#ff8a8a;font-weight:700">${esc(leadMsg)}</p>` : ""}
+      <button class="btn gold big" data-a="lead" ${leadBusy ? "disabled" : ""}>${leadBusy ? "Sending…" : "Keep me posted"}</button>
+      <p class="muted" style="margin:0;font-size:13px">We'll only email you about Buzz In, and you can ask to be removed at any time.</p></div>`;
   function playerPane() {
     const p = me(), ph = s.phase;
     const needJoin = !p && (!isHost || s.hostMode === "play" || showJoin);
@@ -1697,14 +1754,14 @@ function phoneMain(room, hostKey) {
     else if (ph === "reveal") body = revealPane(p);
     else if ((ph === "scores" || ph === "final") && s.kg && !p.kid) {
       const rk = s.players.filter(x => x.kid).sort((a, b) => b.score - a.score);
-      body = `<div class="grow1 center"><p class="muted">${ph === "final" ? "Game over" : "After round " + s.round.n}</p><div class="result" style="color:var(--gold);font-size:44px">${rk[0] ? esc(rk[0].name) + (ph === "final" ? " wins!" : " is winning!") : "Kids' game"}</div><p class="muted">Look at the TV for the scores.</p></div>`;
+      body = `<div class="grow1 center"><p class="muted">${ph === "final" ? "Game over" : "After round " + s.round.n}</p><div class="result" style="color:var(--gold);font-size:44px">${rk[0] ? esc(rk[0].name) + (ph === "final" ? " wins!" : " is winning!") : "Kids' game"}</div><p class="muted">Look at the TV for the scores.</p></div>${ph === "final" ? leadCard() : ""}`;
     }
     else if (ph === "scores" || ph === "final") {
       const rk = s.players.filter(x => !s.kg || x.kid).sort((a, b) => b.score - a.score), pos = rk.findIndex(x => x.id === pid) + 1;
       const ord = n => n + (["th", "st", "nd", "rd"][(n % 100 - 20) % 10] || ["th", "st", "nd", "rd"][n % 100] || "th");
       const mine = ph === "final" && s.awards ? s.awards.filter(a => a.id === pid) : [];
       body = `<div class="grow1 center"><p class="muted">${ph === "final" ? "Final position" : "After round " + s.round.n}</p><div class="result" style="color:${p.color}">${ord(pos)}</div><p style="font-size:22px;font-weight:700">${p.score} points</p>${ph === "final" && pos === 1 ? `<p style="font-size:22px">🏆 Winner!</p>` : ""}
-        ${mine.map(a => `<div class="jokercard on">${a.icon} ${esc(a.title)}<br><small>${esc(a.detail)}</small></div>`).join("")}</div>`;
+        ${mine.map(a => `<div class="jokercard on">${a.icon} ${esc(a.title)}<br><small>${esc(a.detail)}</small></div>`).join("")}</div>${ph === "final" && !p.kid ? leadCard() : ""}`;
     }
     return hdr + body;
   }
@@ -1797,6 +1854,14 @@ function phoneMain(room, hostKey) {
     if (a && a.dataset.a === "join") {
       const name = ($("#j-name").value || "").trim(); if (!name) { $("#j-name").focus(); return; }
       send({ t: "join", name, members: $("#j-mem").value, kid: $("#j-kid").checked }); pendingJoin = true; showJoin = false; setTimeout(() => { if (!me()) { pendingJoin = false; render(); } }, 6000); wakeLock(); render(); return;
+    }
+    if (a && a.dataset.a === "lead") {
+      const em = (($("#l-email") || {}).value || "").trim();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { leadMsg = "That email doesn't look quite right."; render(); return; }
+      leadBusy = true; leadMsg = ""; render();
+      try { const r = await rpc("buzzin_add_lead", { p_name: me() ? me().name : "", p_email: em, p_room: room }); if (r && r.ok) ls.set("buzzin_lead", true); else leadMsg = "That email doesn't look quite right."; }
+      catch (err) { leadMsg = "Couldn't send that. Check your signal and try again."; }
+      leadBusy = false; render(); return;
     }
     if (a && a.dataset.a === "joker") { send({ t: "joker" }); if (navigator.vibrate) navigator.vibrate([40, 40, 80]); return; }
     if (a && a.dataset.a === "buzz") { send({ t: "buzz", key: s.q.key }); if (navigator.vibrate) navigator.vibrate(120); return; }
@@ -1947,8 +2012,89 @@ function landing() {
   $("#code").addEventListener("keydown", e => { if (e.key === "Enter") go(); });
 }
 
+
+// ======================================================================
+// ADMIN (owner only: ?admin)
+// ======================================================================
+function adminPage() {
+  document.body.className = "phone";
+  document.title = "Buzz In admin";
+  let pass = ls.get("buzzin_admin", ""), data = null, msg = "", busy = false;
+  const fmtD = d => d ? new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "";
+  const fmtDT = d => d ? new Date(d).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "never";
+  async function call(action, args) {
+    busy = true; draw();
+    try {
+      const r = await rpc("buzzin_admin", { p_pass: pass, p_action: action, p_args: args || {} });
+      if (r && r.ok) { data = r; msg = ""; ls.set("buzzin_admin", pass); }
+      else if (r && r.reason === "password") { data = null; pass = ""; ls.del("buzzin_admin"); msg = "Wrong password."; }
+      else if (r && r.reason === "short") msg = "The new password needs at least 8 characters.";
+      else msg = "Something went wrong.";
+    } catch (e) { msg = "Couldn't reach the server. Check your connection."; }
+    busy = false; draw();
+  }
+  function draw() {
+    if (!data) {
+      paint(app, `<div class="ph land adm"><img class="appicon" src="icon-192.png" alt=""><div class="logo disp" style="margin-top:4px">Buzz In</div><p class="center muted">Owner admin</p>
+        <div class="card"><h2>Log in</h2><input id="a-pass" type="password" placeholder="Admin password" autocomplete="current-password">
+        ${msg ? `<p style="margin:0;color:#ff8a8a;font-weight:700">${esc(msg)}</p>` : ""}
+        <button class="btn gold big" data-x="login" ${busy ? "disabled" : ""}>${busy ? "Checking…" : "Log in"}</button></div></div>`);
+      return;
+    }
+    const now = Date.now();
+    const codes = data.codes.map(c => {
+      const exp = c.expires && new Date(c.expires).getTime() < now;
+      const tag = !c.active ? `<span class="tag off">Off</span>` : exp ? `<span class="tag off">Expired</span>` : c.in_use ? `<span class="tag live">In a game now</span>` : `<span class="tag on">Active</span>`;
+      return `<div class="item"><div class="row" style="justify-content:space-between"><span class="code">${esc(c.code)}</span>${tag}</div>
+        <div><b>${esc(c.label || "No name")}</b> <span class="muted">${c.expires ? "· until " + fmtD(c.expires) : "· no expiry"}</span></div>
+        <div class="muted" style="font-size:14px">Used ${c.uses} time${c.uses === 1 ? "" : "s"} · last ${fmtDT(c.last_used)}</div>
+        <div class="row"><button class="btn" data-x="copy" data-c="${esc(c.code)}">Copy message</button>
+          <button class="btn" data-x="toggle" data-c="${esc(c.code)}" data-on="${c.active ? 0 : 1}">${c.active ? "Turn off" : "Turn on"}</button>
+          ${c.in_use ? `<button class="btn" data-x="free" data-c="${esc(c.code)}">Free it up</button>` : ""}
+          <button class="btn" data-x="del" data-c="${esc(c.code)}">Delete</button></div></div>`;
+    }).join("") || `<p class="muted" style="margin:0">No codes yet.</p>`;
+    const leads = data.leads.map(l => `<div class="item"><div class="row" style="justify-content:space-between"><b>${esc(l.email)}</b><button class="btn" style="flex:0 0 auto" data-x="dellead" data-id="${l.id}">✕</button></div>
+      <div class="muted" style="font-size:14px">${esc(l.name || "")}${l.name ? " · " : ""}${fmtD(l.at)}${l.room ? " · game " + esc(l.room) : ""}</div></div>`).join("") || `<p class="muted" style="margin:0">Nobody yet. Players see a sign-up box on their phone when a game ends.</p>`;
+    paint(app, `<div class="ph land adm"><div class="logo disp" style="font-size:40px">Buzz In admin</div>
+      <div class="card"><h2>Who can host?</h2>
+        <div class="lockstate ${data.locked ? "locked" : "open"}">${data.locked ? "🔒 Locked: a host code is needed" : "🔓 Open: anyone with the link can host"}</div>
+        <p class="muted" style="margin:0">${data.locked ? "The TV screen asks for a host code before a game can start. Players never need a code." : "Locking makes the TV screen ask for a host code. Games already running carry on."}</p>
+        <button class="btn ${data.locked ? "" : "gold"} big" data-x="lock" data-on="${data.locked ? 0 : 1}" ${busy ? "disabled" : ""}>${data.locked ? "Unlock (let anyone host)" : "Lock hosting"}</button></div>
+      <div class="card"><h2>Host codes</h2>
+        <p class="muted" style="margin:0">One code per person. Each code can run one game at a time, so a code passed around stops working while its owner is playing.</p>
+        <input id="c-label" placeholder="Who's it for? e.g. Tom" maxlength="60">
+        <label class="muted" style="font-size:14px">Expires (optional)<input id="c-exp" type="date"></label>
+        <button class="btn gold big" data-x="add" ${busy ? "disabled" : ""}>Create code</button>
+        ${codes}</div>
+      <div class="card"><h2>Sign-ups · ${data.leads.length}</h2>${data.leads.length ? `<button class="btn" data-x="copyemails">Copy all emails</button>` : ""}${leads}</div>
+      <div class="card"><h2>Admin password</h2><input id="a-new" type="password" placeholder="New password (8+ characters)" autocomplete="new-password">
+        <button class="btn" data-x="setpass">Change password</button>
+        <button class="btn" data-x="logout">Log out on this device</button></div>
+      ${msg ? `<p class="center" style="color:#ff8a8a;font-weight:700">${esc(msg)}</p>` : ""}</div>`);
+  }
+  const copy = t => { try { navigator.clipboard.writeText(t).then(() => toast("Copied"), () => toast(t, 6000)); } catch (e) { toast(t, 6000); } };
+  app.addEventListener("click", e => {
+    const b = e.target.closest("[data-x]"); if (!b || busy) return;
+    const x = b.dataset.x, c = b.dataset.c;
+    if (x === "login") { pass = ($("#a-pass").value || ""); if (pass) call("get"); }
+    else if (x === "lock") call("lock", { locked: b.dataset.on === "1" });
+    else if (x === "add") call("add_code", { label: ($("#c-label").value || "").trim(), expires: $("#c-exp").value || "" }).then(() => { const l = $("#c-label"), d = $("#c-exp"); if (l) l.value = ""; if (d) d.value = ""; });
+    else if (x === "toggle") call("set_code", { code: c, active: b.dataset.on === "1" });
+    else if (x === "free") call("free_code", { code: c });
+    else if (x === "del") { if (b.dataset.sure) call("del_code", { code: c }); else { b.dataset.sure = 1; b.textContent = "Tap again to delete"; } }
+    else if (x === "dellead") { if (b.dataset.sure) call("del_lead", { id: b.dataset.id }); else { b.dataset.sure = 1; b.textContent = "Delete?"; } }
+    else if (x === "copy") { const cd = data.codes.find(k => k.code === c); copy(`Your Buzz In host code is ${c}.\nOpen ${SITE} on the TV screen, tap "This is the TV screen" and enter the code when asked. Players just scan the QR code, no code needed.${cd && cd.expires ? `\nIt works until ${fmtD(cd.expires)}.` : ""}`); }
+    else if (x === "copyemails") copy(data.leads.map(l => l.email).join(", "));
+    else if (x === "setpass") { const v = $("#a-new").value || ""; if (v.length < 8) { msg = "The new password needs at least 8 characters."; draw(); return; } call("set_pass", { pass: v }).then(() => { if (data) { pass = v; ls.set("buzzin_admin", v); call("get"); toast("Password changed"); } }); }
+    else if (x === "logout") { ls.del("buzzin_admin"); pass = ""; data = null; draw(); }
+  });
+  app.addEventListener("keydown", e => { if (e.target.id === "a-pass" && e.key === "Enter") { pass = e.target.value || ""; if (pass) call("get"); } });
+  if (pass) call("get"); else draw();
+}
+
 // ===== ROUTE =====
 if (P.has("tv")) tvMain();
+else if (P.has("admin")) adminPage();
 else if (P.has("family")) familyPage();
 else if (P.has("tvhelp")) tvHelp();
 else if (P.get("join")) phoneMain(P.get("join"));

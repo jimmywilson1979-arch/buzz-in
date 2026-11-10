@@ -34,6 +34,19 @@ Grown-ups can join to watch along, or just host. It defaults to a 30-second time
 Kids' Corner, Animal Antics, Christmas Elves, Nursery Rhyme Tunes, Cartoon Emojis, Kids' True or False,
 Bigger or Smaller and Kids' Odd One Out.
 
+## Christmas edition
+Choose **🎄 Christmas edition** under "Edition" in the lobby (TV or host phone). Every round switches to
+Christmas questions and the Christmas look comes on. It has its own round list, so the standard game's
+questions aren't used up, and switching back to **Standard** brings your normal rounds back.
+
+Default six rounds: Christmas Cracker, Festive Films (emojis), Carol Tunes (public-domain carols),
+Christmas by Numbers (closest wins), Christmas Traditions (true or false) and a Christmas Buzzer Round.
+Also available: Christmas Elves (kids only), Christmas Telly & Tunes, Festive Odd One Out, the Anything Round
+and the Family Round.
+
+Choose **Kids' game** as well for Christmas rounds just for the kids: Christmas Elves, Christmas Tunes,
+Christmas Cartoon Emojis, Christmas True or False and Christmas Odd One Out.
+
 ## Extras
 - One Joker per player to double their points on a round.
 - Original background music, drumroll reveals and a winner's fanfare. Music and volume on the host phone.

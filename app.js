@@ -331,6 +331,20 @@ const ROUND_ORDER = ["gk", "kids", "xmas", "tune", "emoji", "lines", "tf", "hl",
 const DEFAULT_ROUNDS = ["gk", "kids", "tune", "xmas", "lines", "closest", "buzz"];
 const KIDS_ORDER = ["kids", "kanimal", "kxmas", "ktune", "kemoji", "ktf", "khl", "kodd"];
 const KIDS_DEFAULT = ["kids", "kanimal", "ktune", "kemoji", "ktf", "kxmas"];
+// Christmas edition: its own round list for everyone and for the kids' game
+const XMAS_ORDER = ["xmas", "kxmas", "xfilms", "xcarols", "xtelly", "xnum", "xworld", "xodd", "xbuzz", "ai", "family"];
+const XMAS_DEFAULT = ["xmas", "xfilms", "xcarols", "xnum", "xworld", "xbuzz"];
+const XKIDS_ORDER = ["kxmas", "kxtune", "kxemoji", "kxtf", "kxodd", "kids", "kanimal"];
+const XKIDS_DEFAULT = ["kxmas", "kxtune", "kxemoji", "kxtf", "kxodd"];
+// Rounds only kids can answer when everyone is playing
+const KIDS_ONLY = ["kids", "kxmas"];
+// Which round list the lobby is editing, for the current edition and mode
+function roundCfg(st) {
+  const kg = st.mode === "kids", x = st.edition === "xmas";
+  if (x) return kg ? { key: "xKidRounds", order: XKIDS_ORDER, def: XKIDS_DEFAULT } : { key: "xRounds", order: XMAS_ORDER, def: XMAS_DEFAULT };
+  return kg ? { key: "kidRounds", order: KIDS_ORDER, def: KIDS_DEFAULT } : { key: "rounds", order: ROUND_ORDER, def: DEFAULT_ROUNDS };
+}
+const activeRounds = st => { const c = roundCfg(st); return st[c.key] || c.def; };
 const EXTRA = {
   ai: { title: "Anything Round", type: "mc", blurb: "Claude writes a round on any topic you choose." },
   family: { title: "Family Round", type: "mc", blurb: "Questions about your own family. How well do you know each other?" },
@@ -632,6 +646,180 @@ PACKS.kxmas = { title: "Christmas Elves", type: "mc", blurb: "Christmas question
   ]};
 }
 
+// ===== CHRISTMAS EDITION PACKS (used when "Christmas edition" is chosen in the lobby) =====
+PACKS.xfilms = { title: "Festive Films", type: "emoji", blurb: "Guess the Christmas film from the emojis.", qs: [
+  ["🏠👦🪤🎄", "Home Alone", "Elf", "The Santa Clause", "Jingle All the Way"],
+  ["🧝‍♂️🗽🎅", "Elf", "Home Alone 2", "Miracle on 34th Street", "The Polar Express"],
+  ["🚂❄️🎅", "The Polar Express", "Arthur Christmas", "Elf", "Klaus"],
+  ["💚😠🎄", "The Grinch", "Shrek", "Scrooged", "Krampus"],
+  ["👻👻👻💰", "A Christmas Carol", "Ghostbusters", "Casper", "Beetlejuice"],
+  ["⛄👦✈️", "The Snowman", "Frozen", "Arthur Christmas", "The Polar Express"],
+  ["🏢💥🎄👮", "Die Hard", "Lethal Weapon", "Speed", "Home Alone 2"],
+  ["❤️🇬🇧✈️🎄", "Love Actually", "The Holiday", "Notting Hill", "Bridget Jones's Diary"],
+  ["🏡🔄🇬🇧🇺🇸", "The Holiday", "Love Actually", "Notting Hill", "Last Christmas"],
+  ["🐸🎄📖💰", "The Muppet Christmas Carol", "The Muppet Movie", "Elf", "The Grinch"],
+  ["🎅⚖️🏛️", "Miracle on 34th Street", "The Santa Clause", "Elf", "Fred Claus"],
+  ["👔➡️🎅", "The Santa Clause", "Fred Claus", "Elf", "Jingle All the Way"],
+  ["🦌🔴👃", "Rudolph the Red-Nosed Reindeer", "Bambi", "Arthur Christmas", "The Polar Express"],
+  ["🎃🎄💀", "The Nightmare Before Christmas", "Coraline", "Corpse Bride", "Beetlejuice"],
+  ["🗽👦🏨🎄", "Home Alone 2", "Home Alone", "Elf", "Miracle on 34th Street"],
+  ["🦸‍♂️🧸🛍️🏃", "Jingle All the Way", "Home Alone", "Elf", "The Santa Clause"],
+  ["❄️👸⛄", "Frozen", "Tangled", "Moana", "Brave"],
+]};
+PACKS.xtelly = { title: "Christmas Telly & Tunes", type: "mc", blurb: "Christmas specials, adverts and festive hits.", qs: [
+  ["In the 2019 Gavin & Stacey Christmas special, who proposes at the end?", "Nessa", "Stacey", "Gwen", "Pam"],
+  ["In Only Fools and Horses (1996), what did the Trotters sell to become millionaires?", "An old watch", "A painting", "A vase", "A Reliant Robin"],
+  ["Which band had the 1973 hit 'Merry Xmas Everybody'?", "Slade", "Wizzard", "Wham!", "T. Rex"],
+  ["Who sang 'Fairytale of New York' with The Pogues?", "Kirsty MacColl", "Sinéad O'Connor", "Cyndi Lauper", "Annie Lennox"],
+  ["Which band sang 'I Wish It Could Be Christmas Everyday'?", "Wizzard", "Slade", "Mud", "The Wombles"],
+  ["Which shop's Christmas advert starred Monty the Penguin?", "John Lewis", "Marks & Spencer", "Sainsbury's", "Boots"],
+  ["Which supermarket's Christmas adverts star Kevin the Carrot?", "Aldi", "Lidl", "Tesco", "Asda"],
+  ["Who plays Buddy in the film Elf?", "Will Ferrell", "Jim Carrey", "Adam Sandler", "Ben Stiller"],
+  ["What is the name of the boy left behind in Home Alone?", "Kevin", "Charlie", "Danny", "Harry"],
+  ["In The Muppet Christmas Carol, who plays Bob Cratchit?", "Kermit the Frog", "Fozzie Bear", "Gonzo", "Miss Piggy"],
+  ["Who plays Scrooge in The Muppet Christmas Carol?", "Michael Caine", "Patrick Stewart", "Jim Carrey", "Bill Murray"],
+  ["In Love Actually, what is Hugh Grant's character's job?", "Prime Minister", "Writer", "Rock star", "Teacher"],
+  ["Who wrote 'Do They Know It's Christmas?'", "Bob Geldof and Midge Ure", "Bono and Sting", "George Michael and Elton John", "Paul McCartney and Phil Collins"],
+  ["Who sings 'All I Want for Christmas Is You'?", "Mariah Carey", "Whitney Houston", "Celine Dion", "Kylie Minogue"],
+  ["Who sang 'Walking in the Air' in the 1982 film The Snowman?", "Peter Auty", "Aled Jones", "Charlotte Church", "Bryn Terfel"],
+  ["In Die Hard, which building does the action take place in?", "Nakatomi Plaza", "The Empire State Building", "Willis Tower", "Rockefeller Center"],
+  ["Which soap is famous for big Christmas Day drama in Albert Square?", "EastEnders", "Coronation Street", "Emmerdale", "Hollyoaks"],
+]};
+PACKS.xnum = { title: "Christmas by Numbers", type: "number", blurb: "Type a number. Nearest guess takes the points.", qs: [
+  ["In 'The Twelve Days of Christmas', how many gifts are given in total?", 364, "gifts"],
+  ["In which year was Band Aid's 'Do They Know It's Christmas?' first released?", 1984, ""],
+  ["In which year was the film Home Alone released?", 1990, ""],
+  ["In which year was Love Actually released?", 2003, ""],
+  ["In which year was Die Hard released?", 1988, ""],
+  ["In which year was Dickens' 'A Christmas Carol' first published?", 1843, ""],
+  ["How many points does a snowflake usually have?", 6, "points"],
+  ["In which year did 'Fairytale of New York' come out?", 1987, ""],
+  ["In which year was The Snowman first shown on TV?", 1982, ""],
+  ["In which year did Mariah Carey release 'All I Want for Christmas Is You'?", 1994, ""],
+  ["In which year was 'Jingle Bells' first published?", 1857, ""],
+  ["In which year was 'Silent Night' first performed?", 1818, ""],
+  ["In which year did Slade release 'Merry Xmas Everybody'?", 1973, ""],
+  ["In which year was the Gavin & Stacey Christmas special shown, ten years after the last series?", 2019, ""],
+  ["Including Marley, how many ghosts visit Scrooge?", 4, "ghosts"],
+  ["In which year was Coca-Cola's 'Holidays Are Coming' advert first shown?", 1995, ""],
+]};
+PACKS.xworld = { title: "Christmas Traditions", type: "tf", blurb: "Traditions from Wales to Japan. True or false?", qs: [
+  ["In Japan, a KFC meal is a popular Christmas dinner.", true],
+  ["In Norway, people hide their brooms on Christmas Eve.", true],
+  ["In Australia, Christmas falls in the middle of winter.", false],
+  ["In Iceland, children are visited by 13 Yule Lads.", true],
+  ["In the Netherlands, Sinterklaas arrives by boat from Spain.", true],
+  ["In Sweden, millions watch a Donald Duck cartoon on Christmas Eve.", true],
+  ["In Italy, presents are traditionally brought by a witch called La Befana.", true],
+  ["In Russia, Christmas Day is usually celebrated on 25 December.", false],
+  ["The Welsh Mari Lwyd tradition involves a horse's skull carried door to door.", true],
+  ["Christmas Day is a public holiday across mainland China.", false],
+  ["The Christmas cracker was invented in France.", false],
+  ["Mince pies originally contained meat.", true],
+  ["Boxing Day is named after boxing matches held on 26 December.", false],
+  ["Norway gives London the Trafalgar Square tree as thanks for help in the Second World War.", true],
+  ["In the Philippines, the Christmas season can start as early as September.", true],
+  ["In Ukraine, spider-web decorations on the tree are said to bring good luck.", true],
+]};
+PACKS.xodd = { title: "Festive Odd One Out", type: "odd", blurb: "Four answers. Tap the one that doesn't belong.", qs: [
+  ["Rudolph", "Dasher", "Prancer", "Vixen", "The rest are in the original 1823 poem about Santa's reindeer."],
+  ["Easter egg", "Mince pie", "Christmas pudding", "Yule log", "The rest are Christmas foods."],
+  ["Mr Bumble", "Bob Cratchit", "Tiny Tim", "Jacob Marley", "The rest are in A Christmas Carol. Mr Bumble is from Oliver Twist."],
+  ["Silver", "Gold", "Frankincense", "Myrrh", "The rest were the Wise Men's gifts."],
+  ["Love Actually", "Elf", "Home Alone 2", "Miracle on 34th Street", "The rest are set in New York."],
+  ["Last Christmas", "Silent Night", "Away in a Manger", "O Holy Night", "The rest are traditional carols."],
+  ["Three wise men", "Two turtle doves", "Three French hens", "Four calling birds", "The rest are gifts in The Twelve Days of Christmas."],
+  ["Tulip", "Poinsettia", "Holly", "Mistletoe", "The rest are Christmas plants."],
+  ["Mariah Carey", "Wham!", "Slade", "Wizzard", "The rest are British acts with classic Christmas hits."],
+  ["Hamlet", "Cinderella", "Aladdin", "Dick Whittington", "The rest are classic pantomimes."],
+  ["Halloween", "Christmas Eve", "Boxing Day", "New Year's Eve", "The rest are in late December."],
+  ["Bonjour", "Nadolig Llawen", "Joyeux Noël", "Feliz Navidad", "The rest mean Merry Christmas."],
+  ["Jack Frost", "Father Christmas", "Saint Nicholas", "Kris Kringle", "The rest are other names for Santa."],
+]};
+PACKS.xbuzz = { title: "Christmas Buzzer Round", type: "buzz", blurb: "First to buzz answers out loud. Wrong answers lock you out.", qs: [
+  ["What was the name of Scrooge's dead business partner?", "Jacob Marley"],
+  ["Which of Santa's reindeer shares its name with a female fox?", "Vixen"],
+  ["What is the Welsh name for Father Christmas?", "Siôn Corn"],
+  ["How many gold rings are given in The Twelve Days of Christmas?", "Five"],
+  ["Which composer wrote the music for The Nutcracker ballet?", "Tchaikovsky"],
+  ["Which Dickens character says 'God bless us, every one'?", "Tiny Tim"],
+  ["In which city is most of the film Elf set?", "New York"],
+  ["What is the name of the town in It's a Wonderful Life?", "Bedford Falls"],
+  ["What do we call the four weeks leading up to Christmas?", "Advent"],
+  ["What is the German word for a Christmas market?", "Weihnachtsmarkt (or Christkindlmarkt)"],
+  ["What is the little Who girl called in The Grinch?", "Cindy Lou Who"],
+  ["What is Bing Crosby's best-known Christmas song?", "White Christmas"],
+  ["What is the candlelit service with an orange, a candle and a red ribbon called?", "Christingle"],
+  ["In which modern-day country was the real Saint Nicholas born?", "Turkey"],
+  ["What hot, spiced drink is a Christmas market favourite?", "Mulled wine (Glühwein)"],
+  ["Which Christmas plant has red leaves and comes from Mexico?", "Poinsettia"],
+]};
+// Carol tunes: public-domain carols, played as generated notes. Reuses the carols already in Name That Tune.
+{
+  const tq = t => PACKS.tune.qs.find(q => q[0] === t);
+  const k = (t, w1, w2, w3) => { const q = tq(t); return [q[0], q[1], w1, w2, w3, q[5]]; };
+  PACKS.xcarols = { title: "Carol Tunes", type: "tune", blurb: "Listen to the TV. Name the carol before it finishes.", qs: [
+    k("Jingle Bells", "Deck the Halls", "We Wish You a Merry Christmas", "Ding Dong Merrily on High"),
+    k("Silent Night", "Away in a Manger", "O Holy Night", "Once in Royal David's City"),
+    k("We Wish You a Merry Christmas", "Deck the Halls", "The Holly and the Ivy", "Jingle Bells"),
+    k("Deck the Halls", "We Wish You a Merry Christmas", "Ding Dong Merrily on High", "The Holly and the Ivy"),
+    k("Auld Lang Syne", "Greensleeves", "Silent Night", "O Christmas Tree"),
+    ["O Come All Ye Faithful", "G4:1 G4:2 D4:1 G4:1 A4:2 D4:2 B4:1 A4:1 B4:1 C5:1 B4:2 A4:1", "Hark! The Herald Angels Sing", "Joy to the World", "The First Noel", 110],
+    ["Good King Wenceslas", "G4:1 G4:1 G4:1 A4:1 G4:1 G4:1 D4:2 E4:1 D4:1 E4:1 F#4:1 G4:2 G4:2", "God Rest Ye Merry Gentlemen", "While Shepherds Watched", "The Holly and the Ivy", 120],
+    ["Hark! The Herald Angels Sing", "D4:1 G4:1 G4:1.5 F#4:.5 G4:1 B4:1 B4:1 A4:1 D5:1 D5:1 D5:1.5 C5:.5 B4:1 A4:1 B4:2", "O Come All Ye Faithful", "Joy to the World", "O Little Town of Bethlehem", 120],
+    ["Joy to the World", "D5:2 C#5:.75 B4:.25 A4:1.5 G4:.5 F#4:1 E4:1 D4:2 A4:.5 B4:1.5 B4:.5 C#5:1.5 C#5:.5 D5:3", "Hark! The Herald Angels Sing", "O Come All Ye Faithful", "The First Noel", 110],
+    ["O Christmas Tree", "D4:1 G4:.75 G4:.25 G4:1.5 A4:.5 B4:.75 B4:.25 B4:1.5 B4:.5 A4:.5 B4:.5 C5:1 F#4:1 A4:1 G4:2", "Silent Night", "Away in a Manger", "Deck the Halls", 100],
+    ["God Rest Ye Merry Gentlemen", "E4:1 E4:1 B4:1 B4:1 A4:1 G4:1 F#4:1 E4:1 D4:1 E4:1 F#4:1 G4:1 A4:1 B4:3", "Good King Wenceslas", "The Holly and the Ivy", "We Three Kings", 140],
+    ["Away in a Manger", "C5:1 C5:1.5 Bb4:.5 A4:1 A4:1.5 G4:.5 F4:1 F4:1 E4:1 D4:1 C4:2", "Silent Night", "Once in Royal David's City", "O Little Town of Bethlehem", 110],
+  ]};
+  const c = t => PACKS.xcarols.qs.find(q => q[0] === t);
+  const kc = (t, w1, w2, w3) => { const q = c(t); return [q[0], q[1], w1, w2, w3, q[5]]; };
+  PACKS.kxtune = { title: "Christmas Tunes", type: "tune", blurb: "Listen to the TV. Which Christmas song is it?", qs: [
+    kc("Jingle Bells", "We Wish You a Merry Christmas", "Twinkle Twinkle Little Star", "Happy Birthday"),
+    kc("We Wish You a Merry Christmas", "Jingle Bells", "Old MacDonald Had a Farm", "Happy Birthday"),
+    kc("Silent Night", "Twinkle Twinkle Little Star", "Away in a Manger", "Row, Row, Row Your Boat"),
+    kc("Deck the Halls", "Jingle Bells", "Mary Had a Little Lamb", "We Wish You a Merry Christmas"),
+    kc("O Christmas Tree", "Jingle Bells", "Silent Night", "Twinkle Twinkle Little Star"),
+    kc("Away in a Manger", "Silent Night", "Twinkle Twinkle Little Star", "Happy Birthday"),
+  ]};
+}
+PACKS.kxemoji = { title: "Christmas Cartoon Emojis", type: "emoji", blurb: "Guess the Christmas film from the emojis.", qs: [
+  ["❄️👸⛄", "Frozen", "Tangled", "Moana", "Brave"],
+  ["💚😠🎄", "The Grinch", "Shrek", "Trolls", "Monsters, Inc."],
+  ["🚂❄️🎅", "The Polar Express", "Thomas the Tank Engine", "Cars", "Toy Story"],
+  ["⛄👦✈️", "The Snowman", "Frozen", "Up", "Peter Pan"],
+  ["🦌🔴👃", "Rudolph the Red-Nosed Reindeer", "Bambi", "The Lion King", "Madagascar"],
+  ["🎅👦🎁🌍", "Arthur Christmas", "Toy Story", "Up", "Cars"],
+  ["✉️🎅🧸", "Klaus", "Paddington", "Toy Story", "The Polar Express"],
+  ["🧸🇵🇪🍊", "Paddington", "Winnie the Pooh", "Toy Story", "The Jungle Book"],
+]};
+PACKS.kxtf = { title: "Christmas True or False", type: "tf", blurb: "Just two buttons. True or false?", qs: [
+  ["Santa's sleigh is pulled by reindeer.", true],
+  ["Snowmen melt when it gets warm.", true],
+  ["Christmas Day is in July.", false],
+  ["Rudolph has a blue nose.", false],
+  ["Elves help Santa make the toys.", true],
+  ["Penguins live at the North Pole with Santa.", false],
+  ["Reindeer are real animals.", true],
+  ["Christmas trees are usually palm trees.", false],
+  ["People pull crackers at Christmas dinner.", true],
+  ["Snow is made of sugar.", false],
+  ["Holly has red berries.", true],
+  ["Mince pies are made with mice.", false],
+  ["In Australia, Christmas is often hot and sunny.", true],
+  ["Santa comes down the chimney in the stories.", true],
+]};
+PACKS.kxodd = { title: "Christmas Odd One Out", type: "odd", blurb: "Four answers. Tap the one that doesn't belong.", qs: [
+  ["Bucket and spade", "Stocking", "Cracker", "Christmas tree", "The rest are Christmas things."],
+  ["Sun cream", "Snowman", "Snowflake", "Sledge", "The rest are for snowy days."],
+  ["Pumpkin", "Turkey", "Sprouts", "Roast potatoes", "The rest are eaten at Christmas dinner."],
+  ["Easter bunny", "Santa", "Elf", "Reindeer", "The rest are from Christmas stories."],
+  ["Lion", "Reindeer", "Polar bear", "Penguin", "The rest live where it's icy and cold."],
+  ["Spade", "Bauble", "Tinsel", "Star", "The rest go on a Christmas tree."],
+  ["Swimsuit", "Scarf", "Gloves", "Woolly hat", "The rest keep you warm."],
+  ["Ice lolly", "Candy cane", "Mince pie", "Gingerbread man", "The rest are Christmas treats."],
+]};
+
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") wakeLock(); });
 
 // ===== SOUND & MUSIC (all generated in the browser, no audio files) =====
@@ -788,32 +976,34 @@ async function connect(room, onMsg, onStatus) {
 
 // ===== SETTINGS UI (shared by TV and host phone) =====
 function settingsHTML(st, fresh, where, famCount) {
-  const kg = st.mode === "kids", list = kg ? (st.kidRounds || KIDS_DEFAULT) : st.rounds;
-  const chips = (kg ? KIDS_ORDER : ROUND_ORDER).map(id => {
+  const kg = st.mode === "kids", cfg = roundCfg(st), list = activeRounds(st);
+  const chips = cfg.order.map(id => {
     const r = roundInfo(id), on = list.includes(id), dis = id === "family" && !famCount;
     const f = fresh && fresh[id] != null ? `<small>${fresh[id]} new</small>` : "";
     return `<button class="chip ${on ? "on" : ""} ${dis ? "off" : ""}" data-round="${id}" ${dis ? "disabled" : ""}>${esc(r.title)} ${dis ? "<small>set up on host phone</small>" : f}</button>`;
   }).join("");
   const pick = (k, vals, fmt) => vals.map(v => `<button class="chip ${st[k] === v ? "on" : ""}" data-set="${k}" data-val="${v}">${fmt ? fmt(v) : v}</button>`).join("");
-  return `<div class="setrow"><b>Who's playing</b>${pick("mode", ["all", "kids"], v => v === "kids" ? "🧒 Kids' game (grown-ups watch)" : "Everyone")}</div>
+  return `<div class="setrow"><b>Edition</b>${pick("edition", ["std", "xmas"], v => v === "xmas" ? "🎄 Christmas edition" : "Standard")}</div>
+    <div class="setrow"><b>Who's playing</b>${pick("mode", ["all", "kids"], v => v === "kids" ? "🧒 Kids' game (grown-ups watch)" : "Everyone")}</div>
     <div class="setrow"><b>Rounds (in order)</b>${chips}</div>
     <div class="setrow"><b>Questions</b>${pick("perRound", [4, 5, 6, 8, 10], v => v + " per round")}</div>
     <div class="setrow"><b>Timer</b>${pick("timer", [15, 20, 30, 45], v => v + " sec")}</div>
     <div class="setrow"><b>Host</b>${pick("hostMode", ["host", "play"], v => v === "host" ? "Host only (sees answers)" : "Host & play")}</div>
     <div class="setrow"><b>Look</b>${pick("theme", ["auto", "classic", "xmas"], v => ({ auto: "Auto (Christmas in December)", classic: "Classic", xmas: "Christmas" })[v])}</div>
-    ${!kg && st.rounds.includes("ai") ? `<div class="setrow"><b>Anything topic</b><input id="ai-topic-${where}" data-aitopic placeholder="e.g. Gavin & Stacey, 80s toys, Wales" value="${esc(st.aiTopic || "")}" style="flex:1 1 14em"></div>` : ""}
+    ${!kg && list.includes("ai") ? `<div class="setrow"><b>Anything topic</b><input id="ai-topic-${where}" data-aitopic placeholder="e.g. Gavin & Stacey, 80s toys, Wales" value="${esc(st.aiTopic || "")}" style="flex:1 1 14em"></div>` : ""}
+    ${st.edition === "xmas" && where !== "tv" ? `<div class="setrow"><b>Christmas edition</b><span class="muted">Every round is Christmas themed, with its own questions, so the standard game's questions aren't used up. ${kg ? "The kids' game has its own Christmas rounds too." : "Christmas Elves is a kids-only round you can add."}</span></div>` : ""}
     ${kg && where !== "tv" ? `<div class="setrow"><b>Kids' game</b><span class="muted">Every round is just for the kids. Only phones ticked "A child is playing" can answer, and only kids are on the scoreboard. Grown-ups can join to watch along or just host. Easy questions, a longer timer and no buzzer round.</span></div>` : ""}
     <div class="setrow"><b>How it works</b><span class="muted">Tap rounds to add or remove them. Kids' Corner is for kids only and is skipped if no kids join. The Family Round uses questions set up on the host's phone and is skipped once they've all been played. Everyone gets one Joker to double a round. The last round scores double.</span></div>`;
 }
 function settingsClick(e, st) {
   const b = e.target.closest("[data-round],[data-set]"); if (!b) return null;
   if (b.dataset.round) {
-    const id = b.dataset.round;
-    if (st.mode === "kids") {
-      let r = (st.kidRounds || KIDS_DEFAULT).slice();
+    const id = b.dataset.round, cfg = roundCfg(st);
+    if (cfg.key !== "rounds") {
+      let r = activeRounds(st).slice();
       r = r.includes(id) ? r.filter(x => x !== id) : r.concat(id);
-      r.sort((a, c) => KIDS_ORDER.indexOf(a) - KIDS_ORDER.indexOf(c));
-      return { kidRounds: r };
+      r.sort((a, c) => cfg.order.indexOf(a) - cfg.order.indexOf(c));
+      return { [cfg.key]: r };
     }
     let r = st.rounds.slice();
     r = r.includes(id) ? r.filter(x => x !== id) : r.concat(id);
@@ -822,6 +1012,7 @@ function settingsClick(e, st) {
     return { rounds: r };
   }
   const k = b.dataset.set, raw = b.dataset.val;
+  if (k === "edition") return raw === "xmas" ? { edition: "xmas", theme: "xmas" } : { edition: "std", theme: "auto" };
   if (k === "mode") return raw === "kids" ? { mode: "kids", timer: Math.max(30, st.timer || 0) } : { mode: "all", timer: Math.min(st.timer || 20, 20) };
   return { [k]: isNaN(raw) ? raw : Number(raw) };
 }
@@ -838,12 +1029,12 @@ function tvMain() {
   if (!S) {
     S = {
       room: roomCode(), token: uid() + uid(), phase: "lobby", players: {}, order: [],
-      settings: { rounds: DEFAULT_ROUNDS.slice(), kidRounds: KIDS_DEFAULT.slice(), mode: "all", perRound: 5, timer: 20, hostMode: "host", aiTopic: "", theme: "auto" },
+      settings: { rounds: DEFAULT_ROUNDS.slice(), kidRounds: KIDS_DEFAULT.slice(), xRounds: XMAS_DEFAULT.slice(), xKidRounds: XKIDS_DEFAULT.slice(), edition: "std", mode: "all", perRound: 5, timer: 20, hostMode: "host", aiTopic: "", theme: "auto" },
       audio: { music: true, vol: .8 },
       plan: [], ri: 0, qi: 0, answers: {}, res: null, buzz: null, qEnds: 0, pausedLeft: null, qStart: 0, started: false,
     };
   }
-  S.settings.theme = S.settings.theme || "auto"; S.settings.mode = S.settings.mode || "all"; S.settings.kidRounds = S.settings.kidRounds || KIDS_DEFAULT.slice(); S.audio = S.audio || { music: true, vol: .8 };
+  S.settings.theme = S.settings.theme || "auto"; S.settings.mode = S.settings.mode || "all"; S.settings.kidRounds = S.settings.kidRounds || KIDS_DEFAULT.slice(); S.settings.edition = S.settings.edition || "std"; S.settings.xRounds = S.settings.xRounds || XMAS_DEFAULT.slice(); S.settings.xKidRounds = S.settings.xKidRounds || XKIDS_DEFAULT.slice(); S.audio = S.audio || { music: true, vol: .8 };
   Sound.setVol(S.audio.vol, S.audio.music);
   history.replaceState(null, "", "?tv=" + S.room + (LOCAL ? "&local=1" : ""));
   let T = null, conn = "connecting", lastShell = "", lastTick = -1, opened = !!S.started, tuneTimers = [], suspenseTimer = null, finalMusicAt = 0;
@@ -961,9 +1152,9 @@ function tvMain() {
   async function startGame() {
     if (!playersArr().length) { toast("Nobody's joined yet. Scan the code to join."); return; }
     const kidsGame = S.settings.mode === "kids";
-    let rounds = (kidsGame ? (S.settings.kidRounds || KIDS_DEFAULT) : S.settings.rounds).slice();
+    let rounds = activeRounds(S.settings).slice();
     if (kidsGame && !playersArr().some(p => p.kid)) { toast("It's a kids' game, but no kids have joined yet. Tick \"A child is playing\" when joining."); return; }
-    if (!kidsGame && rounds.includes("kids") && !playersArr().some(p => p.kid)) { rounds = rounds.filter(id => id !== "kids"); toast("No kids have joined, so Kids' Corner is skipped."); }
+    if (!kidsGame && rounds.some(id => KIDS_ONLY.includes(id)) && !playersArr().some(p => p.kid)) { const skip = rounds.filter(id => KIDS_ONLY.includes(id)).map(id => roundInfo(id).title).join(" and "); rounds = rounds.filter(id => !KIDS_ONLY.includes(id)); toast(`No kids have joined, so ${skip} is skipped.`); }
     if (!rounds.length) { toast("Pick at least one round."); return; }
     S.phase = "loading"; broadcast();
     const plan = [];
@@ -977,8 +1168,8 @@ function tvMain() {
       } else if (id === "ai") {
         try { qs = await aiRound(S.settings.aiTopic, S.settings.perRound); title = S.settings.aiTopic; blurb = "A round written just for tonight."; }
         catch (e) { toast("Couldn't write the Anything Round, so it's General Knowledge instead."); qs = pickQs("gk", S.settings.perRound); title = "General Knowledge"; blurb = PACKS.gk.blurb; }
-      } else qs = pickQs(id, id === "buzz" ? Math.min(S.settings.perRound + 2, 8) : S.settings.perRound);
-      plan.push({ id, title, type: qs[0] ? qs[0].type : info.type, blurb, qs, kids: kidsGame || id === "kids" });
+      } else qs = pickQs(id, PACKS[id].type === "buzz" ? Math.min(S.settings.perRound + 2, 8) : S.settings.perRound);
+      plan.push({ id, title, type: qs[0] ? qs[0].type : info.type, blurb, qs, kids: kidsGame || KIDS_ONLY.includes(id) });
     }
     if (!plan.length) { toast("No rounds left to play. Pick some more rounds."); S.phase = "lobby"; return broadcast(); }
     plan[plan.length - 1].dbl = plan.length > 1;
@@ -1237,7 +1428,7 @@ function tvMain() {
           <div class="disp" style="font-size:2.2rem">Who's playing · ${playersArr().length}</div>
           <div class="players">${playersArr().map(ptile).join("") || `<span class="muted" style="font-size:1.2rem">Waiting for the first player…</span>`}</div>
           <div class="setup" data-settings>${settingsHTML(S.settings, freshCounts(), "tv", Object.keys(fam).length)}
-            ${S.settings.rounds.includes("ai") && !hasKey ? `<div class="setrow"><b>Claude key</b><input id="ai-key" type="password" placeholder="Paste your Anthropic API key (stays on this device)" style="flex:1 1 14em"><button class="btn" data-a="savekey">Save</button></div>` : ""}
+            ${activeRounds(S.settings).includes("ai") && S.settings.mode !== "kids" && !hasKey ? `<div class="setrow"><b>Claude key</b><input id="ai-key" type="password" placeholder="Paste your Anthropic API key (stays on this device)" style="flex:1 1 14em"><button class="btn" data-a="savekey">Save</button></div>` : ""}
             <div class="hostbox"><div class="qr" id="qr-host"></div><div><b>Host controls on your phone</b><div class="muted">Scan with the host's phone to run the game from the sofa.</div></div>
               <div style="margin-left:auto;display:flex;flex-direction:column;gap:.5rem"><button class="btn gold" data-a="next">Start the quiz</button>${musicBtn()}<button class="btn" data-a="resetused" style="font-size:.8rem">Reset used questions</button></div></div>
           </div>
@@ -1546,7 +1737,7 @@ function phoneMain(room, hostKey) {
     return `<div class="card"><h2>Family Round</h2><p>${mine ? `${mine} question${mine > 1 ? "s" : ""} on this phone · ${s.famCount || 0} on the TV` : "Add your own questions and family photos."}</p>
       <button class="btn big" data-a="editfam">${mine ? "Add or edit family questions" : "Set up the Family Round"}</button></div>
       <div class="card"><h2>Game settings</h2><div class="setup" data-settings>${settingsHTML(s.settings, s.fresh, "ph", s.famCount || 0)}</div>
-      ${s.settings.rounds.includes("ai") ? `<p class="muted" style="font-size:14px">The Anything Round needs your Claude key saved on the TV screen.</p>` : ""}</div>
+      ${activeRounds(s.settings).includes("ai") && s.settings.mode !== "kids" ? `<p class="muted" style="font-size:14px">The Anything Round needs your Claude key saved on the TV screen.</p>` : ""}</div>
       <div class="card"><h2>Players</h2><div class="plist">${s.players.map(p => `<div class="pi"><span class="mini" style="background:${p.color}">${esc(initials(p.name))}</span>${esc(p.name)}${p.kid ? " 🧒" : ""}${p.members ? ` <span class="muted">+ ${esc(p.members)}</span>` : ""}<button class="x" data-kick="${p.id}">Remove</button></div>`).join("") || `<span class="muted">Nobody yet</span>`}</div></div>`;
   }
   function render() {

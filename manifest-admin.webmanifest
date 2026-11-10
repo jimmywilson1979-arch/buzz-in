@@ -1,16 +1,26 @@
 {
-  "id": "./?admin",
+  "id": "./admin.html",
   "name": "Buzz In Admin",
   "short_name": "BI Admin",
   "description": "Owner admin for Buzz In: host lock, host codes and sign-ups.",
-  "start_url": "./?admin",
-  "scope": "./",
+  "start_url": "./admin.html",
+  "scope": "./admin.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#090b14",
   "theme_color": "#090b14",
   "icons": [
-    { "src": "icon-admin-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "icon-admin-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "icon-admin-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-admin-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ]
 }

@@ -42,3 +42,8 @@ Bigger or Smaller and Kids' Odd One Out.
 
 Used questions are remembered on the TV device so replays get fresh ones.
 Live sync runs over Supabase Realtime (broadcast only, nothing stored).
+
+## Files
+- `index.html` – the game page (TV, phones, Family Round set-up, TV guide)
+- `admin.html` – owner admin page; installs as its own home-screen app ("BI Admin")
+- `app.js`, `app.css` – shared code and styles for both pages. Bump the `?v=` on both pages when they change.

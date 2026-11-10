@@ -372,6 +372,8 @@ async function tvMain() {
     S.totalTurns = S.queue.length;
     nextTurn();
   }
+  function playAgain() { if (eligible().length >= 2) start(); else toLobby(); }
+  function toLobby() { S.phase = "lobby"; S.turn = null; push(); }
   function nextTurn() {
     let id; while ((id = S.queue.shift())) { const p = S.players[id]; if (p && alive(p) && plays(p)) break; }
     if (!id) { S.phase = "end"; S.turn = null; feedAdd(""); push(); return; }
@@ -467,9 +469,10 @@ async function tvMain() {
     const isHost = m.id === hostId(), t = S.turn;
     switch (m.t) {
       case "hi": break;
-      case "set": if (isHost && S.phase === "lobby" && SETS.some(x => x[0] === m.k && x[2].some(v => v[0] === m.v))) { S.settings[m.k] = m.v; push(); } break;
+      case "set": if (isHost && (S.phase === "lobby" || S.phase === "end") && SETS.some(x => x[0] === m.k && x[2].some(v => v[0] === m.v))) { S.settings[m.k] = m.v; push(); } break;
       case "start": if (isHost && S.phase === "lobby") start(); break;
-      case "again": if (isHost && S.phase === "end") { S.phase = "lobby"; S.turn = null; push(); } break;
+      case "again": if (isHost && S.phase === "end") playAgain(); break;
+      case "lobby": if (isHost && S.phase === "end") toLobby(); break;
       case "skip": if ((isHost || (t && t.drawer === m.id)) && (S.phase === "draw" || S.phase === "choose")) endTurn(true); break;
       case "choose": if (t && t.drawer === m.id) choose(m.i); break;
       case "ink": if (S.phase === "draw" && t && t.drawer === m.id) { for (const [sid, c, w, pp] of (m.ops || []).slice(0, 50)) { let s = strokes.get(sid); if (!s) strokes.set(sid, s = { c: String(c).slice(0, 9), w: +w || 12, p: [] }); if (Array.isArray(pp)) s.p.push(...pp.slice(0, 2000)); } dirty = true; } break;
@@ -512,7 +515,10 @@ async function tvMain() {
         <div class="panel"><h3>Artists</h3><div class="plist" id="plist"></div>
           <button class="btn gold big" id="start">Start the game</button><div class="lobbynote" id="snote"></div><div id="sets"></div><div class="lobbynote">${esc(conn)}</div></div></main>`
       : S.phase === "end" ? `<main class="end"><div class="gallery" id="gal"></div>
-        <div class="panel"><h3>${S.settings.edition === "xmas" ? "The Christmas Exhibition" : "The Exhibition"}</h3><div class="lobbynote">Tap a picture to save it as a framed print.</div><div class="plist podium" id="plist"></div><button class="btn gold big" id="again">Play again</button></div></main>`
+        <div class="panel"><h3 id="exh"></h3><div class="lobbynote">Tap a picture to save it as a framed print.</div><div class="plist podium" id="plist"></div>
+          <div class="lobbynote" style="margin-top:.4em"><b style="color:var(--fg)">Next game</b> · change anything below, then play again. Same players, no need to rejoin.</div>
+          <button class="btn gold big" id="again">▶ Play again</button><div class="lobbynote" id="snote"></div><div id="sets"></div>
+          <button class="btn" id="tolobby">Back to the lobby (to add players)</button></div></main>`
       : `<main class="tvmain">
         <div class="framecol"><div class="frame"><div class="mat"><canvas id="art" width="900" height="1200"></canvas><div class="overlay" id="ov"></div></div></div><div class="plaque" id="plaque"></div></div>
         <div class="panel"><div class="timer" id="timer"></div><div class="plist" id="plist"></div><div class="feed" id="feed"></div><button class="btn" id="skip" style="margin-top:auto">Skip this one</button></div></main>`;
@@ -545,7 +551,15 @@ async function tvMain() {
       $("#sets").onclick = e => { const b = e.target.closest("[data-set]"); if (b) { const { k, v } = setFromBtn(b); S.settings[k] = v; push(); } };
       $("#start").onclick = start;
     }
-    if (S.phase === "end") { $("#again").onclick = () => { S.phase = "lobby"; S.turn = null; push(); }; return; }
+    if (S.phase === "end") {
+      $("#exh").textContent = S.gallery.length && S.gallery[0].xmas ? "The Christmas Exhibition" : "The Exhibition";
+      $("#sets").innerHTML = setsHTML(S.settings);
+      $("#sets").onclick = e => { const b = e.target.closest("[data-set]"); if (b) { const { k, v } = setFromBtn(b); S.settings[k] = v; push(); } };
+      const n = eligible().length;
+      $("#snote").textContent = n < 2 ? (S.settings.who === "kids" ? "Kids only needs at least 2 kids. Play again will open the lobby so more can join." : "Needs at least 2 players.") : "";
+      $("#again").onclick = playAgain; $("#tolobby").onclick = toLobby;
+      return;
+    }
     if (!t) return;
     const d = S.players[t.drawer], dn = d ? esc(d.name) : "";
     const pq = $("#plaque"), ov = $("#ov");
@@ -736,7 +750,8 @@ async function phoneMain(codeRaw) {
     else if (r === "end") {
       const sorted = ST.players.slice().sort((a, b) => b.score - a.score), pos = sorted.findIndex(x => x.id === id) + 1;
       body = `<div class="center"><div class="bigemoji">${pos === 1 ? "🏆" : "🖼️"}</div><h2>${pos === 1 ? "You won!" : `You came ${ord(pos)}`}</h2><p style="font-size:1.4rem;font-weight:800;color:var(--gold)">${mine().score} points</p>
-        <p class="muted">Your pictures are in the exhibition on the TV.</p>${isHost ? `<button class="btn gold big" id="again">Play again</button>` : ""}</div>`;
+        <p class="muted">Your pictures are in the exhibition on the TV.</p><p class="muted">${me.kid ? "🧒 Child player" : "Grown-up player"} · <button id="edit" style="text-decoration:underline;color:var(--muted)">change</button></p></div>
+        ${isHost ? `<div style="font-weight:800">Next game</div><button class="btn gold big" id="again">▶ Play again</button><div class="muted" id="snote" style="text-align:center"></div><div id="sets"></div><button class="btn" id="tolobby">Back to the lobby</button>` : `<p class="muted" style="text-align:center">Waiting for ${esc((ST.players.find(x => x.id === ST.host) || {}).name || "the host")} to start the next game.</p>`}`;
     }
     app.innerHTML = `<div class="pw">${top(skipBtn)}<div class="pbody">${body}</div></div>`;
     // wire up
@@ -745,6 +760,7 @@ async function phoneMain(codeRaw) {
     on("#edit", () => joinForm());
     on("#start", () => send({ t: "start" }));
     on("#again", () => send({ t: "again" }));
+    on("#tolobby", () => send({ t: "lobby" }));
     document.querySelectorAll("[data-c]").forEach(b => b.onclick = () => { send({ t: "choose", i: +b.dataset.c }); buzzPhone(20); });
     document.querySelectorAll("[data-k]").forEach(b => b.onclick = () => { if (!b.classList.contains("no")) { send({ t: "kpick", i: +b.dataset.k }); buzzPhone(15); } });
     on("#bz", () => { send({ t: "buzz" }); buzzPhone(60); });
@@ -757,10 +773,11 @@ async function phoneMain(codeRaw) {
     festive(!!(ST && ST.settings.edition === "xmas"), 22);
     const tm = $("#ptm");
     if (tm) { const s = ST && ST.phase === "draw" ? Math.ceil(Math.max(0, ST.paused ? ST.left : localEnd - Date.now()) / 1000) : null; tm.textContent = s == null ? "" : (ST.paused ? "⏸" : "") + s; }
-    if (r === "lobby" && $("#sets")) {
+    if ((r === "lobby" || r === "end") && $("#sets")) {
       $("#sets").innerHTML = setsHTML(ST.settings);
       const n = ST.players.filter(p => ST.settings.who === "kids" ? p.kid : true).length;
-      $("#start").disabled = n < 2; $("#snote").textContent = n < 2 ? "Waiting for more players…" : `${n} artists ready`;
+      if ($("#start")) $("#start").disabled = n < 2;
+      $("#snote").textContent = n < 2 ? (r === "end" ? "Not enough players for these settings yet. Play again will open the lobby." : "Waiting for more players…") : `${n} artists ready`;
     }
     if (r === "type") { const h = $("#hint"); if (h) h.textContent = ST.hint || ""; const m = $("#mine"); if (m) m.innerHTML = myGuesses.slice(-6).map(g => `<span class="chip">${esc(g)}</span>`).join(""); }
     if (r === "buzz") {

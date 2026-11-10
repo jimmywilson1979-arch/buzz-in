@@ -12,6 +12,15 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Buzz In">
+<script>
+// The admin page installs as its own home-screen app, opening straight to ?admin
+if (new URLSearchParams(location.search).has("admin")) {
+  document.querySelector('link[rel="manifest"]').href = "manifest-admin.webmanifest";
+  document.querySelector('meta[name="apple-mobile-web-app-title"]').content = "BI Admin";
+  document.querySelectorAll('link[rel="apple-touch-icon"]').forEach(l => l.href = "icon-admin-192.png");
+  document.title = "Buzz In Admin";
+}
+</script>
 <meta property="og:type" content="website">
 <meta property="og:title" content="Buzz In – Family Quiz Night">
 <meta property="og:description" content="The TV asks the questions, your phones are the buzzers. Name That Tune, Family Round, Kids' Corner and more.">

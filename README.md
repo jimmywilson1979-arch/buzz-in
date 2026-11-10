@@ -56,8 +56,21 @@ Christmas Cartoon Emojis, Christmas True or False and Christmas Odd One Out.
 Used questions are remembered on the TV device so replays get fresh ones.
 Live sync runs over Supabase Realtime (broadcast only, nothing stored).
 
+## Doodle Gallery (drawing game)
+**Play:** https://jimmywilson1979-arch.github.io/buzz-in/draw.html
+
+Same set-up as Buzz In: the TV screen opens the lobby, phones scan the QR code to join.
+Each player takes a turn to draw on their phone; the drawing appears live in a gold picture frame on the TV.
+- **Guessing:** Type answers (marked automatically, close guesses get "So close!", letter hints appear as time runs down)
+  or Buzz in (first to buzz says it out loud and the artist taps right or wrong).
+- **Kids:** players who tick "A child is playing" pick a picture to draw (no reading needed) and guess by tapping one of four pictures.
+- **Kids only:** only kids draw and guess, grown-ups watch.
+- The first player to join is the host (settings, start, skip). The TV can also skip a drawing.
+- End of game: The Exhibition, every drawing framed with a plaque. Click one on the TV to save it as a framed print.
+
 ## Files
 - `index.html` – the game page (TV, phones, Family Round set-up, TV guide)
+- `draw.html` – Doodle Gallery drawing game (self-contained)
 - `pad-test.html` – controller test: phones as joystick, air pointer or touchpad, with a cloud vs direct (WebRTC) ping comparison
 - `admin.html` – owner admin page; installs as its own home-screen app ("BI Admin")
 - `app.js`, `app.css` – shared code and styles for both pages. Bump the `?v=` on both pages when they change.

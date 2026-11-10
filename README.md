@@ -67,6 +67,8 @@ Each player takes a turn to draw on their phone; the drawing appears live in a g
 - **Kids only:** only kids draw and guess, grown-ups watch.
 - The first player to join is the host (settings, start, skip). The TV can also skip a drawing.
 - End of game: The Exhibition, every drawing framed with a plaque. Click one on the TV to save it as a framed print.
+- **🎄 Christmas edition** (Edition in the lobby, on automatically in December): Christmas words and pictures for grown-ups and kids, falling snow, a bow on the frame, and prints dated "Christmas".
+- Installs as its own home-screen app with its own icon (`manifest-draw.webmanifest`, `draw-icon-*.png`, `draw-og.jpg` for link previews).
 
 ## Files
 - `index.html` – the game page (TV, phones, Family Round set-up, TV guide)

@@ -3,10 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#1a1014">
+<meta name="theme-color" content="#2a1820">
 <title>Doodle Gallery</title>
 <meta name="description" content="Family drawing game. Draw on your phone, your masterpiece appears framed on the TV, everyone else guesses.">
-<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="icon" type="image/png" sizes="48x48" href="draw-favicon-48.png">
+<link rel="apple-touch-icon" href="draw-apple-touch-icon.png">
+<link rel="manifest" href="manifest-draw.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Doodle Gallery">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Doodle Gallery – Family Drawing Game">
+<meta property="og:description" content="Draw on your phone, your masterpiece goes up on the TV. Kids can play too.">
+<meta property="og:url" content="https://jimmywilson1979-arch.github.io/buzz-in/draw.html">
+<meta property="og:image" content="https://jimmywilson1979-arch.github.io/buzz-in/draw-og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@500;600;700;800&family=Playfair+Display:ital,wght@0,700;0,800;1,700&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -149,6 +162,17 @@ body.ph{overflow:hidden;overscroll-behavior:none}
 .home h1{font-family:var(--serif);font-style:italic;font-size:3rem;margin:0;color:var(--gold)}
 .home h1 span{color:var(--fg)}
 .home p{margin:0;line-height:1.4}
+/* Christmas look */
+.snow{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.snow i{position:absolute;top:-2vh;border-radius:50%;background:#fff;opacity:.75;animation:fall linear infinite}
+@keyframes fall{to{transform:translate(var(--dx),105vh)}}
+.tvwrap,.pw,.home{z-index:1}
+.home{position:relative}
+body.xmas{--wall:#24161b}
+body.tv.xmas{background:radial-gradient(45vw 55vh at 38% 8%,rgba(255,230,170,.16),transparent 70%),
+  radial-gradient(30vw 30vh at 100% 100%,rgba(30,110,60,.35),transparent 70%),radial-gradient(30vw 30vh at 0 100%,rgba(180,20,40,.3),transparent 70%),var(--wall)}
+body.xmas .framecol .frame::before{content:"🎀";position:absolute;left:50%;top:0;transform:translate(-50%,-62%);font-size:7vh;line-height:1;filter:drop-shadow(0 .6vh .6vh rgba(0,0,0,.5))}
+body.xmas .mini .frame::before{content:"🎀";position:absolute;left:50%;top:0;transform:translate(-50%,-60%);font-size:3.4vh;line-height:1}
 </style>
 </head>
 <body>
@@ -182,7 +206,10 @@ const parse = s => s.split("|").map(x => { const i = x.lastIndexOf(" "); return 
 const EASY = parse("Apple 🍎|Banana 🍌|Cat 🐱|Dog 🐶|Fish 🐟|Sun ☀️|Moon 🌙|Star ⭐|House 🏠|Car 🚗|Ball ⚽|Tree 🌳|Flower 🌸|Heart ❤️|Cake 🎂|Ice cream 🍦|Duck 🦆|Snail 🐌|Pig 🐷|Bus 🚌|Boat ⛵|Balloon 🎈|Rainbow 🌈|Snowman ⛄|Spider 🕷️|Bee 🐝|Butterfly 🦋|Egg 🥚|Pizza 🍕|Hat 🎩|Cloud ☁️|Umbrella ☂️|Rocket 🚀|Train 🚂|Key 🔑|Clock ⏰|Book 📖|Teddy 🧸|Frog 🐸|Mouse 🐭|Elephant 🐘|Snake 🐍|Carrot 🥕|Cheese 🧀|Bike 🚲|Shoe 👟|Sock 🧦|Bell 🔔|Present 🎁|Lollipop 🍭|Bird 🐦|Owl 🦉|Crab 🦀|Octopus 🐙|Whale 🐳|Dinosaur 🦕|Tooth 🦷|Hand ✋|Glasses 👓|Crown 👑|Pear 🍐|Strawberry 🍓|Grapes 🍇|Watermelon 🍉|Mushroom 🍄|Cookie 🍪|Doughnut 🍩|Lion 🦁|Rabbit 🐰|Horse 🐴|Cow 🐮|Sheep 🐑|Penguin 🐧|Tractor 🚜|Plane ✈️|Ghost 👻|Robot 🤖|Pumpkin 🎃|Christmas tree 🎄|Scissors ✂️|Candle 🕯️|Turtle 🐢|Bear 🐻|Monkey 🐵|Chicken 🐔");
 const HARD = parse("Volcano 🌋|Castle 🏰|Tent ⛺|Ferris wheel 🎡|Roller coaster 🎢|Anchor ⚓|Magnet 🧲|Telescope 🔭|Hourglass ⌛|Compass 🧭|Guitar 🎸|Trumpet 🎺|Violin 🎻|Drum 🥁|Saxophone 🎷|Bowling 🎳|Darts 🎯|Skateboard 🛹|Parachute 🪂|Helicopter 🚁|Satellite 🛰️|UFO 🛸|Mermaid 🧜|Vampire 🧛|Zombie 🧟|Wizard 🧙|Unicorn 🦄|Dragon 🐉|Shark 🦈|Kangaroo 🦘|Giraffe 🦒|Hedgehog 🦔|Sloth 🦥|Flamingo 🦩|Peacock 🦚|Bat 🦇|Scorpion 🦂|Toilet 🚽|Bath 🛁|Shower 🚿|Sofa 🛋️|Bed 🛏️|Light bulb 💡|Camera 📷|Television 📺|Laptop 💻|Battery 🔋|Lipstick 💄|Ring 💍|Handbag 👜|Sunglasses 🕶️|Wedding 💒|Pirate 🏴‍☠️|Fireworks 🎆|Tornado 🌪️|Lightning ⚡|Snowflake ❄️|Island 🏝️|Desert 🏜️|Statue of Liberty 🗽|Barber 💈|Haircut 💇|Fire engine 🚒|Ambulance 🚑|Police car 🚓|Traffic light 🚦|Sandwich 🥪|Burger 🍔|Hot dog 🌭|Taco 🌮|Popcorn 🍿|Spaghetti 🍝|Sushi 🍣|Pancakes 🥞|Croissant 🥐|Pineapple 🍍|Avocado 🥑|Coconut 🥥|Chilli 🌶️|Wine 🍷|Beer 🍺|Cocktail 🍸|Santa 🎅|Reindeer 🦌|Juggling 🤹|Surfing 🏄|Skiing ⛷️|Fishing 🎣|Karate 🥋|Boxing 🥊|Trophy 🏆|Medal 🏅|Money bag 💰|Sword 🗡️|Shield 🛡️|Bow and arrow 🏹|Chess ♟️|Dice 🎲|Jigsaw 🧩|Hammer 🔨|Spanner 🔧|Broom 🧹|Soap 🧼|Sponge 🧽|Thermometer 🌡️|Pill 💊|DNA 🧬|Mountain ⛰️|Map 🗺️|Microphone 🎤|Headphones 🎧|Rollerskate 🛼|Kite 🪁|Cactus 🌵|Palm tree 🌴|Spider web 🕸️|Ladybird 🐞|Swan 🦢|Parrot 🦜");
 
+const XEASY = parse("Santa 🎅|Snowman ⛄|Christmas tree 🎄|Present 🎁|Star ⭐|Bell 🔔|Reindeer 🦌|Penguin 🐧|Snowflake ❄️|Stocking 🧦|Teddy 🧸|Candle 🕯️|Angel 👼|Sledge 🛷|Gloves 🧤|Scarf 🧣|Cookie 🍪|Sweets 🍬|Carrot 🥕|Milk 🥛|Robin 🐦|Train 🚂|Drum 🥁|Polar bear 🐻‍❄️|Owl 🦉|Sheep 🐑|Moon 🌙|Bow 🎀|Lollipop 🍭|Chocolate 🍫|Elf 🧝|Fox 🦊");
+const XHARD = parse("Mrs Claus 🤶|Ice skating ⛸️|Turkey 🦃|Mince pie 🥧|Christmas cracker 🧨|Hot chocolate ☕|Church ⛪|Camel 🐫|Crown 👑|Snowboard 🏂|Skiing ⛷️|Fireworks 🎆|Champagne 🍾|Christmas card ✉️|Snowy mountain 🏔️|Advent calendar 📅|Party popper 🎉|Ice cube 🧊|Trumpet 🎺|Baby 👶|Yo-yo 🪀|Jumper 👕|Snowing 🌨️|Roast potato 🥔|Wine 🍷|Christmas lights 💡");
 const SETS = [
+  ["edition", "Edition", [["std", "Standard"], ["xmas", "🎄 Christmas"]]],
   ["guess", "Guessing", [["type", "⌨️ Type answers"], ["buzz", "🔔 Buzz in"]]],
   ["who", "Who's playing", [["all", "Everyone"], ["kids", "🧒 Kids only"]]],
   ["laps", "Turns each", [[1, "1 each"], [2, "2 each"], [3, "3 each"]]],
@@ -190,7 +217,7 @@ const SETS = [
 ];
 function setsHTML(st) {
   return SETS.map(([k, label, vals]) => `<div class="setrow"><b>${label}</b>${vals.map(([v, t]) => `<button class="chip ${st[k] === v ? "on" : ""}" data-set="${k}" data-val="${v}">${t}</button>`).join("")}</div>`).join("")
-    + `<div class="lobbynote">${st.guess === "buzz" ? "Buzz in: first to buzz says their answer out loud, and the artist decides if it's right." : "Type answers: everyone types guesses on their phone and it marks them automatically."} Kids (ticked “a child is playing”) draw from pictures and guess by tapping one of four pictures.${st.who === "kids" ? " Kids only: grown-ups can join to watch." : ""}</div>`;
+    + `<div class="lobbynote">${st.edition === "xmas" ? "🎄 Christmas edition: every picture is Christmassy. " : ""}${st.guess === "buzz" ? "Buzz in: first to buzz says their answer out loud, and the artist decides if it's right." : "Type answers: everyone types guesses on their phone and it marks them automatically."} Kids (ticked “a child is playing”) draw from pictures and guess by tapping one of four pictures.${st.who === "kids" ? " Kids only: grown-ups can join to watch." : ""}</div>`;
 }
 const setFromBtn = b => ({ k: b.dataset.set, v: isNaN(b.dataset.val) ? b.dataset.val : Number(b.dataset.val) });
 
@@ -247,6 +274,21 @@ function drawStroke(ctx, s, W, H) {
   ctx.stroke();
 }
 
+// ===== Christmas look: falling snow =====
+function festive(on, n) {
+  document.body.classList.toggle("xmas", on);
+  let sn = document.querySelector(".snow");
+  if (!on) { if (sn) sn.remove(); return; }
+  if (sn) return;
+  sn = document.createElement("div"); sn.className = "snow";
+  for (let i = 0; i < n; i++) {
+    const z = 3 + Math.random() * 7, el = document.createElement("i");
+    el.style.cssText = `left:${Math.random() * 100}vw;width:${z}px;height:${z}px;--dx:${(Math.random() - .5) * 12}vw;animation-duration:${8 + Math.random() * 10}s;animation-delay:-${Math.random() * 18}s;opacity:${.35 + Math.random() * .5}`;
+    sn.appendChild(el);
+  }
+  document.body.prepend(sn);
+}
+
 // ===== Router =====
 if (P.has("tv")) tvMain();
 else if (P.has("join")) phoneMain(P.get("join"));
@@ -276,7 +318,7 @@ async function tvMain() {
   history.replaceState(null, "", "?tv=" + room + (LOCAL ? "&local=1" : ""));
   const joinUrl = location.origin + location.pathname + "?join=" + room + (LOCAL ? "&local=1" : "");
   const S = {
-    phase: "lobby", players: {}, order: [], settings: ls.get("doodle_settings", { guess: "type", who: "all", laps: 1, time: 80 }),
+    phase: "lobby", players: {}, order: [], settings: Object.assign({ guess: "type", who: "all", laps: 1, time: 80, edition: new Date().getMonth() === 11 ? "xmas" : "std" }, ls.get("doodle_settings", {})),
     queue: [], turnNo: 0, totalTurns: 0, turn: null, gallery: [], feed: [], revealUntil: 0,
   };
   let conn = "Connecting…", link = null, colorI = 0, lastKey = "";
@@ -336,7 +378,9 @@ async function tvMain() {
     const p = S.players[id];
     S.turnNo++;
     const used = new Set(S.gallery.map(g => g.w));
-    const pool = (p.kid ? EASY : shuffle(HARD).slice(0, 40).concat(shuffle(EASY).slice(0, 10))).filter(x => !used.has(x.w));
+    const xm = S.settings.edition === "xmas", E = xm ? XEASY : EASY, Hd = xm ? XHARD : HARD;
+    let pool = (p.kid ? E : shuffle(Hd).slice(0, 40).concat(shuffle(E).slice(0, xm ? 14 : 10))).filter(x => !used.has(x.w));
+    if (pool.length < 3) pool = p.kid ? E.slice() : Hd.concat(E);
     S.turn = { drawer: id, opts: shuffle(pool).slice(0, 3), word: null, got: {}, wrong: {}, kidWrong: {}, buzz: null, paused: null, dpts: 0, chooseEnds: now() + 20000 };
     strokes.clear(); dirty = true;
     S.phase = "choose"; S.feed = [];
@@ -348,7 +392,8 @@ async function tvMain() {
     const p = S.players[t.drawer];
     t.dur = (S.settings.time + (p && p.kid ? 20 : 0)) * 1000; t.endsAt = now() + t.dur;
     t.hintOrder = shuffle([...t.word.w].map((c, j) => c === " " ? -1 : j).filter(j => j >= 0));
-    const same = EASY.some(x => x.w === t.word.w) ? EASY : EASY.concat(HARD);
+    const xm = S.settings.edition === "xmas", E = xm ? XEASY : EASY, Hd = xm ? XHARD : HARD;
+    const same = (E.some(x => x.w === t.word.w) ? E : E.concat(Hd)).filter(x => x.e !== t.word.e);
     t.kc = shuffle([t.word].concat(shuffle(same.filter(x => x.w !== t.word.w)).slice(0, 3)));
     S.phase = "draw";
     needSecret.add(t.drawer); push();
@@ -368,7 +413,7 @@ async function tvMain() {
       const x = c.getContext("2d"); x.fillStyle = "#fffdf8"; x.fillRect(0, 0, 600, 800);
       strokes.forEach(s => drawStroke(x, s, 600, 800));
       const d = S.players[t.drawer];
-      S.gallery.push({ w: t.word.w, e: t.word.e, by: d ? d.name : "", color: d ? d.color : "#fff", img: c.toDataURL("image/jpeg", .88) });
+      S.gallery.push({ w: t.word.w, e: t.word.e, by: d ? d.name : "", color: d ? d.color : "#fff", xmas: S.settings.edition === "xmas", img: c.toDataURL("image/jpeg", .88) });
     }
     if (t.word && !skipped) { const n = Object.keys(t.got).length; feedAdd(n ? "" : "Nobody got it this time"); }
     S.phase = "reveal"; S.revealUntil = now() + (skipped ? 3500 : 7000);
@@ -458,16 +503,16 @@ async function tvMain() {
     upd();
   }
   function header() {
-    return `<header class="tvtop"><div class="logo">Doodle <span>Gallery</span></div><div class="tinfo" id="tinfo"></div><div class="codesm">Join code <b>${room}</b></div></header>`;
+    return `<header class="tvtop"><div class="logo" id="logo"></div><div class="tinfo" id="tinfo"></div><div class="codesm">Join code <b>${room}</b></div></header>`;
   }
   function build() {
     const main = S.phase === "lobby" ? `<main class="tvmain">
         <div class="framecol"><div class="frame"><div class="mat"><div class="qrbox" id="qr"></div></div></div>
           <div class="plaque"><small>Now showing</small><b>Scan to join</b><div class="muted" style="color:#4a3606;font-weight:700">or go to the link and enter <b style="font-family:var(--display);font-size:1.3em;letter-spacing:.1em">${room}</b></div></div></div>
-        <div class="panel"><h3>Artists</h3><div class="plist" id="plist"></div><div id="sets"></div>
-          <button class="btn gold big" id="start">Start the game</button><div class="lobbynote" id="snote"></div><div class="lobbynote">${esc(conn)}</div></div></main>`
+        <div class="panel"><h3>Artists</h3><div class="plist" id="plist"></div>
+          <button class="btn gold big" id="start">Start the game</button><div class="lobbynote" id="snote"></div><div id="sets"></div><div class="lobbynote">${esc(conn)}</div></div></main>`
       : S.phase === "end" ? `<main class="end"><div class="gallery" id="gal"></div>
-        <div class="panel"><h3>The Exhibition</h3><div class="lobbynote">Tap a picture to save it as a framed print.</div><div class="plist podium" id="plist"></div><button class="btn gold big" id="again">Play again</button></div></main>`
+        <div class="panel"><h3>${S.settings.edition === "xmas" ? "The Christmas Exhibition" : "The Exhibition"}</h3><div class="lobbynote">Tap a picture to save it as a framed print.</div><div class="plist podium" id="plist"></div><button class="btn gold big" id="again">Play again</button></div></main>`
       : `<main class="tvmain">
         <div class="framecol"><div class="frame"><div class="mat"><canvas id="art" width="900" height="1200"></canvas><div class="overlay" id="ov"></div></div></div><div class="plaque" id="plaque"></div></div>
         <div class="panel"><div class="timer" id="timer"></div><div class="plist" id="plist"></div><div class="feed" id="feed"></div><button class="btn" id="skip" style="margin-top:auto">Skip this one</button></div></main>`;
@@ -480,6 +525,8 @@ async function tvMain() {
     dirty = true;
   }
   function upd() {
+    festive(S.settings.edition === "xmas", 60);
+    const lg = $("#logo"); if (lg) lg.innerHTML = `Doodle <span>Gallery</span>${S.settings.edition === "xmas" ? " 🎄" : ""}`;
     const list = S.order.map(id => S.players[id]).filter(Boolean), t = S.turn;
     const sorted = S.phase === "lobby" ? list : list.slice().sort((a, b) => b.score - a.score);
     const pl = $("#plist");
@@ -562,7 +609,7 @@ async function tvMain() {
       x.fillStyle = pg; x.fillRect(px, py, pw, 150);
       x.fillStyle = "#2a1d02"; x.textAlign = "center";
       x.font = "800 54px 'Playfair Display', Georgia, serif"; x.fillText(`“${g.w}”`, W / 2, py + 70);
-      x.font = "700 30px Barlow, sans-serif"; x.fillText(`by ${g.by} · ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}`, W / 2, py + 118);
+      x.font = "700 30px Barlow, sans-serif"; x.fillText(`by ${g.by} · ${g.xmas ? "Christmas " + new Date().getFullYear() : new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}`, W / 2, py + 118);
       const a = document.createElement("a"); a.href = c.toDataURL("image/png"); a.download = `${g.w} by ${g.by}.png`.replace(/[^\w .-]/g, ""); a.click();
     };
     img.src = g.img;
@@ -707,6 +754,7 @@ async function phoneMain(codeRaw) {
     if (sets) sets.onclick = e => { const b = e.target.closest("[data-set]"); if (b) { const { k, v } = setFromBtn(b); send({ t: "set", k, v }); } };
   }
   function upd(r) {
+    festive(!!(ST && ST.settings.edition === "xmas"), 22);
     const tm = $("#ptm");
     if (tm) { const s = ST && ST.phase === "draw" ? Math.ceil(Math.max(0, ST.paused ? ST.left : localEnd - Date.now()) / 1000) : null; tm.textContent = s == null ? "" : (ST.paused ? "⏸" : "") + s; }
     if (r === "lobby" && $("#sets")) {

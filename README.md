@@ -58,5 +58,6 @@ Live sync runs over Supabase Realtime (broadcast only, nothing stored).
 
 ## Files
 - `index.html` – the game page (TV, phones, Family Round set-up, TV guide)
+- `pad-test.html` – controller test: phones as joystick, air pointer or touchpad, with a cloud vs direct (WebRTC) ping comparison
 - `admin.html` – owner admin page; installs as its own home-screen app ("BI Admin")
 - `app.js`, `app.css` – shared code and styles for both pages. Bump the `?v=` on both pages when they change.

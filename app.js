@@ -891,7 +891,7 @@ function tvMain() {
     if (q && (S.phase === "question" || S.phase === "suspense" || S.phase === "reveal")) {
       o.q = { n: S.qi + 1, of: r.qs.length, key: qkey(), type: q.type, text: q.text, emoji: q.emoji, quote: q.quote, photo: !!q.photo, opts: q.opts, unit: q.unit, left: left(), paused: S.pausedLeft != null, total: qTime(q) };
       o.answered = Object.keys(S.answers);
-      if (S.buzz) o.buzz = { cur: S.buzz.cur, locked: S.buzz.locked, steal: !!S.buzz.steal };
+      if (S.buzz) o.buzz = { cur: S.buzz.cur, locked: S.buzz.locked, steal: !!S.buzz.steal, shown: !!S.buzz.shown, ans: S.buzz.shown ? q.ansText : null };
     }
     if (S.phase === "reveal" && S.res) o.reveal = S.res;
     if (S.phase === "final") o.awards = awards();
@@ -995,7 +995,7 @@ function tvMain() {
     const q = curQ();
     clearTune(); clearTimeout(suspenseTimer);
     S.answers = {}; S.res = null; S.pausedLeft = null;
-    S.buzz = q.type === "buzz" ? { cur: null, locked: [], steal: false } : null;
+    S.buzz = q.type === "buzz" ? { cur: null, locked: [], steal: false, shown: false } : null;
     S.qStart = Date.now(); S.qEnds = Date.now() + qTime(q);
     S.phase = "question"; broadcast();
     if (q.type === "tune") {
@@ -1074,6 +1074,11 @@ function tvMain() {
       S.phase = S.ri < S.plan.length - 1 ? "scores" : "final"; broadcast();
     }
   }
+  // Show the answer on the TV after someone buzzes, so everyone can see whether they were right
+  function showAns() {
+    if (S.phase !== "question" || !S.buzz || !S.buzz.cur || S.buzz.shown) return;
+    S.buzz.shown = true; Sound.whoosh(); broadcast();
+  }
   function judge(ok) {
     if (S.phase !== "question" || !S.buzz || !S.buzz.cur) return;
     const p = S.players[S.buzz.cur];
@@ -1084,6 +1089,8 @@ function tvMain() {
       S.buzz.cur = null; endQuestion(true);
     } else {
       S.buzzRes[p.id] = { gain: 0, ok: false };
+      // the answer is already on screen, so nobody can steal it: end the question
+      if (S.buzz.shown) { S.buzz.locked.push(p.id); S.buzz.cur = null; Sound.bad(); return endQuestion(true); }
       S.buzz.locked.push(p.id); S.buzz.cur = null; S.buzz.steal = true;
       S.qEnds = Date.now() + Math.max(8000, S.pausedLeft ?? 0); S.pausedLeft = null; Sound.bad();
       const remaining = eligible().filter(x => !S.buzz.locked.includes(x.id));
@@ -1148,6 +1155,7 @@ function tvMain() {
       else if (m.cmd === "pause") pause();
       else if (m.cmd === "skip") skip();
       else if (m.cmd === "judge") judge(!!m.ok);
+      else if (m.cmd === "showans") showAns();
       else if (m.cmd === "replay") playTune(true);
       else if (m.cmd === "audio") { S.audio = { music: !!m.music, vol: Math.max(0, Math.min(1, Number(m.vol))) }; Sound.setVol(S.audio.vol, S.audio.music); broadcast(); }
       else if (m.cmd === "kick") { delete S.players[m.pid]; S.order = S.order.filter(x => x !== m.pid); broadcast(); }
@@ -1251,7 +1259,7 @@ function tvMain() {
       const dotsFor = eligible();
       html = `<div class="stage">${top()}<div class="center ${q.photo ? "withphoto" : ""}">${questionBody(q, ph)}</div>
         <div class="bottom"><div class="dots">${dotsFor.map(p => `<span class="dot ${S.answers[p.id] || (S.buzz && (S.buzz.locked.includes(p.id) || S.buzz.cur === p.id)) ? "in" : ""}" style="background:${p.color}" title="${esc(p.name)}">${esc(initials(p.name))}${p.joker === S.ri ? `<i class="jkb">🃏</i>` : ""}</span>`).join("")}</div>
-        ${ph === "question" ? `<div style="display:flex;gap:1.2rem;align-items:center">${ctl((q.type === "buzz" && S.buzz && S.buzz.cur ? `<button class="btn good" data-a="right">Right (Y)</button><button class="btn bad" data-a="wrong">Wrong (N)</button>` : "") + (q.type === "tune" ? `<button class="btn" data-a="replay">Play again (R)</button>` : ""))}<div class="timer" id="timer"></div></div>` : ph === "reveal" ? ctl(q.type === "tune" ? `<button class="btn" data-a="replay">Play again (R)</button>` : "") : `<div></div>`}</div></div>`;
+        ${ph === "question" ? `<div style="display:flex;gap:1.2rem;align-items:center">${ctl((q.type === "buzz" && S.buzz && S.buzz.cur ? `${S.buzz.shown ? "" : `<button class="btn gold" data-a="showans">Show answer (A)</button>`}<button class="btn good" data-a="right">Right (Y)</button><button class="btn bad" data-a="wrong">Wrong (N)</button>` : "") + (q.type === "tune" ? `<button class="btn" data-a="replay">Play again (R)</button>` : ""))}<div class="timer" id="timer"></div></div>` : ph === "reveal" ? ctl(q.type === "tune" ? `<button class="btn" data-a="replay">Play again (R)</button>` : "") : `<div></div>`}</div></div>`;
     } else if (ph === "scores") {
       const rk = ranked(), max = Math.max(1, ...rk.map(p => p.score));
       html = `<div class="stage">${top()}<div class="center"><div class="disp" style="font-size:4rem;color:var(--gold)">Scores after round ${S.ri + 1}</div>
@@ -1302,7 +1310,8 @@ function tvMain() {
     }
     if (q.type === "buzz") {
       if (!rev) {
-        if (S.buzz && S.buzz.cur) { const p = S.players[S.buzz.cur]; h += `<div class="buzzer" style="background:${p.color}">${esc(p.name)}!</div><div class="rblurb">Say your answer out loud${S.buzz.steal ? " · steal for double points" : ""}</div>`; }
+        if (S.buzz && S.buzz.cur && S.buzz.shown) { const p = S.players[S.buzz.cur]; h += `<div class="buzzer" style="background:${p.color}">${esc(p.name)}</div><div class="bigans">${esc(q.ansText)}</div><div class="rblurb">Was ${esc(p.name)} right?</div>`; }
+        else if (S.buzz && S.buzz.cur) { const p = S.players[S.buzz.cur]; h += `<div class="buzzer" style="background:${p.color}">${esc(p.name)}!</div><div class="rblurb">Say your answer out loud${S.buzz.steal ? " · steal for double points" : ""}</div>`; }
         else h += `<div class="rblurb ${S.buzz && S.buzz.steal ? "" : "muted"}">${S.buzz && S.buzz.steal ? "Wrong! <b style=\"color:var(--gold)\">Steal it for double points</b>. Buzz in!" : "Buzz in on your phone when you know it"}</div>`;
       } else {
         const win = Object.keys(rev.per).find(id => rev.per[id].ok);
@@ -1350,6 +1359,7 @@ function tvMain() {
       if (k === "open") { if (gate.st !== "ok") return; opened = true; wakeLock(); try { document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => { }); } catch (_) { } render(); return; }
       if (k === "next") next(); else if (k === "pause") pause(); else if (k === "skip") skip();
       else if (k === "right") judge(true); else if (k === "wrong") judge(false);
+      else if (k === "showans") showAns();
       else if (k === "replay") playTune(true);
       else if (k === "music") toggleMusic();
       else if (k === "savekey") { const v = ($("#ai-key") || {}).value; if (v) { ls.set("buzzin_key", v.trim()); toast("Key saved on this device"); render(); } }
@@ -1367,6 +1377,7 @@ function tvMain() {
     if (e.key === " " || e.key === "Enter" || e.key === "ArrowRight") { e.preventDefault(); next(); }
     else if (e.key === "p" || e.key === "P") pause();
     else if (e.key === "y" || e.key === "Y") judge(true);
+    else if (e.key === "a" || e.key === "A") showAns();
     else if (e.key === "n" || e.key === "N") judge(false);
     else if (e.key === "r" || e.key === "R") playTune(true);
     else if (e.key === "m" || e.key === "M") toggleMusic();
@@ -1485,9 +1496,10 @@ function phoneMain(room, hostKey) {
     if (s.phase === "suspense") return `${head}<div class="grow1 center"><div class="result" style="color:var(--gold)">🥁</div><p style="font-size:20px">Drumroll…</p></div>`;
     if (t === "buzz") {
       const locked = s.buzz && s.buzz.locked.includes(pid), cur = s.buzz && s.buzz.cur, steal = s.buzz && s.buzz.steal;
-      if (cur === pid) return `${head}<div class="grow1 center"><div class="result" style="color:var(--gold)">Your turn!</div><p>Say your answer out loud.</p></div>`;
+      const shownAns = s.buzz && s.buzz.shown ? `<p style="font-size:20px">Answer: <b>${esc(s.buzz.ans || "")}</b></p>` : "";
+      if (cur === pid) return `${head}<div class="grow1 center"><div class="result" style="color:var(--gold)">Your turn!</div><p>${shownAns ? "Were you right?" : "Say your answer out loud."}</p>${shownAns}</div>`;
       return `${head}<div class="grow1 center"><button class="buzzbtn" data-a="buzz" ${locked || cur || q.paused ? "disabled" : ""}>${steal && !locked ? "Steal!" : "Buzz"}</button>
-        <p class="muted">${locked ? "You're locked out of this one." : cur ? "Someone else buzzed…" : steal ? "Steal it for double points!" : "First to buzz gets to answer"}</p></div>`;
+        <p class="muted">${locked ? "You're locked out of this one." : cur ? "Someone else buzzed…" : steal ? "Steal it for double points!" : "First to buzz gets to answer"}</p>${cur ? shownAns : ""}</div>`;
     }
     if (a != null) return `${head}<div class="grow1 center"><div class="result" style="color:${p.color}">Locked in</div><p style="font-size:20px">${t === "number" ? esc(fmtNum(a, q.unit)) : esc(q.opts[a])}</p><p class="muted">Waiting for everyone else…</p></div>`;
     if (t === "number") return `${head}<div class="grow1"><input id="num-${q.key}" class="numin" type="number" inputmode="decimal" placeholder="?" autocomplete="off">${q.unit ? `<p class="center muted">${esc(q.unit)}</p>` : ""}<button class="btn gold big" data-a="num">Lock in my guess</button></div>`;
@@ -1512,7 +1524,11 @@ function phoneMain(room, hostKey) {
     else if (ph === "question") {
       const elig = s.round.kids ? s.players.filter(x => x.kid).length : s.players.length;
       lbl = `Q${s.q.n}/${s.q.of} · ${s.answered ? s.answered.length : 0}/${elig} answered`;
-      if (s.buzz && s.buzz.cur) { const p = s.players.find(x => x.id === s.buzz.cur); lbl = `${p ? p.name : "Someone"} buzzed`; row = `<button class="btn good" data-h="right">Right</button><button class="btn bad" data-h="wrong">Wrong</button>`; }
+      if (s.buzz && s.buzz.cur) {
+        const p = s.players.find(x => x.id === s.buzz.cur), nm = p ? p.name : "Someone";
+        if (s.buzz.shown) { lbl = `Was ${nm} right?`; row = `<button class="btn good" data-h="right">Right</button><button class="btn bad" data-h="wrong">Wrong</button>`; }
+        else { lbl = `${nm} buzzed`; row = `<button class="btn gold" data-h="showans">Show answer</button><button class="btn good" data-h="right">Right</button><button class="btn bad" data-h="wrong">Wrong</button>`; }
+      }
       else row = `${s.q.type === "tune" ? `<button class="btn" data-h="replay">🎵 Again</button>` : `<button class="btn" data-h="pause">${s.q.paused ? "Resume" : "Pause"}</button>`}<button class="btn" data-h="skip">Skip</button><button class="btn gold" data-h="next">Reveal</button>`;
     }
     else if (ph === "suspense") { lbl = "Drumroll…"; row = `<button class="btn" disabled>Revealing…</button>`; }
@@ -1587,6 +1603,7 @@ function phoneMain(room, hostKey) {
     if (h) {
       const k = h.dataset.h, au = s.audio || { music: true, vol: .8 };
       if (k === "right" || k === "wrong") cmd("judge", { ok: k === "right" });
+      else if (k === "showans") cmd("showans");
       else if (k === "music") cmd("audio", { music: !au.music, vol: au.vol });
       else if (k === "volup" || k === "voldown") cmd("audio", { music: au.music, vol: Math.round(Math.max(0, Math.min(1, au.vol + (k === "volup" ? .1 : -.1))) * 10) / 10 });
       else cmd(k);

@@ -18,7 +18,7 @@ https://jimmywilson1979-arch.github.io/buzz-in/?tvhelp
 General Knowledge, Kids' Corner (only players marked as a child can answer), Christmas Cracker,
 Name That Tune (public-domain melodies played as generated notes), Emoji Films, Famous Lines,
 True or False, Higher or Lower, Odd One Out, Closest Wins, Telly & Films, Music, Sport, Food & Drink,
-Buzzer Round (wrong answers let others steal for double), and the Anything Round (written by Claude,
+Buzzer Round (after a buzz, the host can show the answer on the TV before marking it right or wrong; a wrong answer marked without showing the answer lets others steal for double), and the Anything Round (written by Claude,
 needs an Anthropic API key saved on the TV device), and the Family Round.
 
 ## Family Round

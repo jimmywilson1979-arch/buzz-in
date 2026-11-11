@@ -204,13 +204,16 @@ const PTS = [10, 7, 5, 4, 3, 2];
 function setsHTML(st) {
   return `<div class="setrow"><b>Games (tap to include)</b>${GAME_IDS.map(g => `<button class="chip ${st.games.includes(g) ? "on" : ""}" data-game="${g}">${INFO[g].e} ${INFO[g].t}</button>`).join("")}</div>
     <div class="setrow"><b>Theme</b><button class="chip ${st.theme === "std" ? "on" : ""}" data-set="theme" data-val="std">Standard</button><button class="chip ${st.theme === "xmas" ? "on" : ""}" data-set="theme" data-val="xmas">🎄 Christmas</button></div>
+    <div class="setrow"><b>🤖 Computer players</b>${[["auto", "Auto"], [0, "None"], [1, "1"], [2, "2"], [3, "3"]].map(([v, t]) => `<button class="chip ${st.bots === v ? "on" : ""}" data-set="bots" data-val="${v}">${t}</button>`).join("")}</div>
+    <div class="note">Auto adds 2 robot opponents when someone is playing on their own, so one person can play the whole party.</div>
     <div class="setrow"><b>Kids boost</b><button class="chip ${st.boost ? "on" : ""}" data-set="boost" data-val="1">🧒 On</button><button class="chip ${!st.boost ? "on" : ""}" data-set="boost" data-val="0">Off</button></div>
     <div class="note">Kids boost gives players who ticked “a child is playing” a fair chance: heavier penguins, extra-strong taps, a head start in Quick Draw and help with curling power.</div>`;
 }
 function readSet(e) {
   const g = e.target.closest("[data-game]"); if (g) return { k: "game", v: g.dataset.game };
   const b = e.target.closest("[data-set]"); if (!b) return null;
-  return { k: b.dataset.set, v: b.dataset.set === "boost" ? b.dataset.val === "1" : b.dataset.val };
+  const k = b.dataset.set, v = b.dataset.val;
+  return { k, v: k === "boost" ? v === "1" : k === "bots" ? (v === "auto" ? "auto" : +v) : v };
 }
 
 // ===== transport =====
@@ -303,6 +306,11 @@ function Sumo(C) {
     if (S.state === "count") { if (t > 3200) { S.state = "fight"; S.at = T(); } return; }
     if (S.state === "roundEnd") { if (t > 3800) { if (S.round >= S.rounds) api.done = true; else newRound(); } S.peng.forEach(g => { if (!g.alive) g.fall += dt; }); return; }
     S.R = Math.max(.15, .42 - Math.max(0, t / 1000 - 4) * .0065);
+    for (const g of S.peng) if (g.p.bot && g.alive) { // computer penguins: chase the nearest penguin, back off from the edge
+      let tx = -g.x, ty = -g.y;
+      if (Math.hypot(g.x, g.y) < S.R * .62) { let best = null, bd = 9; for (const o of S.peng) if (o !== g && o.alive) { const d = Math.hypot(o.x - g.x, o.y - g.y); if (d < bd) { bd = d; best = o; } } if (best) { tx = best.x - g.x; ty = best.y - g.y; if (bd < .17 && T() - g.dashAt > 2000 && Math.random() < dt * 1.2) api.input(g.p, { t: "dash" }); } }
+      const l = Math.hypot(tx, ty) || 1, k = .72; g.jx += (tx / l * k - g.jx) * Math.min(1, dt * 2.5); g.jy += (ty / l * k - g.jy) * Math.min(1, dt * 2.5);
+    }
     for (const g of S.peng) {
       if (!g.alive) { g.fall += dt; continue; }
       const dashing = T() - g.dashAt < 380, acc = 1.7 / Math.pow(g.m, .25);
@@ -412,6 +420,11 @@ function Curling(C) {
   api.update = dt => {
     const t = T() - S.at;
     if (S.state === "aim" && t > 30000) { S.msg = `${name(order[S.turn])} ran out of time`; next(); return; }
+    const cur = ps.find(p => p.id === order[S.turn]);
+    if (cur && cur.bot) {
+      if (S.state === "aim" && t > 1600) api.input(cur, { t: "throw", p: .4 + Math.random() * .17, a: (Math.random() - .5) * .35 });
+      if (S.state === "moving" && Math.random() < dt * 3) S.sweeps.push(T());
+    }
     if (S.state === "score") { if (t > 5500) api.done = true; return; }
     if (S.state === "settle") { if (t > 1300) next(); return; }
     if (S.state !== "moving") return;
@@ -490,8 +503,11 @@ function Curling(C) {
 function Tug(C) {
   const api = { id: "tug", done: false }, ps = C.players;
   const teams = [[], []]; let k = 0;
-  shuffle(ps.filter(p => p.kid)).forEach(p => teams[k++ % 2].push(p));
-  shuffle(ps.filter(p => !p.kid)).forEach(p => teams[teams[0].length <= teams[1].length ? 0 : 1].push(p));
+  const hum = ps.filter(p => !p.bot), bots = ps.filter(p => p.bot);
+  shuffle(hum.filter(p => p.kid)).forEach(p => teams[k++ % 2].push(p));
+  shuffle(hum.filter(p => !p.kid)).forEach(p => teams[teams[0].length <= teams[1].length ? 0 : 1].push(p));
+  if (hum.length === 1) bots.forEach(p => teams[1].push(p)); else bots.forEach(p => teams[teams[0].length <= teams[1].length ? 0 : 1].push(p));
+  const botRate = {}; bots.forEach(p => botRate[p.id] = 4.6 + Math.random() * 1.4);
   if (!teams[1].length) teams[1].push(teams[0].pop()); if (!teams[0].length) teams[0].push(teams[1].pop());
   const names = C.xmas ? ["Elves", "Snowmen"] : ["Red team", "Blue team"], cols = ["#ff5d5d", "#4dabff"];
   const S = { pos: 0, vel: 0, wins: [0, 0], round: 0, state: "", at: 0, taps: {}, msg: "", lastB: 0 };
@@ -510,6 +526,7 @@ function Tug(C) {
     const t = T() - S.at;
     if (S.state === "count") { if (t > 3200) { S.state = "pull"; S.at = T(); } return; }
     if (S.state === "roundEnd") { if (t > 3800) { if (Math.max(...S.wins) >= 2 || S.round >= 3) api.done = true; else newRound(); } return; }
+    for (const id in botRate) if (Math.random() < dt * botRate[id]) S.taps[id].push(T());
     const target = (rate(1) - rate(0)) * .075;
     S.vel += (target - S.vel) * Math.min(1, dt * 4); S.pos = clamp(S.pos + S.vel * dt, -1, 1);
     if (T() - S.lastB > 250) { S.lastB = T(); C.bcast({ t: "tug", pos: Math.round(S.pos * 100) / 100 }); }
@@ -565,7 +582,7 @@ function QuickDraw(C) {
   const FAKES = ["DRAGON!", "DRUM!", "DROP!", "DRIP!", "DRAWER!"];
   function newRound() {
     S.round++; S.state = "wait"; S.at = T(); S.res = {}; S.delay = 2600 + Math.random() * 3400;
-    S.fakeAt = S.round >= 2 && Math.random() < .65 ? S.delay * (.3 + Math.random() * .4) : null; S.fakeShown = false; S.fakeWord = FAKES[Math.random() * FAKES.length | 0];
+    S.fakeAt = S.round >= 2 && Math.random() < .65 ? S.delay * (.3 + Math.random() * .4) : null; S.fakeShown = false; S.botRt = {}; S.fakeWord = FAKES[Math.random() * FAKES.length | 0];
     C.bcast({ t: "qd", s: "wait", r: S.round });
   }
   newRound();
@@ -578,12 +595,13 @@ function QuickDraw(C) {
   api.update = () => {
     const t = T() - S.at;
     if (S.state === "wait") {
-      if (S.fakeAt != null && !S.fakeShown && t >= S.fakeAt) { S.fakeShown = true; S.fakeT = T(); C.fast({ t: "qd", s: "fake", w: S.fakeWord, r: S.round }); }
+      if (S.fakeAt != null && !S.fakeShown && t >= S.fakeAt) { S.fakeShown = true; S.fakeT = T(); C.fast({ t: "qd", s: "fake", w: S.fakeWord, r: S.round }); ps.filter(p => p.bot).forEach(p => { if (Math.random() < .12) S.res[p.id] = { early: true }; }); }
       if (t >= S.delay) { S.state = "go"; S.goAt = T(); C.fast({ t: "qd", s: "go", r: S.round }); }
       return;
     }
     if (S.state === "go") {
       const act = active();
+      for (const p of ps) if (p.bot && !S.res[p.id]) { const rt = S.botRt[p.id] ?? (S.botRt[p.id] = 260 + Math.random() * 300); if (T() - S.goAt >= rt) S.res[p.id] = { rt: Math.round(rt) }; }
       if (act.every(p => S.res[p.id]) || T() - S.goAt > 3200) {
         const valid = act.filter(p => S.res[p.id] && S.res[p.id].rt != null).map(p => ({ p, eff: S.res[p.id].rt - (C.boost && p.kid ? 120 : 0) })).sort((a, b) => a.eff - b.eff);
         valid.forEach((v, i) => pts[v.p.id] += valid.length - i);
@@ -628,7 +646,7 @@ function QuickDraw(C) {
 function Boat(C) {
   const api = { id: "boat", done: false }, ps = C.players, n = ps.length, A = C.aspect();
   const X0 = .14, X1 = A - .16, LEN = X1 - X0;
-  const S = { state: "setup", at: T(), boats: ps.map(p => ({ p, id: p.id, x: 0, v: 0, lvl: 0, lvlAt: 0, fin: null, ready: false, mode: "" })), order: [], firstFin: 0, msg: "" };
+  const S = { state: "setup", at: T(), boats: ps.map(p => ({ p, id: p.id, x: 0, v: 0, lvl: 0, lvlAt: 0, fin: null, ready: !!p.bot, mode: p.bot ? "bot" : "", base: .46 + Math.random() * .14 })), order: [], firstFin: 0, msg: "" };
   api.input = (p, m) => {
     const b = S.boats.find(q => q.id === p.id); if (!b) return;
     if (m.t === "ready") { b.ready = true; b.mode = m.mode === "tap" ? "tap" : "mic"; }
@@ -641,6 +659,7 @@ function Boat(C) {
     if (S.state === "end") { if (t > 4800) api.done = true; return; }
     for (const b of S.boats) {
       if (b.fin != null) continue;
+      if (b.p.bot) { b.lvl = clamp(b.base + .15 * Math.sin(T() / 800 + b.base * 40) + (Math.random() - .5) * .2, 0, 1); b.lvlAt = T(); }
       let L = T() - b.lvlAt > 450 ? 0 : b.lvl; if (C.boost && b.p.kid) L = Math.min(1, L * 1.35);
       b.v += (L - b.v) * Math.min(1, dt * 2.5); b.x += b.v * .13 * dt;
       if (b.x >= LEN) { b.x = LEN; b.fin = T(); S.order.push(b.id); if (!S.firstFin) S.firstFin = T(); C.buzz(b.id, [50, 50, 200]); }
@@ -671,7 +690,7 @@ function Boat(C) {
       ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.moveTo(x - s * .04, cy - s * 1.25); ctx.lineTo(x - s * .04, cy - s * .15); ctx.lineTo(x - s * (.5 + bill * .3), cy - s * .15); ctx.closePath(); ctx.fill();
       if (C.xmas) hat(ctx, x + s * .02, cy - s * 1.45, s * .22, .1);
       label(ctx, b.p.name + (b.fin != null ? ` 🏁 ${ord(S.order.indexOf(b.id) + 1)}` : ""), X(X0 - .08), cy - s * .4, H * .024, b.p.color);
-      if (S.state === "setup") label(ctx, b.ready ? (b.mode === "tap" ? "✓ tapping" : "✓ mic on") : "turning on mic…", X(X0 - .08), cy + s * .05, H * .02, b.ready ? "#9ff0c2" : "#ffd3d3");
+      if (S.state === "setup") label(ctx, b.ready ? (b.mode === "tap" ? "✓ tapping" : b.mode === "bot" ? "✓ ready" : "✓ mic on") : "turning on mic…", X(X0 - .08), cy + s * .05, H * .02, b.ready ? "#9ff0c2" : "#ffd3d3");
       else { ctx.fillStyle = "rgba(0,0,0,.3)"; ctx.fillRect(X(X0 - .14), cy + s * .05, X(X0 - .02) - X(X0 - .14), H * .012); ctx.fillStyle = b.p.color; ctx.fillRect(X(X0 - .14), cy + s * .05, (X(X0 - .02) - X(X0 - .14)) * L, H * .012); }
     });
     if (S.state === "setup") bigText(ctx, W, H * .27, "Phones: turn on your microphone", "#fff", H * .055);
@@ -731,6 +750,12 @@ function Fish(C) {
       if (f.flee && now > f.flee) { f.flee = 0; f.vx = Math.sign(f.vx) * .035; }
     }
     for (const q of pl) {
+      if (q.p.bot) { // computer anglers
+        if (q.mode !== "bite") q.botHook = 0;
+        if (q.mode === "idle" && now - q.at > 1800 && fish.length) { const f = fish[Math.random() * fish.length | 0]; api.input(q.p, { t: "cast", p: clamp((DOCK - .1 - f.y) / .55, 0, 1), a: clamp((f.x - q.x) / .5, -1, 1) }); }
+        if (q.mode === "bite") { if (!q.botHook) q.botHook = now + 400 + Math.random() * 1100; else if (now >= q.botHook) { q.botHook = 0; api.input(q.p, { t: "hook" }); } }
+        if (q.mode === "reel") api.input(q.p, { t: "reel", a: (q.thrash ? (Math.random() < .3 ? 2.5 : 0) : 6) * dt });
+      }
       if (q.mode === "flying" && now - q.at > 650) setMode(q, "wait");
       if (q.mode === "wait") {
         const r = .14 + (now - q.at) / 1000 * .03;
@@ -830,7 +855,7 @@ function Cards(C) {
   const api = { id: "cards", done: false }, ps = C.players, ROWS = 3, PER = 6;
   const deck = shuffle([...Array(52).keys()]); let di = 0;
   const val = c => c % 13 + 2;
-  const S = { row: 0, cards: [], state: "deal", at: T(), picks: {}, pts: {}, last: null, flipAt: 0, msg: "" };
+  const S = { row: 0, cards: [], state: "deal", at: T(), picks: {}, pts: {}, last: null, flipAt: 0, msg: "", botWait: {} };
   ps.forEach(p => S.pts[p.id] = 0);
   function newRow() { S.row++; S.cards = [deck[di++]]; S.state = "deal"; S.at = T(); S.flipAt = T(); }
   newRow();
@@ -839,6 +864,8 @@ function Cards(C) {
     const t = T() - S.at;
     if (S.state === "deal") { if (t > 1800) { S.state = "guess"; S.at = T(); S.picks = {}; } return; }
     if (S.state === "guess") {
+      if (t < 50) S.botWait = {};
+      for (const p of ps) if (p.bot && !S.picks[p.id] && t > (S.botWait[p.id] ?? (S.botWait[p.id] = 800 + Math.random() * 1800))) { const v = val(S.cards[S.cards.length - 1]); let pk = v < 8 ? "higher" : v > 8 ? "lower" : (Math.random() < .5 ? "higher" : "lower"); if (Math.random() < .12) pk = pk === "higher" ? "lower" : "higher"; S.picks[p.id] = pk; }
       if (ps.filter(p => C.alive(p.id)).every(p => S.picks[p.id]) || t > 12000) {
         const prev = S.cards[S.cards.length - 1], nx = deck[di++]; S.cards.push(nx); S.flipAt = T();
         const a = val(prev), b = val(nx), res = b > a ? "higher" : b < a ? "lower" : "pair";
@@ -927,7 +954,10 @@ function Derby(C) {
   };
   api.update = () => {
     const t = T() - S.at;
-    if (S.state === "bet") { if (ps.filter(p => C.alive(p.id)).every(p => S.bets[p.id]) && t > 3000 || t > 35000) startRace(); return; }
+    if (S.state === "bet") {
+      ps.forEach((p, k) => { if (p.bot && !S.bets[p.id] && t > 2500 + k * 900 && S.coins[p.id] >= 1) { const w = S.horses.map(h => Math.pow(h.p, .7)), tw = w.reduce((a, b) => a + b, 0); let r = Math.random() * tw, h = 0; for (; h < w.length - 1; h++) { r -= w[h]; if (r <= 0) break; } S.bets[p.id] = { h, s: Math.max(1, Math.round(S.coins[p.id] * (.15 + Math.random() * .25))) }; } });
+      if (ps.filter(p => C.alive(p.id)).every(p => S.bets[p.id]) && t > 3000 || t > 35000) startRace(); return;
+    }
     if (S.state === "race") {
       S.horses.forEach(h => h.x = posAt(h, t));
       if (T() - S.commAt > 2300) {
@@ -994,7 +1024,7 @@ async function tvMain() {
   const joinUrl = location.origin + location.pathname + "?join=" + room + (LOCAL ? "&local=1" : "");
   const S = {
     phase: "lobby", players: {}, order: [], list: [], gi: -1, game: null, last: null, endsAt: 0,
-    settings: Object.assign({ games: GAME_IDS.slice(), theme: new Date().getMonth() === 11 ? "xmas" : "std", boost: true }, ls.get("party_settings", {})),
+    settings: Object.assign({ games: GAME_IDS.slice(), theme: new Date().getMonth() === 11 ? "xmas" : "std", boost: true, bots: "auto" }, ls.get("party_settings", {})),
   };
   let main = null, conn = "Connecting…", colorI = 0, lastKey = "", lastPhoneJSON = "";
   if (LOCAL) window.__S = S;
@@ -1003,13 +1033,22 @@ async function tvMain() {
   function size() { DPR = window.devicePixelRatio || 1; W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR; }
   addEventListener("resize", size); size();
 
-  const alive = p => p && T() - p.seen < 20000;
+  const alive = p => p && (p.bot || T() - p.seen < 20000);
+  const humans = () => list().filter(p => !p.bot && alive(p));
+  const botCount = () => S.settings.bots === "auto" ? (humans().length === 1 ? 2 : 0) : (+S.settings.bots || 0);
+  const canStart = () => humans().length >= 1 && humans().length + botCount() >= 2 && S.settings.games.length > 0;
+  function removeBots() { S.order.filter(id => S.players[id] && S.players[id].bot).forEach(id => delete S.players[id]); S.order = S.order.filter(id => S.players[id]); }
+  function addBots() {
+    removeBots();
+    const names = S.settings.theme === "xmas" ? ["🤖 Robo-Rudolph", "🤖 Tinsel-Tron", "🤖 Jingle-Bot"] : ["🤖 Sparky", "🤖 Beep Bop", "🤖 Robo Rob"];
+    for (let i = 0; i < botCount(); i++) { const id = "bot" + i; S.players[id] = { id, bot: true, name: names[i], kid: false, color: COLORS[(colorI + i) % COLORS.length], score: 0, seen: Infinity }; S.order.push(id); }
+  }
   const list = () => S.order.map(id => S.players[id]).filter(Boolean);
-  const hostId = () => (list().find(alive) || {}).id || null;
+  const hostId = () => (list().find(p => !p.bot && alive(p)) || {}).id || null;
   const bcast = m => main && main.send(m);
   function sendTo(p, m) { if (!p) return; if (p.dc && p.dc.readyState === "open") { try { p.dc.send(JSON.stringify(m)); return; } catch (e) { } } p.ch && p.ch.send(m); }
   const C = () => ({
-    players: list().filter(alive).map(p => ({ id: p.id, name: p.name, kid: p.kid, color: p.color })),
+    players: list().filter(alive).map(p => ({ id: p.id, name: p.name, kid: p.kid, color: p.color, bot: !!p.bot })),
     boost: S.settings.boost, xmas: S.settings.theme === "xmas", aspect: () => W / H,
     buzz: (id, ms) => sendTo(S.players[id], { t: "buzz", ms }), priv: (id, m) => sendTo(S.players[id], m), bcast,
     fast: m => { bcast(m); list().forEach(p => { if (p.dc && p.dc.readyState === "open") try { p.dc.send(JSON.stringify(m)); } catch (e) { } }); },
@@ -1018,8 +1057,8 @@ async function tvMain() {
 
   function pub() {
     return {
-      phase: S.phase, settings: S.settings, host: hostId(), gi: S.gi, total: S.list.length, game: S.list[S.gi] || null,
-      players: list().map(p => ({ id: p.id, name: p.name, kid: p.kid, color: p.color, score: p.score })),
+      phase: S.phase, settings: S.settings, host: hostId(), canStart: canStart(), bots: botCount(), gi: S.gi, total: S.list.length, game: S.list[S.gi] || null,
+      players: list().map(p => ({ id: p.id, name: p.name, kid: p.kid, color: p.color, score: p.score, bot: !!p.bot })),
       left: S.endsAt ? Math.max(0, S.endsAt - T()) : 0, last: S.last, g: S.game && S.phase === "play" ? S.game.phone() : null,
     };
   }
@@ -1029,7 +1068,7 @@ async function tvMain() {
 
   // ---- flow ----
   function start() {
-    const pl = list().filter(alive); if (pl.length < 2 || !S.settings.games.length) return;
+    if (!canStart()) return; addBots();
     ls.set("party_settings", S.settings);
     list().forEach(p => p.score = 0);
     S.list = GAME_IDS.filter(g => S.settings.games.includes(g)); S.gi = -1;
@@ -1056,10 +1095,11 @@ async function tvMain() {
     if (k === "game") { const g = S.settings.games; if (!GAME_IDS.includes(v)) return; S.settings.games = g.includes(v) ? (g.length > 1 ? g.filter(x => x !== v) : g) : GAME_IDS.filter(x => g.includes(x) || x === v); }
     else if (k === "theme" && (v === "std" || v === "xmas")) S.settings.theme = v;
     else if (k === "boost") S.settings.boost = !!v;
+    else if (k === "bots" && ["auto", 0, 1, 2, 3].includes(v)) S.settings.bots = v;
     push();
   }
-  const toLobby = () => { S.phase = "lobby"; S.game = null; S.gi = -1; S.endsAt = 0; push(); };
-  const playAgain = () => { if (list().filter(alive).length >= 2) start(); else toLobby(); };
+  const toLobby = () => { removeBots(); S.phase = "lobby"; S.game = null; S.gi = -1; S.endsAt = 0; push(); };
+  const playAgain = () => { if (canStart()) start(); else toLobby(); };
 
   // ---- players & links ----
   async function addPlayer(m) {
@@ -1156,8 +1196,9 @@ async function tvMain() {
     if (plEl) plEl.innerHTML = pl.map(p => `<div class="prow ${alive(p) ? "" : "off"}"><span class="dot" style="background:${p.color}"></span><span class="nm">${esc(p.name)}</span>${p.kid ? `<span class="tag">🧒 child</span>` : ""}</div>`).join("") || `<div class="note">Nobody yet. Scan the code with a phone.</div>`;
     const n = pl.filter(alive).length;
     if ($("#sets")) $("#sets").innerHTML = setsHTML(S.settings);
-    if (S.phase === "lobby") { $("#start").disabled = n < 2; $("#snote").textContent = n < 2 ? "Needs at least 2 players." : `${n} players ready. The first player to join can also start from their phone.`; }
-    if (S.phase === "end") { $("#snote").textContent = n < 2 ? "Needs at least 2 players." : ""; boardHTML($("#board"), false); const top = pl.slice().sort((a, b) => b.score - a.score)[0]; $("#champ").innerHTML = top ? `<span style="color:${top.color}">${esc(top.name)}</span> wins!` : ""; }
+    const bn = botCount(), hn = humans().length, why = hn < 1 ? "Scan the code with a phone to join." : "Playing alone? Set Computer players to Auto or add some.";
+    if (S.phase === "lobby") { $("#start").disabled = !canStart(); $("#snote").textContent = !canStart() ? why : `${hn} player${hn > 1 ? "s" : ""}${bn ? ` + ${bn} computer player${bn > 1 ? "s" : ""}` : ""} ready. The first player to join can also start from their phone.`; }
+    if (S.phase === "end") { $("#snote").textContent = canStart() ? "" : why; boardHTML($("#board"), false); const top = pl.slice().sort((a, b) => b.score - a.score)[0]; $("#champ").innerHTML = top ? `<span style="color:${top.color}">${esc(top.name)}</span> wins!` : ""; }
     if (S.phase === "result" || S.phase === "board") {
       const rc = $("#rcard"), inf = INFO[S.last && S.last.game] || {};
       if (S.phase === "result") {
@@ -1291,7 +1332,7 @@ async function phoneMain(codeRaw) {
     const sets = $("#sets"); if (sets) sets.onclick = e => { const x = readSet(e); if (x) send({ t: "set", k: x.k, v: x.v }); };
   }
   function upd(r) {
-    if ($("#sets")) { $("#sets").innerHTML = setsHTML(ST.settings); const n = ST.players.length; $("#snote").textContent = n < 2 ? "Waiting for more players…" : `${n} players ready`; if ($("#start")) $("#start").disabled = n < 2; }
+    if ($("#sets")) { $("#sets").innerHTML = setsHTML(ST.settings); const n = ST.players.filter(p => !p.bot).length; $("#snote").textContent = !ST.canStart ? "Waiting for more players, or set Computer players to Auto" : `${n} player${n > 1 ? "s" : ""}${ST.bots ? ` + ${ST.bots} computer` : ""} ready`; if ($("#start")) $("#start").disabled = !ST.canStart; }
     const cnt = $("#cnt"); if (cnt) cnt.textContent = `Starting in ${Math.ceil(Math.max(0, localEnd - Date.now()) / 1000)}…`;
     if (r === "result" || r === "board" || r === "end") {
       const pl = ST.players.slice().sort((a, b) => b.score - a.score), pos = pl.findIndex(p => p.id === id) + 1, m = mine();

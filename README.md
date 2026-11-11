@@ -84,7 +84,7 @@ Same set-up as Buzz In: the TV screen opens the lobby, phones scan the QR code t
 - **🃏 Play Your Cards Right** – higher or lower on your phone, 3 rows of 6 cards. Aces high, a pair beats everyone.
 - **🏇 Derby Day** – 100 pretend coins each, back a horse at fractional odds, 3 races. Results are drawn fairly from the odds shown. Most coins wins.
 
-Lobby settings: which games, Standard / 🎄 Christmas theme, and **Kids boost** (players who tick "a child is playing" get heavier penguins,
+Lobby settings: which games, Standard / 🎄 Christmas theme, **🤖 Computer players** (Auto adds 2 robot opponents when one person is playing alone, or choose 0–3), and **Kids boost** (players who tick "a child is playing" get heavier penguins,
 stronger taps, a head start in Quick Draw and help with curling power). The first player to join is the host (start, next, skip from their phone).
 The end screen has the settings and Play again, no rejoining needed.
 Controls use a direct Wi-Fi link between phone and laptop (WebRTC) when possible, falling back to the cloud.

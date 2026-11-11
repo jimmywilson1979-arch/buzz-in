@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#090b14">
 <title>Buzz In Party</title>
-<meta name="description" content="Family party games on the TV. Your phone is the controller: Penguin Sumo, Curling, Tug of War and Quick Draw.">
+<meta name="description" content="Family party games on the TV. Your phone is the controller: Penguin Sumo, Curling, Tug of War, Quick Draw, Blow Boat Race, Gone Fishing, Play Your Cards Right and Derby Day.">
 <link rel="icon" type="image/png" sizes="48x48" href="party-favicon-48.png">
 <link rel="apple-touch-icon" href="party-apple-touch-icon.png">
 <link rel="manifest" href="manifest-party.webmanifest">
@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Buzz In Party">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Buzz In Party – Family Party Games">
-<meta property="og:description" content="Party games on the TV. Your phone is the controller: Penguin Sumo, Curling, Tug of War and Quick Draw.">
+<meta property="og:description" content="Party games on the TV. Your phone is the controller: Penguin Sumo, Curling, Tug of War, Quick Draw, Blow Boat Race, Gone Fishing, Play Your Cards Right and Derby Day.">
 <meta property="og:url" content="https://jimmywilson1979-arch.github.io/buzz-in/party.html">
 <meta property="og:image" content="https://jimmywilson1979-arch.github.io/buzz-in/party-og.jpg">
 <meta property="og:image:width" content="1200">
@@ -131,6 +131,29 @@ body.ph{overflow:hidden;overscroll-behavior:none;touch-action:manipulation}
 .home h1 span{color:var(--gold)}
 .home p{margin:0;line-height:1.4}
 .toast{position:fixed;left:50%;top:20%;transform:translateX(-50%);background:var(--gold);color:var(--gold-ink);font-weight:800;font-size:1.3rem;padding:.6em 1.2em;border-radius:99px;z-index:9;animation:pop .2s}
+.bar2{display:flex;align-items:center;gap:.6em;font-weight:700;font-size:.9rem}
+.bar2 span{width:6.5em;color:var(--muted)}
+.bar2 b{flex:1;height:1rem;border-radius:99px;background:var(--panel);overflow:hidden}
+.bar2 i{display:block;height:100%;transition:width .15s}
+.reelwrap{flex:1;display:flex;align-items:center;justify-content:center;padding:1em}
+.reel{position:relative;width:min(78vw,18rem);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#1d2a55 0 30%,#2a3870 31% 64%,#141936 65%);border:6px solid #5560a8;touch-action:none;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.reel.fight{background:radial-gradient(circle,#5a1010 0 30%,#a51d1d 31% 64%,#3a0a0a 65%);border-color:#ff5d5d;animation:shake .3s infinite}
+.reel span{font-weight:800;text-align:center;width:40%;font-size:.9rem;pointer-events:none}
+.rk{position:absolute;width:3.2rem;height:3.2rem;border-radius:50%;background:var(--gold);transform:translate(-50%,-50%);box-shadow:0 3px 10px rgba(0,0,0,.5);pointer-events:none}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.pcard{width:5.5rem;height:7.7rem;border-radius:.7rem;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 .4rem 1rem rgba(0,0,0,.4);font-family:var(--display)}
+.pcard b{font-size:2.4rem;line-height:1}.pcard span{font-size:2.2rem;line-height:1}
+.pcard.big{width:7.5rem;height:10.5rem}.pcard.big b{font-size:3.4rem}.pcard.big span{font-size:3rem}
+.hl{flex:1;display:flex;flex-direction:column;gap:.8em;padding:1em}
+.hlb{flex:1;border-radius:1.2em;font-family:var(--display);font-weight:800;font-size:2.4rem;color:#fff}
+.hlb.up{background:#2e7d32}.hlb.down{background:#c62828}
+.hlb.on{box-shadow:0 0 0 5px var(--gold)}.hlb.off{opacity:.35}
+.hlist{display:flex;flex-direction:column;gap:.45em}
+.hrow{display:flex;align-items:center;gap:.6em;padding:.55em .7em;border-radius:.8em;background:var(--panel);border:2px solid var(--line);text-align:left}
+.hrow.on{border-color:var(--gold);background:#2a2a14}
+.hrow .silk{width:1.8em;height:1.8em;border-radius:.4em;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6);flex:none}
+.hrow .hn{flex:1;font-weight:700}.hrow .ho{font-family:var(--display);font-weight:800;font-size:1.3rem;color:var(--gold)}
+.chip:disabled{opacity:.35}
 /* snow (Christmas) */
 .snow{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:3}
 .snow i{position:absolute;top:-2vh;border-radius:50%;background:#fff;opacity:.75;animation:fall linear infinite}
@@ -171,8 +194,12 @@ const INFO = {
   curl: { t: "Curling", e: "🥌", how: "On your turn, swipe UP on your phone to slide your stone. Then tap SWEEP fast to make it go further. Closest to the middle wins!", kid: "Kids get help with their power." },
   tug: { t: "Tug of War", e: "💪", how: "Two teams. Tap as fast as you can to pull the rope your way. Best of 3 pulls!", kid: "Kids' taps count extra." },
   draw: { t: "Quick Draw", e: "🤠", how: "Wait for GREEN, then tap as fast as you can. Tap on red or too early and you're out of that round. 5 rounds!", kid: "Kids get a head start." },
+  boat: { t: "Blow Boat Race", e: "⛵", how: "Blow into the bottom of your phone (or shout!) to fill your sail. First boat across the lake wins. No microphone? Tap to paddle instead.", kid: "Kids' puffs count extra." },
+  fish: { t: "Gone Fishing", e: "🎣", how: "Swipe up to cast. Wait for a proper BITE, not a nibble, then tap HOOK. Wind your finger round the reel, but stop when it fights or the line snaps! Most points of fish in 100 seconds wins.", kid: "Kids get longer to hook and stronger lines." },
+  cards: { t: "Play Your Cards Right", e: "🃏", how: "Will the next card be higher or lower? Choose on your phone before time runs out. A pair means everyone's wrong! Most correct after 3 rows wins.", kid: "Everyone has the same chance in this one!" },
+  derby: { t: "Derby Day", e: "🏇", how: "Everyone gets 100 pretend coins. Back a horse on your phone, then watch the race. Winners are paid at the odds shown. Most coins after 3 races wins!", kid: "Kids start with 150 coins." },
 };
-const GAME_IDS = ["sumo", "tug", "draw", "curl"];
+const GAME_IDS = ["sumo", "tug", "draw", "curl", "boat", "fish", "cards", "derby"];
 const PTS = [10, 7, 5, 4, 3, 2];
 function setsHTML(st) {
   return `<div class="setrow"><b>Games (tap to include)</b>${GAME_IDS.map(g => `<button class="chip ${st.games.includes(g) ? "on" : ""}" data-game="${g}">${INFO[g].e} ${INFO[g].t}</button>`).join("")}</div>
@@ -224,7 +251,7 @@ function home() {
   const phone = matchMedia("(pointer:coarse)").matches && Math.min(innerWidth, innerHeight) < 700;
   app.innerHTML = `<div class="home">
     <h1>Buzz In <span>Party</span></h1>
-    <p class="muted">Party games on the TV. Your phone is the controller: Penguin Sumo, Curling, Tug of War and Quick Draw.</p>
+    <p class="muted">Party games on the TV. Your phone is the controller: Penguin Sumo, Curling, Tug of War, Quick Draw, Blow Boat Race, Gone Fishing, Play Your Cards Right and Derby Day.</p>
     <button class="btn big ${phone ? "" : "gold"}" id="tvb">📺 This is the TV screen</button>
     <p class="muted" style="font-size:.9rem">Open on the laptop you cast from or plug into the TV, the same as Buzz In.</p>
     <div style="display:flex;gap:.6em"><input id="code" maxlength="4" placeholder="Code" autocapitalize="characters" style="text-transform:uppercase;font-size:1.3rem;letter-spacing:.15em">
@@ -338,7 +365,7 @@ function Sumo(C) {
       ctx.restore();
       if (g.alive) label(ctx, g.p.name, x, y - r * 1.75, Math.max(12, H * .026), g.p.color);
     }
-    if (S.state === "count") { const s = Math.ceil((3200 - (T() - S.at)) / 1000); bigText(ctx, W, H, s > 0 ? String(s) : "GO!"); }
+    if (S.state === "count") { const s = Math.ceil((3000 - (T() - S.at)) / 1000); bigText(ctx, W, H, s > 0 ? String(s) : "GO!"); }
     if (S.state === "fight" && T() - S.at < 700) bigText(ctx, W, H, "GO!");
     if (S.state === "roundEnd") bigText(ctx, W, H, S.msg, "#fff", H * .085);
   };
@@ -519,7 +546,7 @@ function Tug(C) {
       ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.fillRect(i === 0 ? W * .1 : W * .7, H * .26, W * .2, H * .018);
       ctx.fillStyle = cols[i]; ctx.fillRect(i === 0 ? W * .1 : W * .7, H * .26, W * .2 * clamp(r / 10, 0, 1), H * .018);
     }
-    if (S.state === "count") { const s = Math.ceil((3200 - (T() - S.at)) / 1000); bigText(ctx, W, H * .8, s > 0 ? String(s) : "PULL!"); }
+    if (S.state === "count") { const s = Math.ceil((3000 - (T() - S.at)) / 1000); bigText(ctx, W, H * .8, s > 0 ? String(s) : "PULL!"); }
     if (S.state === "pull" && T() - S.at < 700) bigText(ctx, W, H * .8, "PULL!");
     if (S.state === "roundEnd") bigText(ctx, W, H * .8, S.msg, "#fff", H * .085);
   };
@@ -597,7 +624,365 @@ function QuickDraw(C) {
   api.skip = () => { api.done = true; };
   return api;
 }
-const MAKERS = { sumo: Sumo, curl: Curling, tug: Tug, draw: QuickDraw };
+// ---------- Blow Boat Race ----------
+function Boat(C) {
+  const api = { id: "boat", done: false }, ps = C.players, n = ps.length, A = C.aspect();
+  const X0 = .14, X1 = A - .16, LEN = X1 - X0;
+  const S = { state: "setup", at: T(), boats: ps.map(p => ({ p, id: p.id, x: 0, v: 0, lvl: 0, lvlAt: 0, fin: null, ready: false, mode: "" })), order: [], firstFin: 0, msg: "" };
+  api.input = (p, m) => {
+    const b = S.boats.find(q => q.id === p.id); if (!b) return;
+    if (m.t === "ready") { b.ready = true; b.mode = m.mode === "tap" ? "tap" : "mic"; }
+    if (m.t === "blow") { b.lvl = clamp(+m.v || 0, 0, 1); b.lvlAt = T(); }
+  };
+  api.update = dt => {
+    const t = T() - S.at;
+    if (S.state === "setup") { if (S.boats.every(b => b.ready || !C.alive(b.id)) || t > 20000) { S.state = "count"; S.at = T(); } return; }
+    if (S.state === "count") { if (t > 3200) { S.state = "race"; S.at = T(); } return; }
+    if (S.state === "end") { if (t > 4800) api.done = true; return; }
+    for (const b of S.boats) {
+      if (b.fin != null) continue;
+      let L = T() - b.lvlAt > 450 ? 0 : b.lvl; if (C.boost && b.p.kid) L = Math.min(1, L * 1.35);
+      b.v += (L - b.v) * Math.min(1, dt * 2.5); b.x += b.v * .13 * dt;
+      if (b.x >= LEN) { b.x = LEN; b.fin = T(); S.order.push(b.id); if (!S.firstFin) S.firstFin = T(); C.buzz(b.id, [50, 50, 200]); }
+    }
+    if (S.boats.every(b => b.fin != null || !C.alive(b.id)) || t > 55000 || (S.firstFin && T() - S.firstFin > 9000)) {
+      const w = ps.find(p => p.id === S.order[0]) || ps.find(p => p.id === api.ranking()[0][0]);
+      S.msg = w ? `${w.name} wins the race!` : "Race over"; S.state = "end"; S.at = T();
+    }
+  };
+  api.draw = (ctx, W, H) => {
+    const t = T(), sc = H, ox = (W - A * sc) / 2, X = x => ox + x * sc;
+    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, C.xmas ? "#0f2a4a" : "#87cefa"); g.addColorStop(.2, C.xmas ? "#1b4a7a" : "#bfe6ff"); g.addColorStop(.21, "#2f8fd8"); g.addColorStop(1, "#0b4f8a");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = C.xmas ? "#f4f8ff" : "#4caf50"; ctx.beginPath(); ctx.moveTo(0, H * .21); for (let x = 0; x <= W; x += W / 12) ctx.lineTo(x, H * (.17 + .025 * Math.sin(x / 90))); ctx.lineTo(W, H * .21); ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,.12)"; ctx.lineWidth = 2;
+    for (let y = H * .26; y < H; y += H / 22) { ctx.beginPath(); for (let x = 0; x <= W; x += 24) ctx.lineTo(x, y + Math.sin(x / 50 + t / 600 + y) * 4); ctx.stroke(); }
+    const lanes = S.boats.length, top = .27, h = (.93 - top) / lanes;
+    for (let i = 0; i <= lanes; i++) { ctx.strokeStyle = "rgba(255,255,255,.25)"; ctx.setLineDash([12, 12]); ctx.beginPath(); ctx.moveTo(X(X0 - .06), (top + i * h) * sc); ctx.lineTo(X(X1 + .06), (top + i * h) * sc); ctx.stroke(); ctx.setLineDash([]); }
+    const fx = X(X1); for (let y = top * sc, k = 0; y < .93 * sc; y += 14, k++) { ctx.fillStyle = k % 2 ? "#111" : "#fff"; ctx.fillRect(fx, y, 7, 14); ctx.fillStyle = k % 2 ? "#fff" : "#111"; ctx.fillRect(fx + 7, y, 7, 14); }
+    S.boats.forEach((b, i) => {
+      const cy = (top + (i + .62) * h) * sc, x = X(X0 + b.x), s = Math.min(h * sc * .55, H * .07), L = T() - b.lvlAt > 450 ? 0 : b.lvl;
+      if (S.state === "race" && b.fin == null && L > .1) { ctx.strokeStyle = `rgba(255,255,255,${.3 + L * .5})`; ctx.lineWidth = 3; for (let k = 0; k < 3; k++) { const yy = cy - s * (1.2 - k * .45), off = (t / 4 + k * 40) % 60; ctx.beginPath(); ctx.moveTo(x - s * 1.8 - off, yy); ctx.lineTo(x - s * 1.1 - off, yy); ctx.stroke(); } }
+      ctx.fillStyle = "rgba(255,255,255,.35)"; ctx.beginPath(); ctx.ellipse(x - s * .9, cy + s * .25, s * .7 * b.v + 2, s * .08, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = "#6d4c2f"; ctx.beginPath(); ctx.moveTo(x - s, cy); ctx.lineTo(x + s, cy); ctx.lineTo(x + s * .65, cy + s * .35); ctx.lineTo(x - s * .7, cy + s * .35); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#5a3d24"; ctx.fillRect(x - s * .04, cy - s * 1.45, s * .08, s * 1.45);
+      const bill = .35 + .65 * (S.state === "race" ? L : .3);
+      ctx.fillStyle = b.p.color; ctx.beginPath(); ctx.moveTo(x + s * .04, cy - s * 1.4); ctx.quadraticCurveTo(x + s * (.4 + bill * .6), cy - s * .8, x + s * .04, cy - s * .12); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.moveTo(x - s * .04, cy - s * 1.25); ctx.lineTo(x - s * .04, cy - s * .15); ctx.lineTo(x - s * (.5 + bill * .3), cy - s * .15); ctx.closePath(); ctx.fill();
+      if (C.xmas) hat(ctx, x + s * .02, cy - s * 1.45, s * .22, .1);
+      label(ctx, b.p.name + (b.fin != null ? ` 🏁 ${ord(S.order.indexOf(b.id) + 1)}` : ""), X(X0 - .08), cy - s * .4, H * .024, b.p.color);
+      if (S.state === "setup") label(ctx, b.ready ? (b.mode === "tap" ? "✓ tapping" : "✓ mic on") : "turning on mic…", X(X0 - .08), cy + s * .05, H * .02, b.ready ? "#9ff0c2" : "#ffd3d3");
+      else { ctx.fillStyle = "rgba(0,0,0,.3)"; ctx.fillRect(X(X0 - .14), cy + s * .05, X(X0 - .02) - X(X0 - .14), H * .012); ctx.fillStyle = b.p.color; ctx.fillRect(X(X0 - .14), cy + s * .05, (X(X0 - .02) - X(X0 - .14)) * L, H * .012); }
+    });
+    if (S.state === "setup") bigText(ctx, W, H * .27, "Phones: turn on your microphone", "#fff", H * .055);
+    if (S.state === "count") { const s = Math.ceil((3000 - (T() - S.at)) / 1000); bigText(ctx, W, H, s > 0 ? String(s) : "BLOW!"); }
+    if (S.state === "race" && T() - S.at < 800) bigText(ctx, W, H, "BLOW!");
+    if (S.state === "end") bigText(ctx, W, H, S.msg, "#fff", H * .085);
+  };
+  api.hud = () => "⛵ Blow Boat Race";
+  api.phone = () => ({ state: S.state, ready: S.boats.filter(b => b.ready).map(b => b.id) });
+  api.ranking = () => { const fin = S.order.map(id => [id]); const rest = rankBy(S.boats.filter(b => b.fin == null).map(b => b.id), id => S.boats.find(b => b.id === id).x, true); return fin.concat(rest); };
+  return api;
+}
+
+// ---------- Gone Fishing ----------
+function Fish(C) {
+  const api = { id: "fish", done: false }, ps = C.players, n = ps.length, A = C.aspect();
+  const TOP = .22, BOT = .8, DOCK = .87, DUR = 100000;
+  const TYPES = [{ n: "Minnow", w: 1, s: .6, p: .3 }, { n: "Trout", w: 2, s: .85, p: .27 }, { n: "Salmon", w: 4, s: 1.1, p: .17 }, { n: "Pike", w: 6, s: 1.35, p: .1 }, { n: "Golden carp", w: 10, s: 1, p: .05, gold: true }, { n: "Old boot", w: 0, s: .8, p: .09, boot: true }];
+  if (C.xmas) TYPES.push({ n: "Christmas present", w: 5, s: .9, p: .07, gift: true });
+  const pick = () => { let r = Math.random() * TYPES.reduce((a, t) => a + t.p, 0); for (const t of TYPES) { r -= t.p; if (r <= 0) return t; } return TYPES[0]; };
+  const fish = [];
+  const spawn = () => fish.push({ t: pick(), x: .08 * A + Math.random() * .84 * A, y: TOP + .05 + Math.random() * (BOT - TOP - .1), vx: (Math.random() < .5 ? -1 : 1) * (.025 + Math.random() * .035), ph: Math.random() * 6, target: null, taken: false, flee: 0 });
+  for (let i = 0; i < 9 + n * 2; i++) spawn();
+  const kid = p => C.boost && p.kid;
+  const pl = ps.map((p, i) => ({ p, id: p.id, x: A * (i + 1) / (n + 1), mode: "idle", bob: null, from: null, fish: null, score: 0, best: null, at: 0, nib: 0, nextNib: 0, prog: 0, ten: 0, thrash: false, thrashEnd: 0, nextThrash: 0, lastPriv: 0, dip: 0 }));
+  const S = { state: "count", at: T(), pops: [], msg: "" };
+  const priv = (q, m) => C.priv(q.id, m);
+  function release(q, flee) { if (q.fish) { q.fish.taken = false; q.fish.target = null; if (flee) { q.fish.flee = T() + 2500; q.fish.vx = (q.fish.x > q.bob.x ? 1 : -1) * .12; } } q.fish = null; }
+  function setMode(q, m) { q.mode = m; q.at = T(); }
+  api.input = (p, m) => {
+    const q = pl.find(z => z.id === p.id); if (!q || S.state !== "fish") return;
+    if (m.t === "cast" && q.mode === "idle") {
+      const pw = clamp(+m.p || 0, 0, 1), a = clamp(+m.a || 0, -1, 1);
+      q.from = { x: q.x, y: DOCK - .03 }; q.bob = { x: clamp(q.x + a * .5, .06 * A, .94 * A), y: clamp(DOCK - .1 - pw * .55, TOP + .04, BOT) }; setMode(q, "flying");
+    }
+    if (m.t === "hook") {
+      if (q.mode === "bite") { setMode(q, "reel"); q.prog = 0; q.ten = 0; q.thrash = false; q.nextThrash = T() + 1200 + Math.random() * 1400; priv(q, { t: "fishp", prog: 0, ten: 0, thr: false }); }
+      else if (q.mode === "nibble") { release(q, true); setMode(q, "wait"); priv(q, { t: "fishx", m: "Too soon! It was only nibbling." }); }
+      else if (q.mode === "wait") priv(q, { t: "fishx", m: "Nothing on the line yet!" });
+    }
+    if (m.t === "reel" && q.mode === "reel") {
+      const a = clamp(+m.a || 0, 0, 20), f = q.fish.t;
+      if (q.thrash) { q.ten += a * .1 * (kid(p) ? .55 : 1); }
+      else q.prog += a * .05 / (.55 + f.s * .55);
+    }
+    if (m.t === "recast" && (q.mode === "wait" || q.mode === "nibble")) { release(q, false); setMode(q, "idle"); }
+  };
+  api.update = dt => {
+    const now = T(), t = now - S.at;
+    if (S.state === "count") { if (t > 3200) { S.state = "fish"; S.at = T(); } return; }
+    if (S.state === "end") { if (t > 5500) api.done = true; return; }
+    for (const f of fish) {
+      if (f.taken) continue;
+      if (f.target) { const q = f.target; if (q.mode !== "wait" || !q.bob) { f.target = null; continue; } const dx = q.bob.x - f.x, dy = q.bob.y - f.y, d = Math.hypot(dx, dy), sp = .07; if (d < .02) { f.taken = true; f.target = null; q.fish = f; setMode(q, "nibble"); q.nib = Math.random() * (kid(q.p) ? 1.5 : 3) | 0; q.nextNib = now + 500 + Math.random() * 900; } else { f.x += dx / d * sp * dt; f.y += dy / d * sp * dt; f.vx = Math.sign(dx) * Math.abs(f.vx); } continue; }
+      f.ph += dt; f.x += f.vx * dt; f.y += Math.sin(f.ph * 1.3) * .006 * dt;
+      if (f.x < .05 * A || f.x > .95 * A) { f.vx *= -1; f.x = clamp(f.x, .05 * A, .95 * A); }
+      if (f.flee && now > f.flee) { f.flee = 0; f.vx = Math.sign(f.vx) * .035; }
+    }
+    for (const q of pl) {
+      if (q.mode === "flying" && now - q.at > 650) setMode(q, "wait");
+      if (q.mode === "wait") {
+        const r = .14 + (now - q.at) / 1000 * .03;
+        if (Math.random() < dt * .7) { let best = null, bd = 9; for (const f of fish) { if (f.taken || f.target || f.flee) continue; const d = Math.hypot(f.x - q.bob.x, f.y - q.bob.y); if (d < r && d < bd) { bd = d; best = f; } } if (best) best.target = q; }
+      }
+      if (q.mode === "nibble") {
+        q.fish.x = q.bob.x - .02; q.fish.y = q.bob.y + .01;
+        if (now >= q.nextNib) {
+          if (q.nib > 0) { q.nib--; q.dip = now; priv(q, { t: "fishn" }); q.nextNib = now + 700 + Math.random() * 900; }
+          else { setMode(q, "bite"); q.dip = now; priv(q, { t: "fishb" }); C.buzz(q.id, [120, 40, 120]); }
+        }
+      }
+      if (q.mode === "bite" && now - q.at > (kid(q.p) ? 2200 : 1300)) { release(q, true); setMode(q, "wait"); priv(q, { t: "fishx", m: "Too slow! It got away." }); }
+      if (q.mode === "reel") {
+        const f = q.fish;
+        if (!f.t.boot && !q.thrash && now > q.nextThrash) { q.thrash = true; q.thrashEnd = now + 700 + f.t.s * 450; priv(q, { t: "fishp", prog: q.prog, ten: q.ten, thr: true }); C.buzz(q.id, [200]); }
+        if (q.thrash && now > q.thrashEnd) { q.thrash = false; q.nextThrash = now + 1100 + Math.random() * 1700; }
+        q.ten = Math.max(0, q.ten - dt * .35);
+        f.x = q.bob.x + (q.x - q.bob.x) * q.prog; f.y = q.bob.y + (DOCK - .02 - q.bob.y) * q.prog;
+        if (q.ten >= 1) { release(q, true); fish.splice(fish.indexOf(f), 1); setTimeout(spawn, 2000); setMode(q, "idle"); q.bob = null; priv(q, { t: "fishx", m: "SNAP! The line broke." }); C.buzz(q.id, [300]); }
+        else if (q.prog >= 1) {
+          q.score += f.t.w; if (!q.best || f.t.w > q.best.w) q.best = f.t;
+          S.pops.push({ x: q.x, t: now, f: f.t, who: q.p.name }); fish.splice(fish.indexOf(f), 1); setTimeout(spawn, 1500);
+          q.fish = null; q.bob = null; setMode(q, "idle"); priv(q, { t: "fishx", m: f.t.boot ? "An old boot! 0 points 😂" : `You caught a ${f.t.n}! +${f.t.w}`, good: !f.t.boot }); C.buzz(q.id, [50, 50, 50, 50, 200]);
+        } else if (now - q.lastPriv > 160) { q.lastPriv = now; priv(q, { t: "fishp", prog: Math.round(q.prog * 100) / 100, ten: Math.round(q.ten * 100) / 100, thr: q.thrash }); }
+      }
+    }
+    if (t > DUR) {
+      const top = pl.slice().sort((a, b) => b.score - a.score)[0];
+      S.msg = top && top.score > 0 ? `${top.p.name} wins with ${top.score} points!` : "Nothing caught!"; S.state = "end"; S.at = T();
+      pl.forEach(q => { release(q, false); q.mode = "done"; });
+    }
+  };
+  api.draw = (ctx, W, H) => {
+    const now = T(), sc = H, ox = (W - A * sc) / 2, X = x => ox + x * sc, Y = y => y * sc;
+    const sky = ctx.createLinearGradient(0, 0, 0, Y(TOP)); sky.addColorStop(0, C.xmas ? "#0f2240" : "#8fd3ff"); sky.addColorStop(1, C.xmas ? "#2a4a72" : "#d9f1ff"); ctx.fillStyle = sky; ctx.fillRect(0, 0, W, Y(TOP));
+    ctx.fillStyle = C.xmas ? "#eef4fb" : "#5aa64a"; ctx.fillRect(0, Y(TOP) - H * .03, W, H * .03);
+    ctx.fillStyle = C.xmas ? "#1f5c3a" : "#2f6b2f"; for (let x = 0; x < W; x += H * .09) { ctx.beginPath(); ctx.moveTo(x, Y(TOP) - H * .02); ctx.lineTo(x + H * .04, Y(TOP) - H * .13 - (x % 3) * 6); ctx.lineTo(x + H * .08, Y(TOP) - H * .02); ctx.fill(); }
+    const wg = ctx.createLinearGradient(0, Y(TOP), 0, H); wg.addColorStop(0, "#3a9ad9"); wg.addColorStop(1, "#0d4d7a"); ctx.fillStyle = wg; ctx.fillRect(0, Y(TOP), W, H - Y(TOP));
+    ctx.strokeStyle = "rgba(255,255,255,.1)"; ctx.lineWidth = 2; for (let y = Y(TOP) + 20; y < Y(DOCK); y += H / 20) { ctx.beginPath(); for (let x = 0; x <= W; x += 24) ctx.lineTo(x, y + Math.sin(x / 70 + now / 800 + y) * 3); ctx.stroke(); }
+    for (const f of fish) {
+      const s = f.t.s * H * .028, x = X(f.x), y = Y(f.y), dir = f.vx >= 0 ? 1 : -1, hooked = f.taken && pl.some(q => q.fish === f && q.mode === "reel");
+      ctx.save(); ctx.translate(x, y); ctx.scale(dir, 1);
+      ctx.fillStyle = f.t.gold ? `rgba(255,212,59,${.55 + .25 * Math.sin(now / 200)})` : f.t.gift ? "rgba(229,57,53,.5)" : hooked ? "rgba(20,40,60,.75)" : "rgba(8,30,50,.45)";
+      ctx.beginPath(); ctx.ellipse(0, 0, s * 1.6, s * .65, 0, 0, 7); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-s * 1.4, 0); ctx.lineTo(-s * 2.3, -s * .7); ctx.lineTo(-s * 2.3, s * .7); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+    ctx.fillStyle = "#8a5a33"; ctx.fillRect(0, Y(DOCK), W, H - Y(DOCK)); ctx.strokeStyle = "#6b4426"; ctx.lineWidth = 3; for (let x = 0; x < W; x += H * .06) { ctx.beginPath(); ctx.moveTo(x, Y(DOCK)); ctx.lineTo(x, H); ctx.stroke(); }
+    for (const q of pl) {
+      const px = X(q.x), py = Y(DOCK) - H * .01;
+      ctx.fillStyle = q.p.color; ctx.beginPath(); ctx.roundRect(px - H * .018, py - H * .06, H * .036, H * .05, H * .01); ctx.fill();
+      ctx.fillStyle = "#ffd9b3"; ctx.beginPath(); ctx.arc(px, py - H * .075, H * .017, 0, 7); ctx.fill();
+      if (C.xmas) hat(ctx, px, py - H * .088, H * .014, -.2);
+      const tip = { x: px + H * .05, y: py - H * .12 };
+      ctx.strokeStyle = "#3b2a1a"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(px + H * .01, py - H * .04); ctx.lineTo(tip.x, tip.y); ctx.stroke();
+      if (q.bob) {
+        let bx, by; if (q.mode === "flying") { const u = Math.min(1, (now - q.at) / 650); bx = X(q.from.x + (q.bob.x - q.from.x) * u); by = Y(q.from.y + (q.bob.y - q.from.y) * u) - Math.sin(u * Math.PI) * H * .15; } else { bx = X(q.bob.x); by = Y(q.bob.y); }
+        if (q.mode === "reel") { bx = X(q.fish.x); by = Y(q.fish.y); }
+        const dip = q.mode === "bite" ? H * .012 * (1 + Math.sin(now / 40)) : now - q.dip < 250 ? H * .008 : 0;
+        ctx.strokeStyle = q.mode === "reel" ? (q.thrash ? "#ff5d5d" : "#fff") : "rgba(255,255,255,.75)"; ctx.lineWidth = q.mode === "reel" ? 2.5 : 1.5;
+        ctx.beginPath(); ctx.moveTo(tip.x, tip.y); if (q.mode === "reel") ctx.lineTo(bx, by); else ctx.quadraticCurveTo((tip.x + bx) / 2, Math.max(tip.y, by) + H * .03, bx, by + dip); ctx.stroke();
+        if (q.mode !== "reel") { ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(bx, by + dip, H * .011, 0, 7); ctx.fill(); ctx.fillStyle = "#ff3b3b"; ctx.beginPath(); ctx.arc(bx, by + dip, H * .011, Math.PI, 0); ctx.fill(); }
+        if (q.mode === "bite") label(ctx, "!", bx, by - H * .04, H * .05, "#ffc93c");
+        if (q.mode === "reel") { ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.fillRect(px - H * .05, py + H * .045, H * .1, H * .012); ctx.fillStyle = "#33d17a"; ctx.fillRect(px - H * .05, py + H * .045, H * .1 * q.prog, H * .012); }
+      }
+      label(ctx, `${q.p.name} · ${q.score}`, px, Y(DOCK) + H * .07, H * .024, q.p.color);
+    }
+    S.pops = S.pops.filter(pp => now - pp.t < 2600);
+    for (const pp of S.pops) { const u = (now - pp.t) / 2600; label(ctx, `${pp.f.boot ? "👢" : pp.f.gift ? "🎁" : "🐟"} ${pp.f.n}${pp.f.w ? " +" + pp.f.w : ""}`, X(pp.x), Y(DOCK) - H * (.18 + u * .12), H * .035, pp.f.gold ? "#ffd43b" : "#fff"); }
+    if (S.state === "fish") { const s = Math.max(0, Math.ceil((DUR - (now - S.at)) / 1000)); label(ctx, `⏱ ${s}`, W / 2, H * .13, H * .05, s <= 10 ? "#ff5d5d" : "#fff"); }
+    if (S.state === "count") { const s = Math.ceil((3000 - (now - S.at)) / 1000); bigText(ctx, W, H, s > 0 ? String(s) : "CAST!"); }
+    if (S.state === "end") bigText(ctx, W, H * .9, S.msg, "#fff", H * .075);
+  };
+  api.hud = () => "🎣 Gone Fishing";
+  api.phone = () => ({ state: S.state, modes: Object.fromEntries(pl.map(q => [q.id, q.mode])), scores: Object.fromEntries(pl.map(q => [q.id, q.score])) });
+  api.ranking = () => rankBy(pl.map(q => q.id), id => pl.find(q => q.id === id).score, true);
+  return api;
+}
+
+// ---------- Play Your Cards Right ----------
+const RANKS = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"], SUITS = ["♠", "♥", "♦", "♣"];
+const cardTxt = c => RANKS[c % 13] + SUITS[c / 13 | 0];
+function drawCard(ctx, x, y, w, h, c, up, sx, xmas) {
+  ctx.save(); ctx.translate(x + w / 2, y + h / 2); ctx.scale(Math.max(.02, sx), 1); ctx.translate(-w / 2, -h / 2);
+  ctx.shadowColor = "rgba(0,0,0,.35)"; ctx.shadowBlur = 12; ctx.shadowOffsetY = 6;
+  ctx.fillStyle = up ? "#fff" : (xmas ? "#b71c1c" : "#1e3a8a"); ctx.beginPath(); ctx.roundRect(0, 0, w, h, w * .08); ctx.fill(); ctx.shadowColor = "transparent";
+  if (up) {
+    const red = (c / 13 | 0) === 1 || (c / 13 | 0) === 2; ctx.fillStyle = red ? "#d32f2f" : "#111";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.font = `800 ${w * .26}px Barlow, sans-serif`; ctx.fillText(RANKS[c % 13], w * .2, h * .13); ctx.fillText(SUITS[c / 13 | 0], w * .2, h * .3);
+    ctx.font = `800 ${w * .6}px Barlow, sans-serif`; ctx.fillText(SUITS[c / 13 | 0], w / 2, h * .58);
+  } else { ctx.strokeStyle = "rgba(255,215,90,.6)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(w * .1, h * .07, w * .8, h * .86, w * .05); ctx.stroke(); ctx.font = `${w * .4}px serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "rgba(255,215,90,.8)"; ctx.fillText(xmas ? "🎄" : "★", w / 2, h / 2); }
+  ctx.restore();
+}
+function Cards(C) {
+  const api = { id: "cards", done: false }, ps = C.players, ROWS = 3, PER = 6;
+  const deck = shuffle([...Array(52).keys()]); let di = 0;
+  const val = c => c % 13 + 2;
+  const S = { row: 0, cards: [], state: "deal", at: T(), picks: {}, pts: {}, last: null, flipAt: 0, msg: "" };
+  ps.forEach(p => S.pts[p.id] = 0);
+  function newRow() { S.row++; S.cards = [deck[di++]]; S.state = "deal"; S.at = T(); S.flipAt = T(); }
+  newRow();
+  api.input = (p, m) => { if (m.t === "pick" && S.state === "guess" && (m.v === "higher" || m.v === "lower")) S.picks[p.id] = m.v; };
+  api.update = () => {
+    const t = T() - S.at;
+    if (S.state === "deal") { if (t > 1800) { S.state = "guess"; S.at = T(); S.picks = {}; } return; }
+    if (S.state === "guess") {
+      if (ps.filter(p => C.alive(p.id)).every(p => S.picks[p.id]) || t > 12000) {
+        const prev = S.cards[S.cards.length - 1], nx = deck[di++]; S.cards.push(nx); S.flipAt = T();
+        const a = val(prev), b = val(nx), res = b > a ? "higher" : b < a ? "lower" : "pair";
+        const correct = ps.filter(p => S.picks[p.id] === res).map(p => p.id); correct.forEach(id => { S.pts[id]++; C.buzz(id, [40, 40, 40]); });
+        S.last = { res, correct }; S.state = "reveal"; S.at = T();
+      }
+      return;
+    }
+    if (S.state === "reveal" && t > 3200) { if (S.cards.length >= PER) { if (S.row >= ROWS) { const top = rankBy(ps.map(p => p.id), id => S.pts[id], true)[0]; S.msg = `${top.map(id => ps.find(p => p.id === id).name).join(" & ")} wins!`; S.state = "end"; S.at = T(); } else newRow(); } else { S.state = "guess"; S.at = T(); S.picks = {}; } return; }
+    if (S.state === "end" && t > 4500) api.done = true;
+  };
+  api.draw = (ctx, W, H) => {
+    const now = T();
+    const g = ctx.createRadialGradient(W / 2, H * .45, H * .1, W / 2, H * .45, W * .7); g.addColorStop(0, C.xmas ? "#1f6b3a" : "#1f7a4d"); g.addColorStop(1, C.xmas ? "#0b2e18" : "#0b3a24"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    const cw = Math.min(W * .12, H * .22), ch = cw * 1.4, gap = cw * .22, tot = PER * cw + (PER - 1) * gap, x0 = (W - tot) / 2, y0 = H * .2;
+    for (let i = 0; i < PER; i++) {
+      const x = x0 + i * (cw + gap);
+      ctx.strokeStyle = "rgba(255,255,255,.15)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(x, y0, cw, ch, cw * .08); ctx.stroke();
+      if (i < S.cards.length) { const last = i === S.cards.length - 1, u = last ? clamp((now - S.flipAt) / 350, 0, 1) : 1; drawCard(ctx, x, y0, cw, ch, S.cards[i], u > .5, Math.abs(1 - 2 * u) || (u >= 1 ? 1 : .02), C.xmas); }
+      else if (i === S.cards.length && S.state === "guess") { drawCard(ctx, x, y0 - Math.sin(now / 200) * 4, cw, ch, 0, false, 1, C.xmas); label(ctx, "?", x + cw / 2, y0 + ch / 2, ch * .3, "#ffc93c"); }
+      else drawCard(ctx, x, y0, cw, ch, 0, false, 1, C.xmas);
+    }
+    label(ctx, `Row ${S.row} of ${ROWS}  ·  Aces are high  ·  A pair means everyone loses!`, W / 2, H * .13, H * .03, "#c8e6c9");
+    const cy = y0 + ch + H * .08;
+    if (S.state === "guess") {
+      const left = Math.max(0, Math.ceil((12000 - (now - S.at)) / 1000));
+      bigText(ctx, W, cy * 2, `Higher or lower?  ${left}`, "#ffc93c", H * .065);
+      ps.forEach((p, i) => label(ctx, (S.picks[p.id] ? "✔ " : "… ") + p.name, W * (i + 1) / (ps.length + 1), cy + H * .1, H * .028, S.picks[p.id] ? p.color : "rgba(255,255,255,.5)"));
+    } else if (S.state === "reveal" && S.last) {
+      const r = S.last.res; bigText(ctx, W, cy * 2, r === "pair" ? "A PAIR! Everyone loses" : r === "higher" ? "HIGHER! ⬆" : "LOWER! ⬇", r === "pair" ? "#ff8a80" : "#fff", H * .07);
+      ps.forEach((p, i) => { const ok = S.last.correct.includes(p.id), pk = S.picks[p.id]; label(ctx, `${ok ? "✅" : "❌"} ${p.name}${pk ? " said " + pk : ""}`, W * (i + 1) / (ps.length + 1), cy + H * .1, H * .026, ok ? "#9ff0c2" : "#ffb3b3"); });
+    } else if (S.state === "end") bigText(ctx, W, cy * 2, S.msg, "#fff", H * .075);
+    ps.forEach((p, i) => label(ctx, `${p.name}: ${S.pts[p.id]}`, W * (i + 1) / (ps.length + 1), H * .93, H * .03, p.color));
+  };
+  api.hud = () => "🃏 Play Your Cards Right";
+  api.phone = () => ({ state: S.state, card: S.cards.length ? (S.state === "reveal" ? S.cards[S.cards.length - 2] : S.cards[S.cards.length - 1]) : null, next: S.state === "reveal" ? S.cards[S.cards.length - 1] : null, picks: Object.keys(S.picks), res: S.state === "reveal" && S.last ? S.last.res : null, correct: S.state === "reveal" && S.last ? S.last.correct : [], pts: S.pts, n: S.cards.length, row: S.row });
+  api.ranking = () => rankBy(ps.map(p => p.id), id => S.pts[id], true);
+  return api;
+}
+
+// ---------- Derby Day ----------
+const SILKS = ["#e53935", "#1e88e5", "#fdd835", "#43a047", "#8e24aa", "#fb8c00", "#00acc1", "#f06292"];
+function drawHorse(ctx, x, y, s, ph, silk, num) {
+  ctx.save(); ctx.translate(x, y);
+  ctx.strokeStyle = "#4a2e19"; ctx.lineWidth = s * .07; ctx.lineCap = "round";
+  const leg = (lx, o) => { const a = Math.sin(ph + o) * .55; ctx.beginPath(); ctx.moveTo(lx, s * .1); ctx.lineTo(lx + Math.sin(a) * s * .26, s * .1 + Math.cos(a) * s * .42); ctx.stroke(); };
+  leg(-s * .3, 0); leg(-s * .2, Math.PI); leg(s * .24, Math.PI * .5); leg(s * .33, Math.PI * 1.5);
+  ctx.fillStyle = "#7b4a2a"; ctx.beginPath(); ctx.ellipse(0, 0, s * .45, s * .2, 0, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(s * .28, -s * .1); ctx.lineTo(s * .52, -s * .4); ctx.lineTo(s * .66, -s * .33); ctx.lineTo(s * .44, .02 * s); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(s * .66, -s * .34, s * .15, s * .08, .45, 0, 7); ctx.fill();
+  ctx.strokeStyle = "#3b2414"; ctx.lineWidth = s * .06; ctx.beginPath(); ctx.moveTo(-s * .44, -s * .06); ctx.quadraticCurveTo(-s * .64, Math.sin(ph * 2) * s * .06, -s * .6, s * .24); ctx.stroke();
+  ctx.fillStyle = "#fff"; ctx.fillRect(-s * .13, -s * .18, s * .26, s * .22); ctx.fillStyle = "#111"; ctx.font = `800 ${s * .18}px Barlow, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(num, 0, -s * .07);
+  ctx.fillStyle = silk; ctx.beginPath(); ctx.ellipse(s * .06, -s * .34, s * .1, s * .15, -.35, 0, 7); ctx.fill();
+  ctx.fillStyle = "#ffd9b3"; ctx.beginPath(); ctx.arc(s * .15, -s * .53, s * .07, 0, 7); ctx.fill();
+  ctx.fillStyle = silk; ctx.beginPath(); ctx.arc(s * .15, -s * .56, s * .078, Math.PI, 0); ctx.fill();
+  ctx.restore();
+}
+function Derby(C) {
+  const api = { id: "derby", done: false }, ps = C.players, RACES = 3, NH = 6;
+  const NAMES = C.xmas ? ["Mince Pie Express", "Rudolph's Revenge", "Sprout Surprise", "Jingle Hooves", "Tinsel Tornado", "Comet's Tail", "Snowball Sally", "Figgy Pudding", "Cracker Jack", "Holly Jolly", "Frosty Flyer", "Bauble Trouble"]
+    : ["Thunder Hooves", "Dobbin's Delight", "Lightning Bolt", "Sir Gallops-a-Lot", "Hay Fever", "Mane Attraction", "Neigh Sayer", "Usain Colt", "Trot Rod", "Gravy Train", "Mr Biscuits", "Hoof Hearted"];
+  const FR = [[1, 1], [6, 4], [2, 1], [5, 2], [3, 1], [7, 2], [4, 1], [5, 1], [6, 1], [8, 1], [10, 1], [12, 1], [16, 1], [20, 1], [25, 1]];
+  const odds = o => o[0] === o[1] ? "Evens" : `${o[0]}/${o[1]}`;
+  const S = { race: 0, state: "", at: T(), horses: [], coins: {}, bets: {}, order: [], fin: [], msg: "", comm: "", commAt: 0, cheers: {}, wins: {} };
+  ps.forEach(p => S.coins[p.id] = C.boost && p.kid ? 150 : 100);
+  function newRace() {
+    S.race++; const names = shuffle(NAMES).slice(0, NH);
+    const w = Array.from({ length: NH }, () => Math.pow(Math.random(), 1.7) + .1), sw = w.reduce((a, b) => a + b, 0);
+    S.horses = names.map((nm, i) => { const dec = 1 / (w[i] / sw); let best = FR[0]; for (const f of FR) if (Math.abs(f[0] / f[1] + 1 - dec) < Math.abs(best[0] / best[1] + 1 - dec)) best = f; return { i, name: nm, o: best, dec: best[0] / best[1] + 1, x: 0 }; });
+    const ip = S.horses.map(h => 1 / h.dec), tp = ip.reduce((a, b) => a + b, 0); S.horses.forEach((h, i) => h.p = ip[i] / tp);
+    S.bets = {}; S.cheers = {}; S.state = "bet"; S.at = T(); S.msg = ""; S.comm = "Place your bets!";
+    ps.forEach(p => { if (S.coins[p.id] <= 0) { S.coins[p.id] = 10; C.priv(p.id, { t: "toast", m: "Here are 10 lucky coins to keep you going!" }); } });
+  }
+  newRace();
+  function startRace() {
+    for (const [id, b] of Object.entries(S.bets)) S.coins[id] -= b.s;
+    let left = S.horses.map(h => h.i); S.order = [];
+    while (left.length) { const tot = left.reduce((a, i) => a + S.horses[i].p, 0); let r = Math.random() * tot, k = 0; for (; k < left.length - 1; k++) { r -= S.horses[left[k]].p; if (r <= 0) break; } S.order.push(left[k]); left.splice(k, 1); }
+    let tcur = 12500; S.order.forEach((hi, rank) => { const h = S.horses[hi]; h.T = tcur; tcur += 220 + Math.random() * 520; h.amp = .05 + Math.random() * .06; h.fq = 1 + Math.random() * 1.5; h.phs = Math.random() * 6; h.x = 0; });
+    S.fin = []; S.state = "race"; S.at = T(); S.comm = "And they're off!"; S.commAt = T();
+  }
+  const posAt = (h, t) => { const u = clamp(t / h.T, 0, 1); return clamp(u + h.amp * Math.sin(Math.PI * 2 * (u * h.fq) + h.phs) * Math.sin(Math.PI * u), 0, 1); };
+  api.input = (p, m) => {
+    if (m.t === "bet" && S.state === "bet") { const h = m.h | 0, s = Math.floor(+m.s || 0); if (h >= 0 && h < NH && s >= 1 && s <= S.coins[p.id]) S.bets[p.id] = { h, s }; }
+    if (m.t === "cheer" && S.state === "race" && S.bets[p.id]) { const h = S.bets[p.id].h; S.cheers[h] = (S.cheers[h] || 0) + 1; }
+  };
+  api.update = () => {
+    const t = T() - S.at;
+    if (S.state === "bet") { if (ps.filter(p => C.alive(p.id)).every(p => S.bets[p.id]) && t > 3000 || t > 35000) startRace(); return; }
+    if (S.state === "race") {
+      S.horses.forEach(h => h.x = posAt(h, t));
+      if (T() - S.commAt > 2300) {
+        S.commAt = T(); const rk = S.horses.slice().sort((a, b) => b.x - a.x), lead = rk[0], sec = rk[1], u = lead.x;
+        S.comm = u > .82 ? `Into the final furlong… ${lead.name} from ${sec.name}!` : u > .55 ? `${sec.name} is closing on ${lead.name}!` : u > .25 ? `${lead.name} leads the field` : `${lead.name} breaks well`;
+      }
+      if (t > Math.max(...S.horses.map(h => h.T)) + 600) {
+        const win = S.horses[S.order[0]];
+        const lines = [];
+        for (const p of ps) { const b = S.bets[p.id]; if (b && b.h === win.i) { const pay = Math.round(b.s * win.dec); S.coins[p.id] += pay; S.wins[p.id] = pay; lines.push(`${p.name} +${pay}`); C.priv(p.id, { t: "toast", m: `Your horse won! +${pay} coins` }); C.buzz(p.id, [50, 50, 50, 50, 300]); } else S.wins[p.id] = 0; }
+        S.comm = `${win.name} wins it at ${odds(win.o)}!`; S.msg = lines.length ? "Winners: " + lines.join(", ") : "No winners this time. The bookie's happy!";
+        S.state = "result"; S.at = T();
+      }
+      return;
+    }
+    if (S.state === "result" && t > 6000) { if (S.race >= RACES) { S.state = "end"; S.at = T(); } else newRace(); return; }
+    if (S.state === "end" && t > 4500) api.done = true;
+  };
+  api.draw = (ctx, W, H) => {
+    const now = T(), t = now - S.at;
+    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, C.xmas ? "#16294a" : "#7ec8ff"); g.addColorStop(.18, C.xmas ? "#2d4f80" : "#cfeaff"); g.addColorStop(.181, C.xmas ? "#e8f1fb" : "#3e9b45"); g.addColorStop(1, C.xmas ? "#cfdcec" : "#2a7a32"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    const top = H * .24, bot = H * .84, lh = (bot - top) / NH, x0 = W * .2, x1 = W * .9;
+    ctx.fillStyle = C.xmas ? "rgba(255,255,255,.5)" : "rgba(120,80,40,.25)"; ctx.fillRect(0, top, W, bot - top);
+    ctx.fillStyle = "#fff"; ctx.fillRect(0, top - 6, W, 6); ctx.fillRect(0, bot, W, 6);
+    for (let i = 1; i < NH; i++) { ctx.strokeStyle = "rgba(255,255,255,.25)"; ctx.beginPath(); ctx.moveTo(0, top + i * lh); ctx.lineTo(W, top + i * lh); ctx.stroke(); }
+    ctx.fillStyle = "#d32f2f"; ctx.fillRect(x1 + W * .02, top - H * .05, 8, bot - top + H * .05); label(ctx, "FINISH", x1 + W * .02, top - H * .07, H * .025, "#fff");
+    S.horses.forEach((h, i) => {
+      const cy = top + (i + .7) * lh, s = Math.min(lh * 1.05, H * .1), x = x0 + (x1 - x0) * h.x;
+      const ph = S.state === "race" ? now / 70 + i : 0;
+      drawHorse(ctx, x, cy - s * .2, s, ph, SILKS[i], i + 1);
+      const backers = ps.filter(p => S.bets[p.id] && S.bets[p.id].h === i && S.state !== "bet");
+      label(ctx, `${i + 1}. ${h.name}`, W * .1, cy - lh * .3, H * .022, "#fff");
+      label(ctx, odds(h.o), W * .1, cy - lh * .02, H * .022, "#ffc93c");
+      backers.forEach((p, k) => { ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(W * .04 + k * H * .022, cy - lh * .02, H * .009, 0, 7); ctx.fill(); });
+      if (S.cheers[i] && S.state === "race") for (let k = 0; k < Math.min(6, S.cheers[i] / 3); k++) label(ctx, "✨", x - s * .5 + Math.sin(now / 150 + k) * s * .4, cy - s * (.8 + k * .12), H * .02);
+      if (S.state === "result" && S.order[0] === i) label(ctx, "🏆", x + s * .6, cy - s * .7, H * .05);
+    });
+    label(ctx, `Race ${S.race} of ${RACES}`, W / 2, H * .1, H * .035, "#fff");
+    if (S.state === "bet") {
+      const left = Math.max(0, Math.ceil((35000 - t) / 1000));
+      ctx.fillStyle = "rgba(9,11,20,.82)"; ctx.fillRect(W * .25, H * .3, W * .5, H * .44);
+      label(ctx, "Place your bets on your phone!", W / 2, H * .37, H * .045, "#ffc93c");
+      ps.forEach((p, i) => label(ctx, `${S.bets[p.id] ? "✔" : "…"} ${p.name} · ${S.coins[p.id]} coins`, W / 2, H * (.45 + i * .045), H * .028, S.bets[p.id] ? p.color : "rgba(255,255,255,.55)"));
+      label(ctx, `Race starts in ${left}`, W / 2, H * .7, H * .028, "#9097c0");
+    }
+    ctx.fillStyle = "rgba(9,11,20,.75)"; ctx.fillRect(0, H * .88, W, H * .12);
+    label(ctx, S.state === "result" ? `${S.comm}  ${S.msg}` : S.state === "end" ? `Final coins: ${ps.slice().sort((a, b) => S.coins[b.id] - S.coins[a.id]).map(p => `${p.name} ${S.coins[p.id]}`).join(" · ")}` : S.comm, W / 2, H * .94, H * .032, "#fff");
+  };
+  api.hud = () => "🏇 Derby Day";
+  api.phone = () => ({ state: S.state, race: S.race, horses: S.horses.map(h => ({ n: h.name, o: odds(h.o), d: h.dec })), coins: S.coins, bets: S.bets, win: S.state === "result" || S.state === "end" ? S.order[0] : null, wins: S.state === "result" ? S.wins : {} });
+  api.ranking = () => rankBy(ps.map(p => p.id), id => S.coins[id], true);
+  return api;
+}
+
+const MAKERS = { sumo: Sumo, curl: Curling, tug: Tug, draw: QuickDraw, boat: Boat, fish: Fish, cards: Cards, derby: Derby };
 
 // ======================================================================
 // TV
@@ -626,7 +1011,7 @@ async function tvMain() {
   const C = () => ({
     players: list().filter(alive).map(p => ({ id: p.id, name: p.name, kid: p.kid, color: p.color })),
     boost: S.settings.boost, xmas: S.settings.theme === "xmas", aspect: () => W / H,
-    buzz: (id, ms) => sendTo(S.players[id], { t: "buzz", ms }), bcast,
+    buzz: (id, ms) => sendTo(S.players[id], { t: "buzz", ms }), priv: (id, m) => sendTo(S.players[id], m), bcast,
     fast: m => { bcast(m); list().forEach(p => { if (p.dc && p.dc.readyState === "open") try { p.dc.send(JSON.stringify(m)); } catch (e) { } }); },
     alive: id => alive(S.players[id]),
   });
@@ -808,6 +1193,7 @@ async function phoneMain(codeRaw) {
   const id = ls.get("party_id", null) || uid(); ls.set("party_id", id);
   let me = ls.get("party_me", null);
   let ST = null, mainCh = null, own = null, pc = null, dc = null, welcomed = false, lastState = 0, lastKey = "", subKey = "", localEnd = 0;
+  let mic = null, boatMode = "", boatLvl = 0, boatTaps = [], boatReadyAt = 0, lastBlow = 0, reelAcc = 0, cardPick = null, cardPickN = -1, derbyRace = 0, derbyH = null, derbyS = 10, derbyPlaced = 0, cheerAt = 0;
   const joy = { x: 0, y: 0 }, sent = { x: 9, y: 9, t: 0 }; let tapN = 0, dashAt = 0, qd = { r: 0, s: "", goT: 0, done: false, msg: "" }, tugPos = 0;
 
   const dcOpen = () => dc && dc.readyState === "open";
@@ -833,13 +1219,18 @@ async function phoneMain(codeRaw) {
     if (m.t === "answer" && pc && pc.signalingState === "have-local-offer") pc.setRemoteDescription({ type: "answer", sdp: m.sdp }).catch(() => { });
     if (m.t === "buzz") { vib(m.ms || 30); const c = $(".ctl"); if (c) { c.classList.remove("flash"); void c.offsetWidth; c.classList.add("flash"); } }
     if (m.t === "qd") onQD(m);
+    if (m.t === "toast") toast(m.m);
+    if (m.t === "fishx") { toast(m.m); vib(m.good ? [40, 40, 120] : 120); }
+    if (m.t === "fishp") fishP(m);
+    if (m.t === "fishn") { vib(25); const z = $("#hk"); if (z) { z.dataset.nib = "1"; z.style.background = "#c79a1e"; $("#hkt").textContent = "nibble…"; setTimeout(() => { z.dataset.nib = ""; if (z.isConnected && $("#hkt").textContent === "nibble…") { z.style.background = "#1d3d5c"; $("#hkt").textContent = "WAIT…"; } }, 450); } }
+    if (m.t === "fishb") { vib([150, 50, 150]); const z = $("#hk"); if (z) { z.style.background = "#33d17a"; $("#hkt").textContent = "HOOK IT!"; $("#hks").textContent = "Tap now!"; } }
   }
   function onMain(m) {
     if (!m) return;
     if (m.t === "state") {
       const was = ST; ST = m.st; lastState = Date.now(); localEnd = Date.now() + (ST.left || 0);
       if (me && !ST.players.some(p => p.id === id)) join();
-      if (was && (was.gi !== ST.gi || was.phase !== ST.phase)) { qd = { r: 0, s: "", goT: 0, done: false, msg: "" }; tugPos = 0; }
+      if (was && (was.gi !== ST.gi || was.phase !== ST.phase)) { qd = { r: 0, s: "", goT: 0, done: false, msg: "" }; tugPos = 0; if (was.gi !== ST.gi || ST.phase !== "play") { stopMic(); boatMode = ""; boatLvl = 0; boatTaps = []; } }
       if (ST.phase === "play" && ST.game === "draw" && ST.g && ST.g.round > qd.r) onQD({ t: "qd", s: ST.g.state === "go" ? "go" : "wait", r: ST.g.round });
       render(); return;
     }
@@ -923,7 +1314,11 @@ async function phoneMain(codeRaw) {
     } else if (game === "tug") {
       const ti = g.teams ? (g.teams[0].includes(id) ? 0 : g.teams[1].includes(id) ? 1 : -1) : -1, k = "tug|" + ti + "|" + g.state;
       if (k !== subKey) { subKey = k; tugUI(ctl, g, ti); }
-    } else if (game === "draw") {
+    } else if (game === "boat") boatUI(ctl, g);
+    else if (game === "fish") fishUI(ctl, g);
+    else if (game === "cards") cardsUI(ctl, g);
+    else if (game === "derby") derbyUI(ctl, g);
+    else if (game === "draw") {
       if (subKey !== "draw") { subKey = "draw"; ctl.innerHTML = `<div class="tapzone" id="qz"><div class="big" id="qb"></div><div class="sub" id="qs"></div></div>`; const z = $("#qz"); z.onpointerdown = e => { e.preventDefault(); qdTap(e); }; drawQD(); }
     }
   }
@@ -983,10 +1378,165 @@ async function phoneMain(codeRaw) {
     else if (qd.s === "wait" || qd.s === "fake") { qd.done = true; qd.msg = "early"; send({ t: "qd", r: qd.r, early: 1 }); vib(200); }
     drawQD();
   }
+  // ---------- Blow Boat Race ----------
+  async function startMic() {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+    const ac = new (window.AudioContext || window.webkitAudioContext)(); try { await ac.resume(); } catch (e) { }
+    const src = ac.createMediaStreamSource(stream), an = ac.createAnalyser(); an.fftSize = 1024; src.connect(an);
+    mic = { ac, an, stream, buf: new Float32Array(an.fftSize), base: .02 };
+    let sum = 0, k = 0; const t0 = Date.now();
+    await new Promise(r => { const iv = setInterval(() => { sum += micRms(); k++; if (Date.now() - t0 > 700) { clearInterval(iv); r(); } }, 50); });
+    mic.base = Math.max(.015, (sum / Math.max(1, k)) * 2.2);
+  }
+  function micRms() { if (!mic) return 0; mic.an.getFloatTimeDomainData(mic.buf); let s = 0; for (let i = 0; i < mic.buf.length; i++) s += mic.buf[i] * mic.buf[i]; return Math.sqrt(s / mic.buf.length); }
+  function stopMic() { if (!mic) return; try { mic.stream.getTracks().forEach(t => t.stop()); mic.ac.close(); } catch (e) { } mic = null; }
+  function boatLevel() {
+    if (boatMode === "mic" && mic) { const v = clamp((micRms() - mic.base) / .16, 0, 1); boatLvl = Math.max(v, boatLvl * .82); }
+    else if (boatMode === "tap") { const now = Date.now(); boatTaps = boatTaps.filter(t => now - t < 1000); boatLvl = Math.min(1, boatTaps.length / 7); }
+    return boatLvl;
+  }
+  function boatUI(ctl, g) {
+    const k = "boat|" + (boatMode ? "on" : "setup");
+    if (boatMode && g.state === "setup" && g.ready && !g.ready.includes(id) && Date.now() - boatReadyAt > 1500) { boatReadyAt = Date.now(); send({ t: "ready", mode: boatMode }); }
+    if (k !== subKey) {
+      subKey = k;
+      if (!boatMode) {
+        ctl.innerHTML = `<div class="center"><div class="bigemoji">⛵</div><h2>Ready your sail</h2><p class="muted">Blow into the bottom of your phone, where the microphone is, or shout!</p>
+          <button class="btn gold big" id="micb">🎤 Use my microphone</button><button class="btn big" id="tapb">👆 Tap to paddle instead</button></div>`;
+        $("#micb").onclick = async () => { $("#micb").textContent = "Listening…"; try { await startMic(); boatMode = "mic"; } catch (e) { toast("No microphone. Tap instead!"); boatMode = "tap"; } boatReadyAt = Date.now(); send({ t: "ready", mode: boatMode }); render(); };
+        $("#tapb").onclick = () => { boatMode = "tap"; boatReadyAt = Date.now(); send({ t: "ready", mode: "tap" }); render(); };
+      } else {
+        ctl.innerHTML = `<div class="tapzone" id="bz" style="background:#0b4f8a;color:#fff"><div class="big" id="bzt"></div><div class="sub" id="bzs"></div>
+          <div style="width:80%;height:1.6rem;border-radius:99px;background:rgba(255,255,255,.2);overflow:hidden;margin-top:1rem"><i id="bzl" style="display:block;height:100%;width:0;background:#ffc93c;transition:width .08s"></i></div></div>`;
+        $("#bz").onpointerdown = e => { e.preventDefault(); if (boatMode === "tap") { boatTaps.push(Date.now()); vib(8); } };
+      }
+    }
+    const t = $("#bzt"), s = $("#bzs");
+    if (t) { t.textContent = g.state === "race" ? (boatMode === "mic" ? "BLOW!" : "TAP!") : g.state === "end" ? "FINISH!" : "GET READY"; s.textContent = boatMode === "mic" ? "Blow into the bottom of your phone (or shout!)" : "Tap as fast as you can"; }
+  }
+
+  // ---------- swipe pad (used for fishing casts) ----------
+  function swipePad(ctl, title, sub, colour, cb) {
+    ctl.innerHTML = `<div class="swipe" id="sw"><div class="arrow">⬆</div><div class="lbl">${title}<br><span style="font-weight:600;font-size:.9rem">${sub}</span></div><div class="stone" id="stn" style="background:radial-gradient(circle at 40% 35%,#fff,${colour} 70%)"></div></div>`;
+    const sw = $("#sw"), stn = $("#stn"); let pts = [], pid = null;
+    sw.onpointerdown = e => { if (pid != null) return; pid = e.pointerId; try { sw.setPointerCapture(pid); } catch (_) { } pts = [[e.clientX, e.clientY, e.timeStamp]]; };
+    sw.onpointermove = e => { if (e.pointerId !== pid) return; pts.push([e.clientX, e.clientY, e.timeStamp]); if (pts.length > 40) pts.shift(); const r = sw.getBoundingClientRect(); stn.style.left = (e.clientX - r.left) + "px"; stn.style.bottom = Math.max(0, r.bottom - e.clientY - 44) + "px"; };
+    sw.onpointerup = sw.onpointercancel = e => {
+      if (e.pointerId !== pid) return; pid = null; pts.push([e.clientX, e.clientY, e.timeStamp]);
+      const end = pts[pts.length - 1], st = pts.find(q => end[2] - q[2] <= 110) || pts[0], dt = Math.max(16, end[2] - st[2]);
+      const vy = (st[1] - end[1]) / dt, vx = (end[0] - st[0]) / dt; stn.style.left = "50%"; stn.style.bottom = "12%";
+      if (vy < .25) { toast("Swipe up faster!"); return; }
+      cb(clamp((Math.hypot(vx, vy) - .3) / 2.4, 0, 1), clamp(vx / vy, -1, 1));
+    };
+  }
+
+  // ---------- Gone Fishing ----------
+  function fishUI(ctl, g) {
+    const mode = g.modes ? g.modes[id] : "idle", bucket = mode === "idle" ? "cast" : mode === "reel" ? "reel" : ["flying", "wait", "nibble", "bite"].includes(mode) ? "hook" : "done";
+    const k = "fish|" + bucket + "|" + (g.state || "");
+    if (k !== subKey) {
+      subKey = k;
+      if (g.state === "count") ctl.innerHTML = `<div class="center"><div class="bigemoji">🎣</div><h2>Get ready to cast</h2><p class="muted">Watch the TV and aim for the shadows. The golden ones are worth the most!</p></div>`;
+      else if (bucket === "cast") swipePad(ctl, "Swipe up to cast!", "Harder = further out. Angle it to aim at a fish.", "#ff5d5d", (p, a) => { send({ t: "cast", p: Math.round(p * 1000) / 1000, a: Math.round(a * 1000) / 1000 }); vib(25); });
+      else if (bucket === "hook") {
+        ctl.innerHTML = `<div class="tapzone" id="hk" style="background:#1d3d5c;color:#fff"><div class="big" id="hkt">WAIT…</div><div class="sub" id="hks">Wait for a proper BITE. Don't strike on a nibble!</div></div><button class="btn" id="rc" style="margin:0 1em 1em">Reel in and cast again</button>`;
+        $("#hk").onpointerdown = e => { e.preventDefault(); send({ t: "hook" }); vib(20); };
+        $("#rc").onclick = () => send({ t: "recast" });
+      } else if (bucket === "reel") reelUI(ctl);
+      else ctl.innerHTML = `<div class="center"><div class="bigemoji">🐟</div><h2>Lines in!</h2><p class="muted">You caught <b style="color:var(--gold)">${(g.scores || {})[id] || 0}</b> points of fish.</p></div>`;
+    }
+    if (bucket === "hook") { const t = $("#hkt"), s = $("#hks"), z = $("#hk"); if (mode === "bite") { z.style.background = "#33d17a"; t.textContent = "HOOK IT!"; s.textContent = "Tap now!"; } else if (z.dataset.nib !== "1") { z.style.background = "#1d3d5c"; t.textContent = mode === "flying" ? "SPLASH" : "WAIT…"; s.textContent = "Wait for a proper BITE. Don't strike on a nibble!"; } }
+    const sc = $("#fsc"); if (sc) sc.textContent = (g.scores || {})[id] || 0;
+  }
+  function reelUI(ctl) {
+    ctl.innerHTML = `<div style="padding:1em 1em 0;display:flex;flex-direction:column;gap:.5em">
+        <div class="bar2"><span>Reeled in</span><b><i id="rp" style="width:0;background:#33d17a"></i></b></div>
+        <div class="bar2"><span>Line strain</span><b><i id="rt" style="width:0;background:#ff5d5d"></i></b></div></div>
+      <div class="reelwrap"><div class="reel" id="reel"><i class="rk" id="rk"></i><span id="rmsg">Wind your finger round!</span></div></div>`;
+    const reel = $("#reel"), rk = $("#rk"); let pid = null, lastA = null;
+    const ang = e => { const r = reel.getBoundingClientRect(); return Math.atan2(e.clientY - (r.top + r.height / 2), e.clientX - (r.left + r.width / 2)); };
+    const place = a => { rk.style.left = (50 + Math.cos(a) * 38) + "%"; rk.style.top = (50 + Math.sin(a) * 38) + "%"; };
+    place(-Math.PI / 2);
+    reel.onpointerdown = e => { if (pid != null) return; pid = e.pointerId; try { reel.setPointerCapture(pid); } catch (_) { } lastA = ang(e); place(lastA); };
+    reel.onpointermove = e => { if (e.pointerId !== pid) return; const a = ang(e); let d = a - lastA; if (d > Math.PI) d -= Math.PI * 2; if (d < -Math.PI) d += Math.PI * 2; reelAcc += Math.abs(d); lastA = a; place(a); };
+    reel.onpointerup = reel.onpointercancel = e => { if (e.pointerId === pid) pid = null; };
+    fishP({ prog: 0, ten: 0, thr: false });
+  }
+  function fishP(m) {
+    const rp = $("#rp"), rt = $("#rt"), reel = $("#reel"), msg = $("#rmsg"); if (!rp) return;
+    rp.style.width = (m.prog * 100) + "%"; rt.style.width = (Math.min(1, m.ten) * 100) + "%";
+    reel.classList.toggle("fight", !!m.thr); msg.textContent = m.thr ? "STOP! It's fighting!" : "Wind your finger round!";
+  }
+
+  // ---------- Play Your Cards Right ----------
+  function cardHTML(c, big) {
+    if (c == null) return "";
+    const red = (c / 13 | 0) === 1 || (c / 13 | 0) === 2;
+    return `<div class="pcard ${big ? "big" : ""}" style="color:${red ? "#d32f2f" : "#111"}"><b>${RANKS[c % 13]}</b><span>${SUITS[c / 13 | 0]}</span></div>`;
+  }
+  function cardsUI(ctl, g) {
+    const k = "cards|" + g.state + "|" + g.n;
+    if (k !== subKey) {
+      subKey = k; if (g.state === "guess" && cardPickN !== g.n) { cardPick = null; cardPickN = g.n; }
+      if (g.state === "deal") ctl.innerHTML = `<div class="center"><div class="bigemoji">🃏</div><h2>Dealing row ${g.row}…</h2></div>`;
+      else if (g.state === "guess") {
+        ctl.innerHTML = `<div class="center" style="flex:none;padding-top:1em"><div class="muted">The card on the TV is</div>${cardHTML(g.card, true)}<div class="muted">Is the next one higher or lower? Aces are high.</div></div>
+          <div class="hl"><button class="hlb up" data-v="higher">⬆ HIGHER</button><button class="hlb down" data-v="lower">⬇ LOWER</button></div>`;
+        ctl.querySelectorAll("[data-v]").forEach(b => b.onclick = () => { cardPick = b.dataset.v; send({ t: "pick", v: cardPick }); vib(15); paintPick(); });
+        paintPick();
+      } else if (g.state === "reveal") {
+        const ok = g.correct.includes(id);
+        ctl.innerHTML = `<div class="center"><div style="display:flex;gap:1em;align-items:center">${cardHTML(g.card)}<span style="font-size:2rem">→</span>${cardHTML(g.next)}</div>
+          <h2 style="color:${g.res === "pair" ? "#ff8a80" : ok ? "#33d17a" : "#ff5d5d"}">${g.res === "pair" ? "A pair! Everyone loses" : ok ? "Correct!" : cardPick ? "Wrong!" : "Too slow!"}</h2><p class="muted">You have ${g.pts[id] || 0} correct</p></div>`;
+      } else ctl.innerHTML = `<div class="center"><div class="bigemoji">🃏</div><h2>${g.pts[id] || 0} correct</h2><p class="muted">Results on the TV</p></div>`;
+    }
+  }
+  function paintPick() { document.querySelectorAll(".hlb").forEach(b => { b.classList.toggle("on", b.dataset.v === cardPick); b.classList.toggle("off", !!cardPick && b.dataset.v !== cardPick); }); }
+
+  // ---------- Derby Day ----------
+  function derbyUI(ctl, g) {
+    const k = "derby|" + g.state + "|" + g.race;
+    if (k !== subKey) {
+      subKey = k;
+      const coins = (g.coins || {})[id] || 0, myBet = (g.bets || {})[id];
+      if (g.state === "bet") {
+        if (derbyRace !== g.race) { derbyRace = g.race; derbyH = null; derbyS = Math.min(10, coins); }
+        ctl.innerHTML = `<div class="pbody" style="padding-top:.6em"><div style="display:flex;justify-content:space-between;align-items:center"><b>Race ${g.race} · pick a horse</b><span class="pill">💰 <span id="dc">${coins}</span> coins</span></div>
+          <div class="hlist">${g.horses.map((h, i) => `<button class="hrow" data-h="${i}"><span class="silk" style="background:${SILKS[i]}">${i + 1}</span><span class="hn">${esc(h.n)}</span><span class="ho">${h.o}</span></button>`).join("")}</div>
+          <div class="setrow"><b>Stake</b>${[10, 25, 50].map(s => `<button class="chip" data-s="${s}" ${s > coins ? "disabled" : ""}>${s}</button>`).join("")}<button class="chip" data-s="${coins}">All in (${coins})</button></div>
+          <button class="btn gold big" id="pb">Place bet</button><div class="muted" id="dinfo" style="text-align:center"></div></div>`;
+        ctl.querySelectorAll("[data-h]").forEach(b => b.onclick = () => { derbyH = +b.dataset.h; paintDerby(g); });
+        ctl.querySelectorAll("[data-s]").forEach(b => b.onclick = () => { if (!b.disabled) { derbyS = +b.dataset.s; paintDerby(g); } });
+        $("#pb").onclick = () => { if (derbyH == null) return toast("Pick a horse first"); if (derbyS < 1) return toast("Pick a stake"); send({ t: "bet", h: derbyH, s: derbyS }); vib(20); derbyPlaced = g.race; paintDerby(g); };
+        paintDerby(g);
+      } else if (g.state === "race") {
+        const b = myBet, h = b ? g.horses[b.h] : null;
+        ctl.innerHTML = h ? `<div class="tapzone" id="ch" style="background:${SILKS[b.h]};color:${b.h === 2 ? "#1b1300" : "#fff"}"><div class="sub" style="font-size:1.2rem">Your horse: #${b.h + 1} ${esc(h.n)}</div><div class="big">CHEER!</div><div class="sub">${b.s} coins at ${h.o}. Tap to cheer it on!</div></div>`
+          : `<div class="center"><div class="bigemoji">🏇</div><h2>No bet this race</h2><p class="muted">Watch the TV!</p></div>`;
+        const z = $("#ch"); if (z) z.onpointerdown = e => { e.preventDefault(); if (Date.now() - cheerAt > 120) { cheerAt = Date.now(); send({ t: "cheer" }); vib(6); } };
+      } else if (g.state === "result") {
+        const w = g.win, won = (g.wins || {})[id] || 0;
+        ctl.innerHTML = `<div class="center"><div class="bigemoji">${won ? "🤑" : "🏇"}</div><h2>${won ? `You won ${won} coins!` : myBet ? "Unlucky!" : "No bet"}</h2><p class="muted">Winner: #${w + 1} ${esc(g.horses[w].n)} at ${g.horses[w].o}</p><p style="font-size:1.3rem;font-weight:800;color:var(--gold)">💰 ${coins} coins</p></div>`;
+      } else ctl.innerHTML = `<div class="center"><div class="bigemoji">💰</div><h2>${coins} coins</h2><p class="muted">Final results on the TV</p></div>`;
+    }
+  }
+  function paintDerby(g) {
+    document.querySelectorAll("[data-h]").forEach(b => b.classList.toggle("on", +b.dataset.h === derbyH));
+    document.querySelectorAll("[data-s]").forEach(b => b.classList.toggle("on", +b.dataset.s === derbyS));
+    const info = $("#dinfo"); if (!info) return;
+    if (derbyH != null && derbyS > 0) { const h = g.horses[derbyH]; info.textContent = `${derbyPlaced === g.race ? "✔ Bet placed: " : ""}${derbyS} on ${h.n} at ${h.o}. Wins ${Math.round(derbyS * h.d)} coins.${derbyPlaced === g.race ? " You can still change it." : ""}`; }
+    else info.textContent = "Tap a horse, then a stake.";
+  }
+
   function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1300); }
 
   // ---------- send loops ----------
   function tick() {
+    if (ST && ST.phase === "play" && ST.game === "boat" && boatMode) {
+      const now = Date.now(), lv = boatLevel(), l = $("#bzl"); if (l) l.style.width = (lv * 100) + "%";
+      if (ST.g && ST.g.state === "race" && now - lastBlow >= (dcOpen() ? 50 : 80)) { lastBlow = now; send({ t: "blow", v: Math.round(lv * 100) / 100 }); }
+    }
+    if (reelAcc > .02 && Date.now() - lastBlow >= 80) { lastBlow = Date.now(); send({ t: "reel", a: Math.round(reelAcc * 100) / 100 }); reelAcc = 0; }
     if (ST && ST.phase === "play" && ST.game === "sumo") {
       const now = Date.now(), gap = dcOpen() ? 30 : 66;
       if ((joy.x !== sent.x || joy.y !== sent.y || now - sent.t > 500) && now - sent.t >= gap) { send({ t: "joy", x: joy.x, y: joy.y }); sent.x = joy.x; sent.y = joy.y; sent.t = now; }

@@ -73,12 +73,16 @@ Each player takes a turn to draw on their phone; the drawing appears live in a g
 ## Buzz In Party (party games)
 **Play:** https://jimmywilson1979-arch.github.io/buzz-in/party.html
 
-Same set-up as Buzz In: the TV screen opens the lobby, phones scan the QR code to join. Four mini-games played in a row with an overall leaderboard
+Same set-up as Buzz In: the TV screen opens the lobby, phones scan the QR code to join. Eight mini-games (pick which ones in the lobby) played in a row with an overall leaderboard
 (10 / 7 / 5 / 4 / 3 / 2 points for 1st to 6th in each game):
 - **🐧 Penguin Sumo** – joystick + DASH, push everyone off a shrinking ice floe. 3 rounds.
 - **💪 Tug of War** – two auto-balanced teams tap as fast as they can. Best of 3 (uneven teams are evened out).
 - **🤠 Quick Draw** – wait for green, tap fastest. Red decoys and early taps knock you out of the round. 5 rounds. Reaction time is measured on the phone itself, so the connection speed doesn't matter.
 - **🥌 Curling** – swipe up to throw (speed = distance, angle = aim), tap SWEEP to carry it further. Closest stone wins.
+- **⛵ Blow Boat Race** – blow into the phone's microphone (or shout) to fill your sail; tap-to-paddle if there's no mic.
+- **🎣 Gone Fishing** – swipe to cast, wait for a real bite (striking on a nibble scares it off), tap HOOK, wind your finger round the reel and stop when the fish fights or the line snaps. 100 seconds, most points of fish wins. Golden carp are worth the most; old boots are worth nothing.
+- **🃏 Play Your Cards Right** – higher or lower on your phone, 3 rows of 6 cards. Aces high, a pair beats everyone.
+- **🏇 Derby Day** – 100 pretend coins each, back a horse at fractional odds, 3 races. Results are drawn fairly from the odds shown. Most coins wins.
 
 Lobby settings: which games, Standard / 🎄 Christmas theme, and **Kids boost** (players who tick "a child is playing" get heavier penguins,
 stronger taps, a head start in Quick Draw and help with curling power). The first player to join is the host (start, next, skip from their phone).

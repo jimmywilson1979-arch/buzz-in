@@ -1,0 +1,1013 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#090b14">
+<title>Buzz In Party</title>
+<meta name="description" content="Family party games on the TV. Your phone is the controller: Penguin Sumo, Curling, Tug of War and Quick Draw.">
+<link rel="icon" type="image/png" sizes="48x48" href="party-favicon-48.png">
+<link rel="apple-touch-icon" href="party-apple-touch-icon.png">
+<link rel="manifest" href="manifest-party.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Buzz In Party">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Buzz In Party – Family Party Games">
+<meta property="og:description" content="Party games on the TV. Your phone is the controller: Penguin Sumo, Curling, Tug of War and Quick Draw.">
+<meta property="og:url" content="https://jimmywilson1979-arch.github.io/buzz-in/party.html">
+<meta property="og:image" content="https://jimmywilson1979-arch.github.io/buzz-in/party-og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@500;600;700;800&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+:root{
+  --bg:#090b14; --bg2:#10142a; --panel:#141936; --line:#262d55; --fg:#f3f5ff; --muted:#9097c0;
+  --gold:#ffc93c; --gold-ink:#1b1300; --good:#33d17a; --bad:#ff5d5d; --red:#ff5d5d; --blue:#4dabff;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+input{font:inherit;color:var(--fg);background:var(--bg2);border:2px solid var(--line);border-radius:12px;padding:.8em .9em;width:100%;min-width:0}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+.disp{font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:.01em;line-height:.95}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4em;border-radius:14px;padding:.75em 1.1em;font-weight:700;font-size:1rem;background:var(--panel);border:2px solid var(--line)}
+.btn.gold{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
+.btn.big{font-size:1.2rem;padding:.95em 1.2em;width:100%}
+.btn:disabled{opacity:.45;cursor:default}
+.chip{display:inline-flex;align-items:center;gap:.35em;padding:.45em .8em;border-radius:99px;border:2px solid var(--line);background:var(--bg2);font-weight:700;font-size:.9rem}
+.chip.on{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
+.setrow{display:flex;flex-wrap:wrap;gap:.4em;align-items:center;margin:.35em 0}
+.setrow b{width:100%;font-size:.85em;color:var(--muted);font-weight:700}
+.note{font-size:.9em;color:var(--muted);line-height:1.4}
+
+/* TV */
+body.tv{overflow:hidden;font-size:clamp(13px,1.15vw,24px)}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block}
+.hud{position:fixed;left:0;right:0;top:0;display:flex;align-items:center;justify-content:space-between;gap:1em;padding:1.6vh 2.4vw;pointer-events:none;z-index:2}
+.logo{font-family:var(--display);font-weight:800;font-size:2.2em;text-transform:uppercase;letter-spacing:.02em;text-shadow:0 .1em .3em rgba(0,0,0,.5)}
+.logo span{color:var(--gold)}
+.ginfo{font-family:var(--display);font-weight:800;font-size:1.6em;text-transform:uppercase;letter-spacing:.04em;text-shadow:0 .1em .3em rgba(0,0,0,.6);text-align:center}
+.codesm{font-weight:700;color:var(--muted);text-shadow:0 .1em .3em rgba(0,0,0,.6)} .codesm b{color:var(--fg);font-family:var(--display);font-size:1.5em;letter-spacing:.1em}
+.layer{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:9vh 3vw 3vh;z-index:1}
+.layer.pe-none{pointer-events:none}
+.lobby{display:flex;gap:3vw;align-items:stretch;width:100%;max-width:120em;height:100%}
+.lobby .left{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2vh;text-align:center}
+.lobby h1{font-family:var(--display);font-weight:800;font-size:5.4em;text-transform:uppercase;margin:0;line-height:.9}
+.lobby h1 span{color:var(--gold)}
+.qr{background:#fff;padding:1.2vh;border-radius:1.2vh;line-height:0}
+.qr img,.qr canvas{width:32vh!important;height:32vh!important}
+.code{font-family:var(--display);font-weight:800;font-size:4em;letter-spacing:.1em;line-height:1}
+.panel{width:min(26em,34vw);display:flex;flex-direction:column;gap:.9em;min-height:0;overflow:auto;padding:1.2em;background:rgba(16,20,42,.88);border:2px solid var(--line);border-radius:1em}
+.panel h3{margin:0;font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:1.6em;color:var(--gold)}
+.plist{display:flex;flex-direction:column;gap:.45em}
+.prow{display:flex;align-items:center;gap:.6em;padding:.45em .7em;border-radius:.7em;background:var(--panel);border:2px solid var(--line)}
+.prow .dot{width:1em;height:1em;border-radius:50%;flex:none}
+.prow .nm{flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prow .sc{font-family:var(--display);font-weight:800;font-size:1.5em;color:var(--gold)}
+.prow.off{opacity:.45}
+.tag{font-size:.75em;font-weight:700;padding:.1em .5em;border-radius:99px;background:var(--bg2);border:1px solid var(--line);color:var(--muted)}
+.card{background:rgba(16,20,42,.94);border:3px solid var(--line);border-radius:1.4em;padding:2.4em 3em;text-align:center;max-width:60em;box-shadow:0 2em 5em rgba(0,0,0,.55);animation:pop .3s}
+.card .em{font-size:6em;line-height:1}
+.card h2{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:4em;margin:.1em 0 .2em;color:var(--gold);line-height:.95}
+.card p{font-size:1.5em;line-height:1.35;margin:.4em 0}
+.card .kidtip{font-size:1.15em;color:var(--muted)}
+.count{font-family:var(--display);font-weight:800;font-size:2em;color:var(--gold);margin-top:.6em}
+@keyframes pop{from{transform:scale(.85);opacity:0}}
+.board{display:flex;flex-direction:column;gap:.7em;min-width:34em;margin-top:1em;text-align:left}
+.brow{display:flex;align-items:center;gap:.8em;font-size:1.4em}
+.brow .nm{width:7em;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.brow .bar{flex:1;height:1.4em;border-radius:.4em;background:var(--panel);overflow:hidden}
+.brow .bar i{display:block;height:100%;border-radius:.4em;transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+.brow .pts{width:3.2em;text-align:right;font-family:var(--display);font-weight:800;font-size:1.3em;color:var(--gold)}
+.brow .plus{width:3em;color:var(--good);font-weight:800}
+.tvbtns{display:flex;gap:.8em;justify-content:center;margin-top:1.2em}
+
+/* Phone */
+body.ph{overflow:hidden;overscroll-behavior:none;touch-action:manipulation}
+.pw{position:fixed;inset:0;display:flex;flex-direction:column;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.ptop{display:flex;align-items:center;gap:.6em;padding:.65em 1em;background:var(--bg2);border-bottom:2px solid var(--line);flex:none}
+.ptop .dot{width:1.1em;height:1.1em;border-radius:50%;flex:none}
+.ptop .nm{flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill{font-size:.8rem;font-weight:800;padding:.25em .6em;border-radius:99px;background:var(--panel);border:2px solid var(--line);white-space:nowrap}
+.pbody{flex:1;display:flex;flex-direction:column;gap:1em;padding:1em;overflow:auto;min-height:0}
+.center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:.7em}
+.center h2{margin:0;font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:2.2rem;line-height:.95}
+.bigemoji{font-size:6rem;line-height:1}
+.ctl{flex:1;display:flex;flex-direction:column;min-height:0;position:relative;touch-action:none;user-select:none;-webkit-user-select:none}
+.area{position:relative;flex:1;margin:1em;border-radius:1.2em;background:var(--panel);border:2px dashed var(--line);overflow:hidden;touch-action:none}
+.area .hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:1.5em;color:var(--muted);pointer-events:none;line-height:1.4}
+.knob,.base{position:absolute;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%)}
+.base{width:150px;height:150px;border:3px solid var(--line);background:rgba(255,255,255,.04)}
+.knob{width:68px;height:68px;background:var(--gold);box-shadow:0 4px 16px rgba(0,0,0,.4)}
+.bigbtn{margin:0 1em 1em;height:6.5rem;border-radius:1.4em;background:var(--gold);color:var(--gold-ink);font-family:var(--display);font-weight:800;font-size:2.4rem;box-shadow:0 6px 0 #b8860b;touch-action:none;flex:none;position:relative;overflow:hidden}
+.bigbtn.down{transform:translateY(5px);box-shadow:0 1px 0 #b8860b}
+.bigbtn .cool{position:absolute;left:0;top:0;bottom:0;background:rgba(0,0,0,.25);pointer-events:none}
+.tapzone{flex:1;margin:1em;border-radius:1.6em;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3em;font-family:var(--display);font-weight:800;text-transform:uppercase;touch-action:none;user-select:none;-webkit-user-select:none;transition:background .08s}
+.tapzone .big{font-size:4.4rem;line-height:1}
+.tapzone .sub{font-family:var(--body);text-transform:none;font-size:1.1rem;font-weight:700;opacity:.85}
+.tapzone.pressed{transform:scale(.98)}
+.swipe{flex:1;margin:1em;border-radius:1.4em;background:linear-gradient(180deg,#dff1ff,#b9dcf5);position:relative;overflow:hidden;touch-action:none}
+.swipe .stone{position:absolute;left:50%;bottom:12%;width:5.5rem;height:5.5rem;border-radius:50%;transform:translate(-50%,0);background:radial-gradient(circle at 40% 35%,#c9ccd6,#7c8191 70%,#5d6271);box-shadow:0 .4rem 1rem rgba(0,0,0,.35);pointer-events:none}
+.swipe .stone i{position:absolute;left:30%;right:30%;top:42%;height:16%;border-radius:.4rem}
+.swipe .arrow{position:absolute;left:50%;top:10%;transform:translateX(-50%);font-size:3.5rem;color:#1d3d5c;animation:bob 1s ease-in-out infinite;pointer-events:none}
+.swipe .lbl{position:absolute;left:0;right:0;top:34%;text-align:center;color:#1d3d5c;font-weight:800;font-size:1.3rem;pointer-events:none}
+@keyframes bob{50%{transform:translate(-50%,-.6rem)}}
+.flash{animation:fl .3s}
+@keyframes fl{from{box-shadow:inset 0 0 0 8px var(--gold)}to{box-shadow:inset 0 0 0 0 transparent}}
+.check{display:flex;gap:.7em;align-items:center;padding:.9em 1em;border-radius:12px;background:var(--bg2);border:2px solid var(--line);font-weight:700;text-align:left}
+.check input{width:1.6em;height:1.6em;flex:none}
+.home{min-height:100%;display:flex;flex-direction:column;justify-content:center;gap:1rem;padding:1.5rem;max-width:30rem;margin:0 auto;position:relative;z-index:1}
+.home h1{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:3.4rem;margin:0;line-height:.9}
+.home h1 span{color:var(--gold)}
+.home p{margin:0;line-height:1.4}
+.toast{position:fixed;left:50%;top:20%;transform:translateX(-50%);background:var(--gold);color:var(--gold-ink);font-weight:800;font-size:1.3rem;padding:.6em 1.2em;border-radius:99px;z-index:9;animation:pop .2s}
+/* snow (Christmas) */
+.snow{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:3}
+.snow i{position:absolute;top:-2vh;border-radius:50%;background:#fff;opacity:.75;animation:fall linear infinite}
+@keyframes fall{to{transform:translate(var(--dx),105vh)}}
+</style>
+</head>
+<body>
+<canvas id="cv" class="hidden"></canvas>
+<div id="app"></div>
+<script>
+// ===================================================================
+// Buzz In Party — four mini-games on the TV, phones are the controllers.
+// TV runs everything. Phones join over Supabase Realtime (like Buzz In),
+// then try a direct Wi-Fi link (WebRTC) for the fast controls, falling
+// back to the cloud if it can't connect. Add &local=1 to test in tabs.
+// ===================================================================
+const SUPA_URL = "https://uqwlmegbelyqtbegxqlz.supabase.co";
+const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxd2xtZWdiZWx5cXRiZWd4cWx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3NTYzNzAsImV4cCI6MjEwNzMzMjM3MH0.bSeF8_kwKqSrEj3n8Ku2OeSU8E5nMqJj0hcfgXb8cW0";
+const ICE = [{ urls: "stun:stun.l.google.com:19302" }];
+
+const P = new URLSearchParams(location.search);
+const LOCAL = P.has("local");
+const $ = s => document.querySelector(s);
+const app = $("#app");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const COLORS = ["#ff6b6b", "#4dabff", "#ffd43b", "#51e08a", "#c792ff", "#ff9f43", "#3ee6d6", "#ff7ac0", "#b5e853", "#a5b4cc"];
+const T = () => performance.now();
+const uid = () => Math.random().toString(36).slice(2, 10);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const ls = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } } };
+const code4 = () => Array.from({ length: 4 }, () => "BCDFGHJKLMNPQRSTVWXZ"[Math.random() * 20 | 0]).join("");
+const vib = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) { } };
+const ord = n => n + (["th", "st", "nd", "rd"][(n % 100 - 20) % 10] || ["th", "st", "nd", "rd"][n % 100] || "th");
+
+const INFO = {
+  sumo: { t: "Penguin Sumo", e: "🐧", how: "Waddle with the joystick and press DASH to barge. Push everyone off the ice. Last penguin standing wins the round. 3 rounds!", kid: "Kids are bigger, heavier penguins." },
+  curl: { t: "Curling", e: "🥌", how: "On your turn, swipe UP on your phone to slide your stone. Then tap SWEEP fast to make it go further. Closest to the middle wins!", kid: "Kids get help with their power." },
+  tug: { t: "Tug of War", e: "💪", how: "Two teams. Tap as fast as you can to pull the rope your way. Best of 3 pulls!", kid: "Kids' taps count extra." },
+  draw: { t: "Quick Draw", e: "🤠", how: "Wait for GREEN, then tap as fast as you can. Tap on red or too early and you're out of that round. 5 rounds!", kid: "Kids get a head start." },
+};
+const GAME_IDS = ["sumo", "tug", "draw", "curl"];
+const PTS = [10, 7, 5, 4, 3, 2];
+function setsHTML(st) {
+  return `<div class="setrow"><b>Games (tap to include)</b>${GAME_IDS.map(g => `<button class="chip ${st.games.includes(g) ? "on" : ""}" data-game="${g}">${INFO[g].e} ${INFO[g].t}</button>`).join("")}</div>
+    <div class="setrow"><b>Theme</b><button class="chip ${st.theme === "std" ? "on" : ""}" data-set="theme" data-val="std">Standard</button><button class="chip ${st.theme === "xmas" ? "on" : ""}" data-set="theme" data-val="xmas">🎄 Christmas</button></div>
+    <div class="setrow"><b>Kids boost</b><button class="chip ${st.boost ? "on" : ""}" data-set="boost" data-val="1">🧒 On</button><button class="chip ${!st.boost ? "on" : ""}" data-set="boost" data-val="0">Off</button></div>
+    <div class="note">Kids boost gives players who ticked “a child is playing” a fair chance: heavier penguins, extra-strong taps, a head start in Quick Draw and help with curling power.</div>`;
+}
+function readSet(e) {
+  const g = e.target.closest("[data-game]"); if (g) return { k: "game", v: g.dataset.game };
+  const b = e.target.closest("[data-set]"); if (!b) return null;
+  return { k: b.dataset.set, v: b.dataset.set === "boost" ? b.dataset.val === "1" : b.dataset.val };
+}
+
+// ===== transport =====
+let sb = null;
+async function chan(name, onMsg) {
+  if (LOCAL) { const bc = new BroadcastChannel(name); bc.onmessage = e => onMsg(e.data); return { send: m => bc.postMessage(m), close: () => bc.close() }; }
+  if (!sb) sb = window.supabase.createClient(SUPA_URL, SUPA_KEY, { realtime: { params: { eventsPerSecond: 30 } } });
+  const ch = sb.channel(name, { config: { broadcast: { self: false } } });
+  ch.on("broadcast", { event: "m" }, ({ payload }) => onMsg(payload));
+  await new Promise((res, rej) => {
+    let done = false; const t = setTimeout(() => { if (!done) { done = true; rej(new Error("timeout")); } }, 12000);
+    ch.subscribe(st => { if (done) return; if (st === "SUBSCRIBED") { done = true; clearTimeout(t); res(); } else if (st === "CHANNEL_ERROR" || st === "TIMED_OUT" || st === "CLOSED") { done = true; clearTimeout(t); rej(new Error(st)); } });
+  });
+  return { send: m => ch.send({ type: "broadcast", event: "m", payload: m }), close: () => sb.removeChannel(ch) };
+}
+function iceDone(pc) { return new Promise(res => { if (pc.iceGatheringState === "complete") return res(); const t = setTimeout(res, 2500); pc.addEventListener("icegatheringstatechange", () => { if (pc.iceGatheringState === "complete") { clearTimeout(t); res(); } }); }); }
+function festive(on, n) {
+  let sn = document.querySelector(".snow");
+  if (!on) { if (sn) sn.remove(); return; }
+  if (sn) return;
+  sn = document.createElement("div"); sn.className = "snow";
+  for (let i = 0; i < n; i++) { const z = 3 + Math.random() * 6, el = document.createElement("i"); el.style.cssText = `left:${Math.random() * 100}vw;width:${z}px;height:${z}px;--dx:${(Math.random() - .5) * 12}vw;animation-duration:${8 + Math.random() * 10}s;animation-delay:-${Math.random() * 18}s;opacity:${.3 + Math.random() * .45}`; sn.appendChild(el); }
+  document.body.appendChild(sn);
+}
+function rankBy(ids, fn, desc) {
+  const arr = ids.map(id => ({ id, s: fn(id) })).sort((a, b) => desc ? b.s - a.s : a.s - b.s), groups = [];
+  for (const x of arr) { const l = groups[groups.length - 1]; if (l && l.s === x.s) l.ids.push(x.id); else groups.push({ s: x.s, ids: [x.id] }); }
+  return groups.map(g => g.ids);
+}
+function groupsToPoints(groups) { const out = {}; let pos = 0; for (const g of groups) { const p = PTS[Math.min(pos, PTS.length - 1)]; g.forEach(id => out[id] = p); pos += g.length; } return out; }
+
+// ===== router =====
+if (P.has("tv")) tvMain();
+else if (P.has("join")) phoneMain(P.get("join"));
+else home();
+
+function home() {
+  const phone = matchMedia("(pointer:coarse)").matches && Math.min(innerWidth, innerHeight) < 700;
+  app.innerHTML = `<div class="home">
+    <h1>Buzz In <span>Party</span></h1>
+    <p class="muted">Party games on the TV. Your phone is the controller: Penguin Sumo, Curling, Tug of War and Quick Draw.</p>
+    <button class="btn big ${phone ? "" : "gold"}" id="tvb">📺 This is the TV screen</button>
+    <p class="muted" style="font-size:.9rem">Open on the laptop you cast from or plug into the TV, the same as Buzz In.</p>
+    <div style="display:flex;gap:.6em"><input id="code" maxlength="4" placeholder="Code" autocapitalize="characters" style="text-transform:uppercase;font-size:1.3rem;letter-spacing:.15em">
+    <button class="btn ${phone ? "gold" : ""}" id="jb" style="flex:none">Join</button></div></div>`;
+  $("#tvb").onclick = () => { location.search = "?tv" + (LOCAL ? "&local=1" : ""); };
+  const go = () => { const c = $("#code").value.trim().toUpperCase(); if (c.length === 4) location.search = "?join=" + c + (LOCAL ? "&local=1" : ""); };
+  $("#jb").onclick = go; $("#code").onkeydown = e => { if (e.key === "Enter") go(); };
+}
+
+// ======================================================================
+// MINI-GAMES (run on the TV). Each returns {update, draw, input, phone, hud, ranking, done}
+// C = { players, boost, xmas, aspect, buzz(id,ms), bcast(m), fast(m), alive(id) }
+// ======================================================================
+function hat(ctx, x, y, s, tilt) { // little Santa hat
+  ctx.save(); ctx.translate(x, y); ctx.rotate(tilt || 0);
+  ctx.fillStyle = "#e53935"; ctx.beginPath(); ctx.moveTo(-s, 0); ctx.quadraticCurveTo(-s * .2, -s * 1.9, s * .9, -s * 1.3); ctx.lineTo(s, 0); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#fff"; ctx.fillRect(-s * 1.1, -s * .25, s * 2.2, s * .45); ctx.beginPath(); ctx.arc(s * .9, -s * 1.3, s * .32, 0, 7); ctx.fill(); ctx.restore();
+}
+function label(ctx, txt, x, y, size, col) {
+  ctx.font = `800 ${size}px Barlow, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.lineWidth = size * .25; ctx.strokeStyle = "rgba(0,0,0,.6)"; ctx.strokeText(txt, x, y); ctx.fillStyle = col || "#fff"; ctx.fillText(txt, x, y);
+}
+function bigText(ctx, W, H, txt, col, size) {
+  ctx.font = `800 ${size || H * .2}px "Barlow Condensed", sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.lineWidth = (size || H * .2) * .08; ctx.strokeStyle = "rgba(0,0,0,.7)"; ctx.strokeText(txt, W / 2, H / 2); ctx.fillStyle = col || "#ffc93c"; ctx.fillText(txt, W / 2, H / 2);
+}
+
+// ---------- Penguin Sumo ----------
+function Sumo(C) {
+  const api = { id: "sumo", done: false }, ps = C.players, n = ps.length, pts = {};
+  ps.forEach(p => pts[p.id] = 0);
+  const S = { round: 0, rounds: 3, state: "", at: 0, R: .42, peng: [], out: [], msg: "", fx: [] };
+  function newRound() {
+    S.round++; S.R = .42; S.out = []; S.state = "count"; S.at = T(); S.fx = [];
+    S.peng = ps.map((p, i) => { const a = i / n * Math.PI * 2 - Math.PI / 2, big = C.boost && p.kid; return { p, id: p.id, x: Math.cos(a) * .24, y: Math.sin(a) * .24, vx: 0, vy: 0, fx: -Math.cos(a), fy: -Math.sin(a), m: big ? 1.8 : 1, r: big ? .054 : .045, alive: true, fall: 0, dashAt: -1e9, jx: 0, jy: 0, bump: {} }; });
+    S.cracks = Array.from({ length: 8 }, () => [Math.random() * 6.28, .12 + Math.random() * .26, Math.random() * .8 - .4]);
+  }
+  newRound();
+  api.input = (p, m) => {
+    const g = S.peng.find(q => q.id === p.id); if (!g) return;
+    if (m.t === "joy") { g.jx = clamp(+m.x || 0, -1, 1); g.jy = clamp(+m.y || 0, -1, 1); }
+    if (m.t === "dash" && S.state === "fight" && g.alive && T() - g.dashAt > 1400) {
+      g.dashAt = T(); let dx = g.jx, dy = g.jy, l = Math.hypot(dx, dy); if (l < .25) { dx = g.fx; dy = g.fy; l = 1; }
+      g.vx += dx / l * .85 / Math.sqrt(g.m); g.vy += dy / l * .85 / Math.sqrt(g.m);
+    }
+  };
+  api.update = dt => {
+    const t = T() - S.at;
+    if (S.state === "count") { if (t > 3200) { S.state = "fight"; S.at = T(); } return; }
+    if (S.state === "roundEnd") { if (t > 3800) { if (S.round >= S.rounds) api.done = true; else newRound(); } S.peng.forEach(g => { if (!g.alive) g.fall += dt; }); return; }
+    S.R = Math.max(.15, .42 - Math.max(0, t / 1000 - 4) * .0065);
+    for (const g of S.peng) {
+      if (!g.alive) { g.fall += dt; continue; }
+      const dashing = T() - g.dashAt < 380, acc = 1.7 / Math.pow(g.m, .25);
+      g.vx += g.jx * acc * dt; g.vy += g.jy * acc * dt;
+      const f = Math.exp(-1.05 * dt); g.vx *= f; g.vy *= f;
+      const sp = Math.hypot(g.vx, g.vy), max = dashing ? 1.35 : .55; if (sp > max) { g.vx *= max / sp; g.vy *= max / sp; }
+      if (sp > .03) { g.fx = g.vx / sp; g.fy = g.vy / sp; }
+      g.x += g.vx * dt; g.y += g.vy * dt;
+    }
+    const al = S.peng.filter(g => g.alive);
+    for (let i = 0; i < al.length; i++) for (let j = i + 1; j < al.length; j++) {
+      const a = al[i], b = al[j], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy), min = a.r + b.r;
+      if (d > 0 && d < min) {
+        const nx = dx / d, ny = dy / d, o = min - d, tm = a.m + b.m;
+        a.x -= nx * o * b.m / tm; a.y -= ny * o * b.m / tm; b.x += nx * o * a.m / tm; b.y += ny * o * a.m / tm;
+        const rel = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
+        if (rel > 0) { const jj = 2.2 * rel / (1 / a.m + 1 / b.m); a.vx -= jj / a.m * nx; a.vy -= jj / a.m * ny; b.vx += jj / b.m * nx; b.vy += jj / b.m * ny; }
+        const now = T(); if (now - (a.bump[b.id] || 0) > 350) { a.bump[b.id] = now; C.buzz(a.id, 30); C.buzz(b.id, 30); S.fx.push({ x: a.x + nx * a.r, y: a.y + ny * a.r, t: now, k: "hit" }); }
+      }
+    }
+    for (const g of al) if (Math.hypot(g.x, g.y) > S.R + g.r * .25) { g.alive = false; g.fall = 0; S.out.push(g.id); C.buzz(g.id, [60, 40, 220]); S.fx.push({ x: g.x, y: g.y, t: T(), k: "splash" }); }
+    const left = S.peng.filter(g => g.alive);
+    if (left.length <= 1 || t > 80000) {
+      const surv = left.slice().sort((a, b) => Math.hypot(b.x, b.y) - Math.hypot(a.x, a.y)).map(g => g.id);
+      const order = [...S.out, ...surv]; order.forEach((id, i) => pts[id] += i);
+      const w = ps.find(p => p.id === order[order.length - 1]);
+      S.msg = w ? `${w.name} wins round ${S.round}!` : "Round over"; S.state = "roundEnd"; S.at = T();
+      if (w) C.buzz(w.id, [50, 50, 50, 50, 200]);
+    }
+  };
+  api.draw = (ctx, W, H) => {
+    const t = T(), cx = W / 2, cy = H * .55, sc = H * .95;
+    const g0 = ctx.createLinearGradient(0, 0, 0, H); g0.addColorStop(0, "#0b2a4a"); g0.addColorStop(1, "#04121f"); ctx.fillStyle = g0; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = "rgba(120,190,255,.12)"; ctx.lineWidth = 2;
+    for (let y = 0; y < H; y += H / 18) { ctx.beginPath(); for (let x = 0; x <= W; x += 20) ctx.lineTo(x, y + Math.sin(x / 60 + t / 700 + y) * 6); ctx.stroke(); }
+    const R = S.R * sc;
+    ctx.save(); ctx.shadowColor = "rgba(0,0,0,.5)"; ctx.shadowBlur = 30; ctx.shadowOffsetY = 12;
+    const gi = ctx.createRadialGradient(cx - R * .3, cy - R * .4, R * .1, cx, cy, R); gi.addColorStop(0, "#ffffff"); gi.addColorStop(.75, "#e3f2ff"); gi.addColorStop(1, "#a9d3f5");
+    ctx.fillStyle = gi; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.fill(); ctx.restore();
+    ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.clip(); ctx.strokeStyle = "rgba(90,150,200,.35)"; ctx.lineWidth = 2;
+    for (const [a, l, b] of S.cracks) { ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R); ctx.lineTo(cx + Math.cos(a + b) * R * (1 - l * 2), cy + Math.sin(a + b) * R * (1 - l * 2)); ctx.stroke(); }
+    ctx.restore();
+    if (S.state === "fight" && S.R > .15) { ctx.strokeStyle = "rgba(255,93,93,.5)"; ctx.setLineDash([10, 10]); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.stroke(); ctx.setLineDash([]); }
+    for (const f of S.fx) { const age = (t - f.t) / (f.k === "splash" ? 900 : 300); if (age > 1) continue; ctx.strokeStyle = f.k === "splash" ? "rgba(200,235,255," + (1 - age) + ")" : "rgba(255,255,255," + (1 - age) + ")"; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(cx + f.x * sc, cy + f.y * sc, (f.k === "splash" ? .09 : .04) * sc * (.3 + age), 0, 7); ctx.stroke(); }
+    S.fx = S.fx.filter(f => t - f.t < 1000);
+    const list = S.peng.slice().sort((a, b) => a.y - b.y);
+    for (const g of list) {
+      const fs = g.alive ? 1 : Math.max(0, 1 - g.fall * 1.6); if (fs <= 0) continue;
+      const x = cx + g.x * sc, y = cy + g.y * sc, r = g.r * sc * fs;
+      ctx.save(); ctx.globalAlpha = g.alive ? 1 : fs;
+      ctx.fillStyle = "rgba(0,0,0,.18)"; ctx.beginPath(); ctx.ellipse(x, y + r * .9, r * 1.05, r * .4, 0, 0, 7); ctx.fill();
+      if (T() - g.dashAt < 300 && g.alive) { ctx.strokeStyle = "rgba(255,255,255,.7)"; ctx.lineWidth = 3; for (let k = -1; k <= 1; k++) { ctx.beginPath(); ctx.moveTo(x - g.fx * r * 1.3 + k * g.fy * r * .5, y - g.fy * r * 1.3 - k * g.fx * r * .5); ctx.lineTo(x - g.fx * r * 2.4 + k * g.fy * r * .5, y - g.fy * r * 2.4 - k * g.fx * r * .5); ctx.stroke(); } }
+      ctx.fillStyle = "#1b1f2a"; ctx.beginPath(); ctx.ellipse(x, y, r * .95, r * 1.12, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = "#fdfdfd"; ctx.beginPath(); ctx.ellipse(x + g.fx * r * .22, y + g.fy * r * .1 + r * .2, r * .62, r * .78, 0, 0, 7); ctx.fill();
+      ctx.strokeStyle = g.p.color; ctx.lineWidth = r * .28; ctx.beginPath(); ctx.arc(x, y - r * .25, r * .8, Math.PI * .15, Math.PI * .85); ctx.stroke();
+      const ex = x + g.fx * r * .45, ey = y - r * .45 + g.fy * r * .25;
+      for (const s of [-1, 1]) { ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(ex + s * r * .28, ey, r * .17, 0, 7); ctx.fill(); ctx.fillStyle = "#111"; ctx.beginPath(); ctx.arc(ex + s * r * .28 + g.fx * r * .05, ey + g.fy * r * .05, r * .08, 0, 7); ctx.fill(); }
+      ctx.fillStyle = "#ff9f1a"; ctx.beginPath(); ctx.moveTo(ex + g.fx * r * .55, ey + r * .18 + g.fy * r * .4); ctx.lineTo(ex - r * .14, ey + r * .14); ctx.lineTo(ex + r * .14, ey + r * .14); ctx.closePath(); ctx.fill();
+      if (C.xmas) hat(ctx, x, y - r * .95, r * .55, -.15);
+      ctx.restore();
+      if (g.alive) label(ctx, g.p.name, x, y - r * 1.75, Math.max(12, H * .026), g.p.color);
+    }
+    if (S.state === "count") { const s = Math.ceil((3200 - (T() - S.at)) / 1000); bigText(ctx, W, H, s > 0 ? String(s) : "GO!"); }
+    if (S.state === "fight" && T() - S.at < 700) bigText(ctx, W, H, "GO!");
+    if (S.state === "roundEnd") bigText(ctx, W, H, S.msg, "#fff", H * .085);
+  };
+  api.hud = () => `🐧 Penguin Sumo · Round ${S.round} of ${S.rounds}`;
+  api.phone = () => ({ alive: S.peng.filter(g => g.alive).map(g => g.id), state: S.state, round: S.round });
+  api.ranking = () => rankBy(ps.map(p => p.id), id => pts[id], true);
+  api.skip = () => { api.done = true; };
+  return api;
+}
+
+// ---------- Curling ----------
+function Curling(C) {
+  const api = { id: "curl", done: false }, ps = C.players, n = ps.length, each = n <= 3 ? 3 : n <= 5 ? 2 : 1;
+  const order = []; for (let k = 0; k < each; k++) ps.forEach(p => order.push(p.id));
+  const A = C.aspect(), top = .17, bot = .9, hy = (top + bot) / 2, hx = A - .33, sx = .2, D = hx - sx, MU = .34, SR = .028, HOUSE = .17;
+  const S = { stones: [], turn: -1, state: "", at: 0, cur: null, sweeps: [], best: {}, msg: "" };
+  const name = id => (ps.find(p => p.id === id) || {}).name || "";
+  function next() {
+    S.turn++;
+    while (S.turn < order.length && !C.alive(order[S.turn])) S.turn++;
+    if (S.turn >= order.length) { score(); return; }
+    S.state = "aim"; S.at = T(); S.cur = null; S.msg = "";
+    C.buzz(order[S.turn], [60, 60, 60]);
+  }
+  function score() {
+    S.best = {};
+    for (const s of S.stones) if (!s.out) { const d = Math.hypot(s.x - hx, s.y - hy); if (S.best[s.id] == null || d < S.best[s.id]) S.best[s.id] = d; }
+    S.state = "score"; S.at = T();
+    const r = api.ranking(); const w = r[0] && S.best[r[0][0]] != null ? r[0].map(name).join(" & ") : null;
+    S.msg = w ? `${w} is closest!` : "No stones left on the ice!";
+  }
+  next();
+  api.input = (p, m) => {
+    if (m.t === "throw" && S.state === "aim" && order[S.turn] === p.id) {
+      let pw = clamp(+m.p || 0, 0, 1); const kid = ps.find(q => q.id === p.id).kid; if (C.boost && kid) pw = .38 + pw * .3;
+      const v = Math.sqrt(2 * MU * D * (.45 + pw * 1.15)), a = clamp(+m.a || 0, -1, 1) * .1;
+      const pl = ps.find(q => q.id === p.id);
+      S.cur = { id: p.id, color: pl.color, x: sx, y: hy, vx: v * Math.cos(a), vy: v * Math.sin(a), out: false, trail: [] };
+      S.stones.push(S.cur); S.state = "moving"; S.at = T(); S.sweeps = [];
+    }
+    if (m.t === "sweep" && S.state === "moving" && order[S.turn] === p.id) { S.sweeps.push(T()); if (S.sweeps.length > 30) S.sweeps.shift(); }
+  };
+  const sweepI = () => { const now = T(); return Math.min(1, S.sweeps.filter(t => now - t < 650).length / 5); };
+  api.update = dt => {
+    const t = T() - S.at;
+    if (S.state === "aim" && t > 30000) { S.msg = `${name(order[S.turn])} ran out of time`; next(); return; }
+    if (S.state === "score") { if (t > 5500) api.done = true; return; }
+    if (S.state === "settle") { if (t > 1300) next(); return; }
+    if (S.state !== "moving") return;
+    const steps = 4, h = dt / steps;
+    for (let k = 0; k < steps; k++) {
+      for (const s of S.stones) {
+        if (s.out) continue; const sp = Math.hypot(s.vx, s.vy); if (sp <= 0) continue;
+        const mu = MU * (s === S.cur ? 1 - .5 * sweepI() : 1), ns = sp - mu * h;
+        if (ns <= .003) { s.vx = s.vy = 0; } else { s.vx *= ns / sp; s.vy *= ns / sp; }
+        s.x += s.vx * h; s.y += s.vy * h;
+        if (s.y < top + SR * .5 || s.y > bot - SR * .5 || s.x > hx + HOUSE + .12) { s.out = true; s.vx = s.vy = 0; }
+      }
+      const live = S.stones.filter(s => !s.out);
+      for (let i = 0; i < live.length; i++) for (let j = i + 1; j < live.length; j++) {
+        const a = live[i], b = live[j], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy);
+        if (d > 0 && d < SR * 2) {
+          const nx = dx / d, ny = dy / d, o = (SR * 2 - d) / 2; a.x -= nx * o; a.y -= ny * o; b.x += nx * o; b.y += ny * o;
+          const rel = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
+          if (rel > 0) { const jj = rel * .95; a.vx -= jj * nx; a.vy -= jj * ny; b.vx += jj * nx; b.vy += jj * ny; C.buzz(a.id, 25); }
+        }
+      }
+    }
+    if (S.cur && !S.cur.out) { S.cur.trail.push([S.cur.x, S.cur.y]); if (S.cur.trail.length > 40) S.cur.trail.shift(); }
+    if (S.stones.every(s => s.out || (s.vx === 0 && s.vy === 0))) {
+      for (const s of S.stones) if (!s.out && s.x < hx - .45) s.out = true; // didn't reach the hog line
+      S.state = "settle"; S.at = T();
+    }
+  };
+  api.draw = (ctx, W, H) => {
+    const sc = H, ox = (W - A * sc) / 2;
+    ctx.fillStyle = "#0b1222"; ctx.fillRect(0, 0, W, H);
+    const X = x => ox + x * sc, Y = y => y * sc;
+    const gs = ctx.createLinearGradient(0, Y(top), 0, Y(bot)); gs.addColorStop(0, "#eaf5ff"); gs.addColorStop(.5, "#ffffff"); gs.addColorStop(1, "#e3f0fb");
+    ctx.fillStyle = "#3b2a1c"; ctx.fillRect(X(.04), Y(top) - 10, X(A - .04) - X(.04), Y(bot) - Y(top) + 20);
+    ctx.fillStyle = gs; ctx.fillRect(X(.04), Y(top), X(A - .04) - X(.04), Y(bot) - Y(top));
+    for (const [r, col] of [[HOUSE, "#2f6fd6"], [.115, "#ffffff"], [.06, "#d63a3a"], [.02, "#ffffff"]]) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(X(hx), Y(hy), r * sc, 0, 7); ctx.fill(); }
+    ctx.strokeStyle = "rgba(30,60,120,.35)"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(X(hx - .45), Y(top)); ctx.lineTo(X(hx - .45), Y(bot)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(X(.08), Y(hy)); ctx.lineTo(X(A - .06), Y(hy)); ctx.stroke();
+    ctx.fillStyle = "#333"; ctx.fillRect(X(sx) - 8, Y(hy) - 14, 10, 28);
+    if (S.state === "aim") { ctx.setLineDash([8, 10]); ctx.strokeStyle = "rgba(255,180,0,.6)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(X(sx), Y(hy)); ctx.lineTo(X(hx), Y(hy)); ctx.stroke(); ctx.setLineDash([]); }
+    const si = S.state === "moving" ? sweepI() : 0;
+    for (const s of S.stones) {
+      if (s.out) continue; const x = X(s.x), y = Y(s.y), r = SR * sc;
+      if (s === S.cur && s.trail.length > 1) { ctx.strokeStyle = "rgba(120,170,220,.35)"; ctx.lineWidth = r * .8; ctx.lineCap = "round"; ctx.beginPath(); s.trail.forEach(([a, b], i) => i ? ctx.lineTo(X(a), Y(b)) : ctx.moveTo(X(a), Y(b))); ctx.stroke(); }
+      if (s === S.cur && si > 0) { ctx.strokeStyle = `rgba(255,201,60,${.4 + si * .6})`; ctx.lineWidth = 4; for (const k of [-1, 1]) { ctx.beginPath(); const bx = x + r * 2.4, by = y + k * r * .7 + Math.sin(T() / 50) * r * .6 * k; ctx.moveTo(bx - r, by); ctx.lineTo(bx + r, by); ctx.stroke(); } }
+      ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.beginPath(); ctx.arc(x + 2, y + 4, r, 0, 7); ctx.fill();
+      const gg = ctx.createRadialGradient(x - r * .3, y - r * .3, r * .1, x, y, r); gg.addColorStop(0, "#d4d7df"); gg.addColorStop(1, "#6d7282");
+      ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+      ctx.fillStyle = s.color; ctx.beginPath(); ctx.arc(x, y, r * .62, 0, 7); ctx.fill();
+      ctx.fillStyle = "rgba(0,0,0,.35)"; ctx.fillRect(x - r * .5, y - r * .12, r, r * .24);
+    }
+    if (S.state === "score") {
+      for (const [id, d] of Object.entries(S.best)) { const s = S.stones.filter(q => q.id === id && !q.out).sort((a, b) => Math.hypot(a.x - hx, a.y - hy) - Math.hypot(b.x - hx, b.y - hy))[0]; if (s) label(ctx, name(id), X(s.x), Y(s.y) - SR * sc * 1.8, H * .025); }
+      bigText(ctx, W, H * .22, S.msg, "#fff", H * .07);
+    } else {
+      const who = name(order[S.turn]);
+      const txt = S.state === "aim" ? `${who}: swipe up on your phone!` : S.state === "moving" ? `${who}: SWEEP! SWEEP!` : S.msg || "";
+      label(ctx, txt, W / 2, Y(top) - H * .045, H * .04, "#ffc93c");
+      const lefts = order.slice(S.turn + 1);
+      const parts = ps.map(p => `${p.name} ${"●".repeat(lefts.filter(x => x === p.id).length + (order[S.turn] === p.id && S.state === "aim" ? 1 : 0))}`).join("   ");
+      label(ctx, parts, W / 2, Y(bot) + H * .045, H * .026, "#9097c0");
+    }
+  };
+  api.hud = () => `🥌 Curling · Stone ${Math.min(S.turn + 1, order.length)} of ${order.length}`;
+  api.phone = () => {
+    const left = {}; ps.forEach(p => left[p.id] = order.slice(S.turn).filter(x => x === p.id).length - (order[S.turn] === p.id && S.state !== "aim" ? 1 : 0));
+    return { turn: order[S.turn] || null, state: S.state, left };
+  };
+  api.ranking = () => rankBy(ps.map(p => p.id).filter(id => S.best[id] != null), id => S.best[id], false); // no stones left = no points
+  api.skip = () => { if (S.state === "aim" || S.state === "moving") { S.stones.forEach(s => { s.vx = s.vy = 0; }); next(); } else api.done = true; };
+  return api;
+}
+
+// ---------- Tug of War ----------
+function Tug(C) {
+  const api = { id: "tug", done: false }, ps = C.players;
+  const teams = [[], []]; let k = 0;
+  shuffle(ps.filter(p => p.kid)).forEach(p => teams[k++ % 2].push(p));
+  shuffle(ps.filter(p => !p.kid)).forEach(p => teams[teams[0].length <= teams[1].length ? 0 : 1].push(p));
+  if (!teams[1].length) teams[1].push(teams[0].pop()); if (!teams[0].length) teams[0].push(teams[1].pop());
+  const names = C.xmas ? ["Elves", "Snowmen"] : ["Red team", "Blue team"], cols = ["#ff5d5d", "#4dabff"];
+  const S = { pos: 0, vel: 0, wins: [0, 0], round: 0, state: "", at: 0, taps: {}, msg: "", lastB: 0 };
+  ps.forEach(p => S.taps[p.id] = []);
+  const teamOf = id => teams[0].some(p => p.id === id) ? 0 : 1;
+  function newRound() { S.round++; S.pos = 0; S.vel = 0; S.state = "count"; S.at = T(); ps.forEach(p => S.taps[p.id] = []); }
+  newRound();
+  const rate = i => { const now = T(); let s = 0; for (const p of teams[i]) s += S.taps[p.id].filter(t => now - t < 1000).length * (C.boost && p.kid ? 1.5 : 1); return s / teams[i].length; };
+  api.input = (p, m) => {
+    if (m.t !== "taps" || S.state !== "pull") return;
+    const arr = S.taps[p.id]; if (!arr) return; const now = T(), n = clamp(m.n | 0, 0, 4);
+    for (let i = 0; i < n; i++) arr.push(now);
+    while (arr.length && now - arr[0] > 1200) arr.shift(); if (arr.length > 24) arr.splice(0, arr.length - 24);
+  };
+  api.update = dt => {
+    const t = T() - S.at;
+    if (S.state === "count") { if (t > 3200) { S.state = "pull"; S.at = T(); } return; }
+    if (S.state === "roundEnd") { if (t > 3800) { if (Math.max(...S.wins) >= 2 || S.round >= 3) api.done = true; else newRound(); } return; }
+    const target = (rate(1) - rate(0)) * .075;
+    S.vel += (target - S.vel) * Math.min(1, dt * 4); S.pos = clamp(S.pos + S.vel * dt, -1, 1);
+    if (T() - S.lastB > 250) { S.lastB = T(); C.bcast({ t: "tug", pos: Math.round(S.pos * 100) / 100 }); }
+    if (Math.abs(S.pos) >= 1 || t > 25000) {
+      if (S.pos === 0) { S.msg = "It's a draw!"; }
+      else { const w = S.pos > 0 ? 1 : 0; S.wins[w]++; S.msg = `${names[w]} win the pull!`; teams[w].forEach(p => C.buzz(p.id, [50, 50, 50, 50, 200])); }
+      S.state = "roundEnd"; S.at = T();
+    }
+  };
+  api.draw = (ctx, W, H) => {
+    const t = T();
+    const gsky = ctx.createLinearGradient(0, 0, 0, H); gsky.addColorStop(0, C.xmas ? "#1a2a4a" : "#3b6fb6"); gsky.addColorStop(1, C.xmas ? "#2d4a6b" : "#9fd0ff"); ctx.fillStyle = gsky; ctx.fillRect(0, 0, W, H);
+    const gy = H * .62; ctx.fillStyle = C.xmas ? "#f2f7ff" : "#5fb85a"; ctx.fillRect(0, gy, W, H - gy);
+    ctx.fillStyle = C.xmas ? "#9cc8ea" : "#7a4f2a"; ctx.beginPath(); ctx.ellipse(W / 2, gy + H * .09, W * .1, H * .05, 0, 0, 7); ctx.fill();
+    const lineL = W / 2 - W * .3, lineR = W / 2 + W * .3;
+    ctx.fillStyle = cols[0]; ctx.fillRect(lineL - 3, gy - H * .02, 6, H * .2); ctx.fillStyle = cols[1]; ctx.fillRect(lineR - 3, gy - H * .02, 6, H * .2);
+    const shift = S.pos * W * .3, ry = gy - H * .07;
+    ctx.strokeStyle = "#c8a165"; ctx.lineWidth = H * .016; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(W * .04 + shift, ry); ctx.lineTo(W * .96 + shift, ry); ctx.stroke();
+    ctx.strokeStyle = "rgba(0,0,0,.18)"; ctx.lineWidth = 2; for (let x = W * .04; x < W * .96; x += H * .03) { ctx.beginPath(); ctx.moveTo(x + shift, ry - H * .008); ctx.lineTo(x + shift + H * .012, ry + H * .008); ctx.stroke(); }
+    ctx.fillStyle = "#ff3b3b"; ctx.beginPath(); ctx.moveTo(W / 2 + shift, ry); ctx.lineTo(W / 2 + shift, ry + H * .09); ctx.lineTo(W / 2 + shift + H * .05, ry + H * .06); ctx.lineTo(W / 2 + shift, ry + H * .03); ctx.fill();
+    for (const i of [0, 1]) {
+      const tm = teams[i], dir = i === 0 ? -1 : 1, r = rate(i), lean = clamp(r / 8, 0, 1);
+      tm.forEach((p, j) => {
+        const x = W / 2 + dir * (W * .36 + j * W * .075) + shift, bob = S.state === "pull" ? Math.sin(t / 90 + j) * H * .006 * (1 + lean * 2) : 0, s = H * (p.kid && C.boost ? .052 : .045);
+        ctx.save(); ctx.translate(x, gy - s * 1.6 + bob); ctx.rotate(dir * (.15 + lean * .35));
+        ctx.fillStyle = cols[i]; ctx.beginPath(); ctx.roundRect(-s * .55, -s * .2, s * 1.1, s * 1.6, s * .4); ctx.fill();
+        ctx.fillStyle = "#ffd9b3"; ctx.beginPath(); ctx.arc(0, -s * .7, s * .55, 0, 7); ctx.fill();
+        ctx.fillStyle = p.color; ctx.fillRect(-s * .6, -s * .95, s * 1.2, s * .22);
+        if (C.xmas) hat(ctx, 0, -s * 1.05, s * .5, dir * .2);
+        ctx.restore();
+        label(ctx, p.name, x, gy + H * .06 + (j % 2) * H * .04, H * .026, "#fff");
+      });
+      label(ctx, `${names[i]}  ${"★".repeat(S.wins[i])}${"☆".repeat(Math.max(0, 2 - S.wins[i]))}`, i === 0 ? W * .2 : W * .8, H * .2, H * .05, cols[i]);
+      ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.fillRect(i === 0 ? W * .1 : W * .7, H * .26, W * .2, H * .018);
+      ctx.fillStyle = cols[i]; ctx.fillRect(i === 0 ? W * .1 : W * .7, H * .26, W * .2 * clamp(r / 10, 0, 1), H * .018);
+    }
+    if (S.state === "count") { const s = Math.ceil((3200 - (T() - S.at)) / 1000); bigText(ctx, W, H * .8, s > 0 ? String(s) : "PULL!"); }
+    if (S.state === "pull" && T() - S.at < 700) bigText(ctx, W, H * .8, "PULL!");
+    if (S.state === "roundEnd") bigText(ctx, W, H * .8, S.msg, "#fff", H * .085);
+  };
+  api.hud = () => `💪 Tug of War · Pull ${S.round}`;
+  api.phone = () => ({ teams: teams.map(tm => tm.map(p => p.id)), names, cols, wins: S.wins, state: S.state });
+  api.ranking = () => S.wins[0] === S.wins[1] ? [ps.map(p => p.id)] : (S.wins[0] > S.wins[1] ? [teams[0], teams[1]] : [teams[1], teams[0]]).map(tm => tm.map(p => p.id));
+  api.skip = () => { api.done = true; };
+  return api;
+}
+
+// ---------- Quick Draw ----------
+function QuickDraw(C) {
+  const api = { id: "draw", done: false }, ps = C.players, pts = {}, ROUNDS = 5;
+  ps.forEach(p => pts[p.id] = 0);
+  const S = { round: 0, state: "", at: 0, delay: 0, fakeAt: null, fakeShown: false, fakeWord: "", res: {}, goAt: 0, order: [] };
+  const FAKES = ["DRAGON!", "DRUM!", "DROP!", "DRIP!", "DRAWER!"];
+  function newRound() {
+    S.round++; S.state = "wait"; S.at = T(); S.res = {}; S.delay = 2600 + Math.random() * 3400;
+    S.fakeAt = S.round >= 2 && Math.random() < .65 ? S.delay * (.3 + Math.random() * .4) : null; S.fakeShown = false; S.fakeWord = FAKES[Math.random() * FAKES.length | 0];
+    C.bcast({ t: "qd", s: "wait", r: S.round });
+  }
+  newRound();
+  const active = () => ps.filter(p => C.alive(p.id));
+  api.input = (p, m) => {
+    if (m.t !== "qd" || m.r !== S.round || S.res[p.id]) return;
+    if (S.state === "wait" || m.early) { S.res[p.id] = { early: true }; C.buzz(p.id, 200); return; }
+    if (S.state === "go") { const rt = +m.rt; S.res[p.id] = rt < 90 || !isFinite(rt) ? { early: true } : { rt: Math.min(rt, 3000) }; }
+  };
+  api.update = () => {
+    const t = T() - S.at;
+    if (S.state === "wait") {
+      if (S.fakeAt != null && !S.fakeShown && t >= S.fakeAt) { S.fakeShown = true; S.fakeT = T(); C.fast({ t: "qd", s: "fake", w: S.fakeWord, r: S.round }); }
+      if (t >= S.delay) { S.state = "go"; S.goAt = T(); C.fast({ t: "qd", s: "go", r: S.round }); }
+      return;
+    }
+    if (S.state === "go") {
+      const act = active();
+      if (act.every(p => S.res[p.id]) || T() - S.goAt > 3200) {
+        const valid = act.filter(p => S.res[p.id] && S.res[p.id].rt != null).map(p => ({ p, eff: S.res[p.id].rt - (C.boost && p.kid ? 120 : 0) })).sort((a, b) => a.eff - b.eff);
+        valid.forEach((v, i) => pts[v.p.id] += valid.length - i);
+        S.order = valid; S.state = "res"; S.at = T();
+        if (valid[0]) C.buzz(valid[0].p.id, [50, 50, 200]);
+        C.bcast({ t: "qd", s: "res", r: S.round });
+      }
+      return;
+    }
+    if (S.state === "res" && t > 4200) { if (S.round >= ROUNDS) api.done = true; else newRound(); }
+  };
+  api.draw = (ctx, W, H) => {
+    const t = T();
+    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, C.xmas ? "#0d1b3a" : "#2b1b4a"); g.addColorStop(.6, C.xmas ? "#3a5a8a" : "#ff7b54"); g.addColorStop(1, C.xmas ? "#dce9f7" : "#ffc36b"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = C.xmas ? "rgba(255,255,255,.8)" : "rgba(255,230,150,.9)"; ctx.beginPath(); ctx.arc(W * .78, H * .3, H * .09, 0, 7); ctx.fill();
+    ctx.fillStyle = C.xmas ? "#eef4fb" : "#4a2a1a"; ctx.beginPath(); ctx.moveTo(0, H * .78); for (let x = 0; x <= W; x += W / 10) ctx.lineTo(x, H * .76 + Math.sin(x / 120) * H * .02); ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.fill();
+    ctx.fillStyle = C.xmas ? "#1f5c3a" : "#2a1a10";
+    for (const cx of [W * .12, W * .88]) { if (C.xmas) { ctx.beginPath(); ctx.moveTo(cx, H * .45); ctx.lineTo(cx - H * .09, H * .78); ctx.lineTo(cx + H * .09, H * .78); ctx.fill(); } else { ctx.fillRect(cx - H * .02, H * .48, H * .04, H * .3); ctx.fillRect(cx - H * .08, H * .55, H * .06, H * .025); ctx.fillRect(cx - H * .08, H * .5, H * .025, H * .07); ctx.fillRect(cx + H * .02, H * .58, H * .06, H * .025); ctx.fillRect(cx + H * .055, H * .53, H * .025, H * .07); } }
+    if (S.state === "go") { ctx.fillStyle = "rgba(51,209,122,.85)"; ctx.fillRect(0, 0, W, H); bigText(ctx, W, H, "DRAW!", "#fff", H * .3); }
+    else if (S.state === "wait" && S.fakeShown && t - S.fakeT < 800) { ctx.fillStyle = "rgba(255,70,70,.8)"; ctx.fillRect(0, 0, W, H); bigText(ctx, W, H, S.fakeWord, "#fff", H * .2); }
+    else if (S.state === "wait") { bigText(ctx, W, H * .7, "Wait for GREEN…", "#fff", H * .1); }
+    const act = ps;
+    act.forEach((p, i) => {
+      const x = W * (i + 1) / (act.length + 1), y = H * .86, r = S.res[p.id];
+      label(ctx, p.name, x, y, H * .03, p.color);
+      const st = r ? (r.early ? "TOO EARLY" : (r.rt / 1000).toFixed(3) + "s") : S.state === "res" ? "missed" : "";
+      if (st) label(ctx, st, x, y + H * .045, H * .028, r && r.early ? "#ff5d5d" : "#fff");
+      label(ctx, `${pts[p.id]} pts`, x, y - H * .045, H * .022, "#ffc93c");
+    });
+    if (S.state === "res") {
+      const w = S.order[0];
+      bigText(ctx, W, H * .55, w ? `${w.p.name} is fastest!` : "Nobody drew in time!", "#fff", H * .085);
+    }
+  };
+  api.hud = () => `🤠 Quick Draw · Round ${S.round} of ${ROUNDS}`;
+  api.phone = () => ({ state: S.state, round: S.round, res: Object.fromEntries(Object.entries(S.res).map(([k, v]) => [k, v.early ? "early" : v.rt])) });
+  api.ranking = () => rankBy(ps.map(p => p.id), id => pts[id], true);
+  api.skip = () => { api.done = true; };
+  return api;
+}
+const MAKERS = { sumo: Sumo, curl: Curling, tug: Tug, draw: QuickDraw };
+
+// ======================================================================
+// TV
+// ======================================================================
+async function tvMain() {
+  document.body.className = "tv";
+  const room = (P.get("tv") || "").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 4) || code4();
+  history.replaceState(null, "", "?tv=" + room + (LOCAL ? "&local=1" : ""));
+  const joinUrl = location.origin + location.pathname + "?join=" + room + (LOCAL ? "&local=1" : "");
+  const S = {
+    phase: "lobby", players: {}, order: [], list: [], gi: -1, game: null, last: null, endsAt: 0,
+    settings: Object.assign({ games: GAME_IDS.slice(), theme: new Date().getMonth() === 11 ? "xmas" : "std", boost: true }, ls.get("party_settings", {})),
+  };
+  let main = null, conn = "Connecting…", colorI = 0, lastKey = "", lastPhoneJSON = "";
+  if (LOCAL) window.__S = S;
+  const cv = $("#cv"), ctx = cv.getContext("2d"); cv.classList.remove("hidden");
+  let W = 1, H = 1, DPR = 1;
+  function size() { DPR = window.devicePixelRatio || 1; W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR; }
+  addEventListener("resize", size); size();
+
+  const alive = p => p && T() - p.seen < 20000;
+  const list = () => S.order.map(id => S.players[id]).filter(Boolean);
+  const hostId = () => (list().find(alive) || {}).id || null;
+  const bcast = m => main && main.send(m);
+  function sendTo(p, m) { if (!p) return; if (p.dc && p.dc.readyState === "open") { try { p.dc.send(JSON.stringify(m)); return; } catch (e) { } } p.ch && p.ch.send(m); }
+  const C = () => ({
+    players: list().filter(alive).map(p => ({ id: p.id, name: p.name, kid: p.kid, color: p.color })),
+    boost: S.settings.boost, xmas: S.settings.theme === "xmas", aspect: () => W / H,
+    buzz: (id, ms) => sendTo(S.players[id], { t: "buzz", ms }), bcast,
+    fast: m => { bcast(m); list().forEach(p => { if (p.dc && p.dc.readyState === "open") try { p.dc.send(JSON.stringify(m)); } catch (e) { } }); },
+    alive: id => alive(S.players[id]),
+  });
+
+  function pub() {
+    return {
+      phase: S.phase, settings: S.settings, host: hostId(), gi: S.gi, total: S.list.length, game: S.list[S.gi] || null,
+      players: list().map(p => ({ id: p.id, name: p.name, kid: p.kid, color: p.color, score: p.score })),
+      left: S.endsAt ? Math.max(0, S.endsAt - T()) : 0, last: S.last, g: S.game && S.phase === "play" ? S.game.phone() : null,
+    };
+  }
+  let pushT = null;
+  function push() { clearTimeout(pushT); pushT = setTimeout(() => { bcast({ t: "state", st: pub() }); render(); }, 30); }
+  setInterval(() => bcast({ t: "state", st: pub() }), 3000);
+
+  // ---- flow ----
+  function start() {
+    const pl = list().filter(alive); if (pl.length < 2 || !S.settings.games.length) return;
+    ls.set("party_settings", S.settings);
+    list().forEach(p => p.score = 0);
+    S.list = GAME_IDS.filter(g => S.settings.games.includes(g)); S.gi = -1;
+    nextGame();
+  }
+  function nextGame() {
+    S.gi++; S.game = null; S.last = null;
+    if (S.gi >= S.list.length) { S.phase = "end"; S.endsAt = 0; push(); return; }
+    S.phase = "intro"; S.endsAt = T() + 10000; push();
+  }
+  function play() { S.game = MAKERS[S.list[S.gi]](C()); S.phase = "play"; S.endsAt = 0; lastPhoneJSON = ""; push(); }
+  function finishGame(skipped) {
+    const g = S.game; let pts = {};
+    if (!skipped) { pts = groupsToPoints(g.ranking()); for (const [id, v] of Object.entries(pts)) if (S.players[id]) S.players[id].score += v; }
+    S.last = { game: S.list[S.gi], pts, skipped: !!skipped };
+    S.phase = "result"; S.endsAt = T() + 7000; push();
+  }
+  function advance() {
+    if (S.phase === "intro") play();
+    else if (S.phase === "result") { S.phase = "board"; S.endsAt = T() + 7000; push(); }
+    else if (S.phase === "board") nextGame();
+  }
+  function setSetting(k, v) {
+    if (k === "game") { const g = S.settings.games; if (!GAME_IDS.includes(v)) return; S.settings.games = g.includes(v) ? (g.length > 1 ? g.filter(x => x !== v) : g) : GAME_IDS.filter(x => g.includes(x) || x === v); }
+    else if (k === "theme" && (v === "std" || v === "xmas")) S.settings.theme = v;
+    else if (k === "boost") S.settings.boost = !!v;
+    push();
+  }
+  const toLobby = () => { S.phase = "lobby"; S.game = null; S.gi = -1; S.endsAt = 0; push(); };
+  const playAgain = () => { if (list().filter(alive).length >= 2) start(); else toLobby(); };
+
+  // ---- players & links ----
+  async function addPlayer(m) {
+    let p = S.players[m.id];
+    if (!p) {
+      p = S.players[m.id] = { id: m.id, color: COLORS[colorI++ % COLORS.length], score: 0, ch: null, pc: null, dc: null, pending: null };
+      S.order.push(m.id);
+    }
+    p.name = String(m.name || "Player").slice(0, 14); p.kid = !!m.kid; p.seen = T();
+    if (!p.ch && !p.pending) p.pending = chan("party-" + room + "-" + m.id, msg => onPad(p, msg)).then(ch => { p.ch = ch; p.pending = null; }).catch(() => { p.pending = null; });
+    if (p.pending) await p.pending;
+    if (p.ch) p.ch.send({ t: "welcome" });
+    push();
+  }
+  async function answer(p, sdp) {
+    try { p.pc && p.pc.close(); } catch (e) { }
+    const pc = p.pc = new RTCPeerConnection({ iceServers: ICE });
+    pc.ondatachannel = e => { const dc = e.channel; p.dc = dc; dc.onmessage = ev => { let m; try { m = JSON.parse(ev.data); } catch (_) { return; } onPad(p, m); }; dc.onclose = () => { if (p.dc === dc) p.dc = null; }; };
+    try { await pc.setRemoteDescription({ type: "offer", sdp }); await pc.setLocalDescription(await pc.createAnswer()); await iceDone(pc); if (p.pc === pc) p.ch.send({ t: "answer", sdp: pc.localDescription.sdp }); } catch (e) { }
+  }
+  function onPad(p, m) {
+    if (!m || !m.t) return;
+    p.seen = T();
+    const isHost = p.id === hostId();
+    switch (m.t) {
+      case "hi": break;
+      case "offer": answer(p, m.sdp); break;
+      case "set": if (isHost && (S.phase === "lobby" || S.phase === "end")) setSetting(m.k, m.v); break;
+      case "start": if (isHost && S.phase === "lobby") start(); break;
+      case "again": if (isHost && S.phase === "end") playAgain(); break;
+      case "lobby": if (isHost && S.phase === "end") toLobby(); break;
+      case "next": if (isHost) advance(); break;
+      case "skip": if (isHost && S.phase === "play" && S.game) { S.game.skipped = true; S.game.done = true; } break;
+      default: if (S.phase === "play" && S.game) S.game.input(p, m);
+    }
+  }
+  function onMain(m) { if (m && m.t === "join" && m.id) addPlayer(m); }
+
+  // ---- loop ----
+  let last = T(), lastPhoneCheck = 0;
+  // the game runs on a timer (keeps going even if the page isn't redrawing), drawing happens per frame
+  function step() {
+    const now = T(), dt = Math.min(.05, (now - last) / 1000); last = now;
+    if (S.phase === "play" && S.game) {
+      S.game.update(dt);
+      if (S.game.done) finishGame(!!S.game.skipped);
+      else if (now - lastPhoneCheck > 150) { lastPhoneCheck = now; const j = JSON.stringify(S.game.phone()); if (j !== lastPhoneJSON) { lastPhoneJSON = j; push(); } }
+    } else if ((S.phase === "intro" || S.phase === "result" || S.phase === "board") && S.endsAt && now > S.endsAt) advance();
+  }
+  setInterval(step, 16);
+  function frame() {
+    const now = T();
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    if (S.phase === "play" && S.game) S.game.draw(ctx, W, H); else backdrop(now);
+    updCount();
+    requestAnimationFrame(frame);
+  }
+  function backdrop(t) {
+    const g = ctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, S.settings.theme === "xmas" ? "#0d2a1c" : "#0e1330"); g.addColorStop(.5, "#090b14"); g.addColorStop(1, S.settings.theme === "xmas" ? "#3a0d14" : "#1b0f30");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    for (let i = 0; i < 6; i++) { const x = W * (.1 + .16 * i) + Math.sin(t / 2000 + i) * 40, y = H * (.3 + .3 * Math.sin(t / 3000 + i * 2)); ctx.fillStyle = COLORS[i] + "22"; ctx.beginPath(); ctx.arc(x, y, H * .18, 0, 7); ctx.fill(); }
+  }
+  function updCount() { const el = $("#count"); if (el && S.endsAt) el.textContent = Math.ceil(Math.max(0, S.endsAt - T()) / 1000); }
+
+  // ---- HUD/overlays ----
+  function render() {
+    festive(S.settings.theme === "xmas", 50);
+    const key = S.phase + "|" + S.gi;
+    if (key !== lastKey) { lastKey = key; build(); }
+    upd();
+  }
+  function build() {
+    const gid = S.list[S.gi], inf = INFO[gid] || {};
+    let layer = "";
+    if (S.phase === "lobby") layer = `<div class="lobby"><div class="left"><h1>Buzz In <span>Party</span></h1><div class="qr" id="qr"></div>
+        <div class="muted" style="font-size:1.3em;font-weight:700">Scan to join, or enter code</div><div class="code">${room}</div></div>
+        <div class="panel"><h3>Players</h3><div class="plist" id="plist"></div><button class="btn gold big" id="start">Start the party</button><div class="note" id="snote"></div><div id="sets"></div><div class="note">${esc(conn)}</div></div></div>`;
+    else if (S.phase === "intro") layer = `<div class="card"><div class="note" style="font-size:1.2em;font-weight:800;letter-spacing:.1em">GAME ${S.gi + 1} OF ${S.list.length}</div><div class="em">${inf.e}</div><h2>${inf.t}</h2><p>${inf.how}</p>${S.settings.boost ? `<p class="kidtip">🧒 ${inf.kid}</p>` : ""}<div class="count">Starting in <span id="count"></span></div><div class="tvbtns"><button class="btn gold" id="go">Start now</button></div></div>`;
+    else if (S.phase === "result" || S.phase === "board") layer = `<div class="card" id="rcard"></div>`;
+    else if (S.phase === "end") layer = `<div class="lobby"><div class="left"><div class="em" style="font-size:7em">🏆</div><h1 id="champ"></h1><div class="board" id="board" style="font-size:.9em"></div></div>
+        <div class="panel"><h3>Next game</h3><div class="note">Change anything, then play again. Same players, no need to rejoin.</div><button class="btn gold big" id="again">▶ Play again</button><div class="note" id="snote"></div><div id="sets"></div><button class="btn" id="tolobby">Back to the lobby (to add players)</button></div></div>`;
+    app.innerHTML = `<div class="hud"><div class="logo">Buzz In <span>Party</span>${S.settings.theme === "xmas" ? " 🎄" : ""}</div><div class="ginfo" id="ginfo"></div><div class="codesm">Join code <b>${room}</b></div></div>
+      ${layer ? `<div class="layer">${layer}</div>` : ""}<div class="layer pe-none hidden" id="skipwrap"></div>`;
+    if (S.phase === "lobby") { try { new QRCode($("#qr"), { text: joinUrl, width: 400, height: 400, correctLevel: QRCode.CorrectLevel.M }); } catch (e) { $("#qr").textContent = joinUrl; } }
+    const on = (s, f) => { const e = $(s); if (e) e.onclick = f; };
+    on("#start", start); on("#go", play); on("#again", playAgain); on("#tolobby", toLobby);
+    const sets = $("#sets"); if (sets) sets.onclick = e => { const r = readSet(e); if (r) setSetting(r.k, r.v); };
+  }
+  function upd() {
+    const pl = list(), gi = $("#ginfo");
+    if (gi) gi.textContent = S.phase === "play" && S.game ? S.game.hud() : S.phase === "intro" || S.phase === "result" || S.phase === "board" ? `Game ${S.gi + 1} of ${S.list.length}` : "";
+    const plEl = $("#plist");
+    if (plEl) plEl.innerHTML = pl.map(p => `<div class="prow ${alive(p) ? "" : "off"}"><span class="dot" style="background:${p.color}"></span><span class="nm">${esc(p.name)}</span>${p.kid ? `<span class="tag">🧒 child</span>` : ""}</div>`).join("") || `<div class="note">Nobody yet. Scan the code with a phone.</div>`;
+    const n = pl.filter(alive).length;
+    if ($("#sets")) $("#sets").innerHTML = setsHTML(S.settings);
+    if (S.phase === "lobby") { $("#start").disabled = n < 2; $("#snote").textContent = n < 2 ? "Needs at least 2 players." : `${n} players ready. The first player to join can also start from their phone.`; }
+    if (S.phase === "end") { $("#snote").textContent = n < 2 ? "Needs at least 2 players." : ""; boardHTML($("#board"), false); const top = pl.slice().sort((a, b) => b.score - a.score)[0]; $("#champ").innerHTML = top ? `<span style="color:${top.color}">${esc(top.name)}</span> wins!` : ""; }
+    if (S.phase === "result" || S.phase === "board") {
+      const rc = $("#rcard"), inf = INFO[S.last && S.last.game] || {};
+      if (S.phase === "result") {
+        const pts = Object.assign(Object.fromEntries(pl.map(p => [p.id, 0])), S.last.pts), rows = pl.slice().sort((a, b) => pts[b.id] - pts[a.id]);
+        rc.innerHTML = `<div class="em">${inf.e || ""}</div><h2>${S.last.skipped ? "Skipped" : inf.t + " results"}</h2>${S.last.skipped ? "" : `<div class="board">${rows.map((p, i) => `<div class="brow"><span style="width:2.2em;font-weight:800;color:var(--muted)">${ord(rows.findIndex(q => pts[q.id] === pts[p.id]) + 1)}</span><span class="dot" style="width:1em;height:1em;border-radius:50%;background:${p.color}"></span><span class="nm">${esc(p.name)}</span><span class="plus" style="flex:1">+${pts[p.id]}</span></div>`).join("")}</div>`}<div class="tvbtns"><button class="btn gold" id="nx">Next</button></div>`;
+      } else {
+        rc.innerHTML = `<h2>Leaderboard</h2><div class="board" id="board"></div><div class="count">${S.gi + 1 >= S.list.length ? "Final results in" : "Next game in"} <span id="count"></span></div><div class="tvbtns"><button class="btn gold" id="nx">Next</button></div>`;
+        boardHTML($("#board"), true);
+      }
+      $("#nx").onclick = advance;
+    }
+  }
+  function boardHTML(el, animate) {
+    if (!el) return; const pl = list().slice().sort((a, b) => b.score - a.score), mx = Math.max(1, ...pl.map(p => p.score)), plus = (S.last && S.last.pts) || {};
+    el.innerHTML = pl.map(p => `<div class="brow"><span class="nm" style="color:${p.color}">${esc(p.name)}</span><span class="bar"><i data-w="${p.score / mx * 100}" style="width:${animate ? Math.max(0, p.score - (plus[p.id] || 0)) / mx * 100 : p.score / mx * 100}%;background:${p.color}"></i></span><span class="pts">${p.score}</span></div>`).join("");
+    if (animate) requestAnimationFrame(() => requestAnimationFrame(() => el.querySelectorAll("i[data-w]").forEach(i => i.style.width = i.dataset.w + "%")));
+  }
+
+  render();
+  requestAnimationFrame(frame);
+  try { main = await chan("party-" + room, onMain); conn = LOCAL ? "Local test mode" : ""; }
+  catch (e) { conn = "Couldn't connect. Check the internet and reload."; }
+  lastKey = ""; render();
+}
+
+// ======================================================================
+// Phone
+// ======================================================================
+async function phoneMain(codeRaw) {
+  document.body.className = "ph";
+  const room = String(codeRaw || "").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 4);
+  if (room.length !== 4) return home();
+  const id = ls.get("party_id", null) || uid(); ls.set("party_id", id);
+  let me = ls.get("party_me", null);
+  let ST = null, mainCh = null, own = null, pc = null, dc = null, welcomed = false, lastState = 0, lastKey = "", subKey = "", localEnd = 0;
+  const joy = { x: 0, y: 0 }, sent = { x: 9, y: 9, t: 0 }; let tapN = 0, dashAt = 0, qd = { r: 0, s: "", goT: 0, done: false, msg: "" }, tugPos = 0;
+
+  const dcOpen = () => dc && dc.readyState === "open";
+  function send(m) { m.id = id; if (dcOpen()) { try { dc.send(JSON.stringify(m)); return; } catch (e) { } } own && own.send(m); }
+  const join = () => me && mainCh && mainCh.send({ t: "join", id, name: me.name, kid: me.kid });
+
+  async function startDirect() {
+    if (pc || P.has("nodirect")) return;
+    pc = new RTCPeerConnection({ iceServers: ICE }); const my = pc;
+    dc = pc.createDataChannel("pad", { ordered: false, maxRetransmits: 0 });
+    dc.onmessage = ev => { let m; try { m = JSON.parse(ev.data); } catch (_) { return; } onPrivate(m); };
+    dc.onopen = () => pill();
+    dc.onclose = () => { if (my === pc) stopDirect(); };
+    pc.onconnectionstatechange = () => { if (my === pc && ["failed", "closed"].includes(pc.connectionState)) stopDirect(); };
+    try { await pc.setLocalDescription(await pc.createOffer()); await iceDone(pc); if (my === pc) own.send({ t: "offer", id, sdp: pc.localDescription.sdp }); } catch (e) { stopDirect(); }
+    setTimeout(() => { if (my === pc && !dcOpen()) stopDirect(); }, 10000);
+  }
+  function stopDirect() { try { pc && pc.close(); } catch (e) { } pc = null; dc = null; pill(); }
+
+  function onPrivate(m) {
+    if (!m) return;
+    if (m.t === "welcome") { welcomed = true; if (!pc) startDirect(); }
+    if (m.t === "answer" && pc && pc.signalingState === "have-local-offer") pc.setRemoteDescription({ type: "answer", sdp: m.sdp }).catch(() => { });
+    if (m.t === "buzz") { vib(m.ms || 30); const c = $(".ctl"); if (c) { c.classList.remove("flash"); void c.offsetWidth; c.classList.add("flash"); } }
+    if (m.t === "qd") onQD(m);
+  }
+  function onMain(m) {
+    if (!m) return;
+    if (m.t === "state") {
+      const was = ST; ST = m.st; lastState = Date.now(); localEnd = Date.now() + (ST.left || 0);
+      if (me && !ST.players.some(p => p.id === id)) join();
+      if (was && (was.gi !== ST.gi || was.phase !== ST.phase)) { qd = { r: 0, s: "", goT: 0, done: false, msg: "" }; tugPos = 0; }
+      if (ST.phase === "play" && ST.game === "draw" && ST.g && ST.g.round > qd.r) onQD({ t: "qd", s: ST.g.state === "go" ? "go" : "wait", r: ST.g.round });
+      render(); return;
+    }
+    if (m.t === "qd") onQD(m);
+    if (m.t === "tug") { tugPos = m.pos; const b = $("#tugbar"); if (b) b.style.left = (50 + tugPos * 50) + "%"; }
+  }
+  function onQD(m) {
+    if (m.r < qd.r) return;
+    if (m.r > qd.r) qd = { r: m.r, s: "wait", goT: 0, done: false, msg: "" };
+    if (qd.done && m.s !== "res") return;
+    if (m.s === "go" && qd.s !== "go") { qd.s = "go"; qd.goT = performance.now(); vib(40); }
+    else if (m.s === "fake" && qd.s === "wait") { qd.s = "fake"; setTimeout(() => { if (qd.s === "fake") { qd.s = "wait"; drawQD(); } }, 800); }
+    else if (m.s === "res") qd.s = "res";
+    drawQD();
+  }
+
+  function joinForm() {
+    lastKey = "join";
+    app.innerHTML = `<div class="home"><h1>Buzz In <span>Party</span></h1><p class="muted">Game ${esc(room)}</p>
+      <input id="nm" maxlength="14" placeholder="Your name" value="${esc(me ? me.name : "")}">
+      <label class="check"><input type="checkbox" id="kid" ${me && me.kid ? "checked" : ""}> 🧒 A child is playing<br><span class="muted" style="font-weight:500;font-size:.9em">With Kids boost on, they get a fair chance against grown-ups.</span></label>
+      <button class="btn big gold" id="go">Join</button></div>`;
+    const go = () => { const v = $("#nm").value.trim(); if (!v) return $("#nm").focus(); me = { name: v, kid: $("#kid").checked }; ls.set("party_me", me); lastKey = ""; join(); render(); };
+    $("#go").onclick = go; $("#nm").onkeydown = e => { if (e.key === "Enter") go(); };
+  }
+  const mine = () => ST && ST.players.find(p => p.id === id);
+  function role() {
+    if (!me) return "join"; if (!ST || !mine()) return "wait";
+    return ST.phase === "play" ? "play-" + ST.game : ST.phase;
+  }
+  function pill() { const p = $("#pill"); if (p) p.textContent = dcOpen() ? "⚡ Direct" : "☁️ Cloud"; }
+  function top() { const p = mine(); return `<div class="ptop"><span class="dot" style="background:${p ? p.color : "#666"}"></span><span class="nm">${esc(me.name)}${p ? ` · ${p.score} pts` : ""}</span><span class="pill" id="pill"></span></div>`; }
+  function render() {
+    const r = role();
+    if (r === "join") { if (lastKey !== "join") joinForm(); return; }
+    const key = r + "|" + (ST ? ST.gi : "");
+    if (key !== lastKey) { lastKey = key; subKey = ""; build(r); }
+    upd(r);
+  }
+  function build(r) {
+    festive(!!(ST && ST.settings.theme === "xmas"), 18);
+    const isHost = ST && ST.host === id, inf = ST && INFO[ST.game] || {};
+    const hostBar = isHost && ["intro", "result", "board"].includes(r) ? `<button class="btn gold big" id="nx">${r === "intro" ? "Start now" : "Next"}</button>` : isHost && r.startsWith("play-") ? `<button class="btn" id="skp" style="margin:0 1em 1em">Skip this game</button>` : "";
+    let body = "";
+    if (r === "wait") body = `<div class="center"><div class="bigemoji">🎮</div><h2>Finding the TV…</h2><p class="muted">Make sure the TV screen is on game ${esc(room)}.</p></div>`;
+    else if (r === "lobby") body = `<div class="center" style="flex:none;padding-top:1em"><div class="bigemoji" style="font-size:4.5rem">🎉</div><h2>You're in!</h2><p class="muted">${me.kid ? "🧒 Child player" : "Grown-up player"} · <button id="edit" style="text-decoration:underline;color:var(--muted)">change</button></p></div>
+      ${isHost ? `<button class="btn gold big" id="start">Start the party</button><div class="muted" id="snote" style="text-align:center"></div><div id="sets"></div>` : `<p class="muted" style="text-align:center">Waiting for ${esc((ST.players.find(x => x.id === ST.host) || {}).name || "the host")} to start.</p>`}`;
+    else if (r === "intro") body = `<div class="center"><div class="muted" style="font-weight:800;letter-spacing:.1em">GAME ${ST.gi + 1} OF ${ST.total}</div><div class="bigemoji">${inf.e}</div><h2>${inf.t}</h2><p style="font-size:1.15rem;line-height:1.4">${inf.how}</p>${me.kid && ST.settings.boost ? `<p class="muted">🧒 ${inf.kid}</p>` : ""}<div class="muted" id="cnt"></div></div>`;
+    else if (r === "result" || r === "board") body = `<div class="center"><div class="bigemoji" id="rem"></div><h2 id="rh"></h2><p style="font-size:1.4rem;font-weight:800;color:var(--gold)" id="rp"></p></div>`;
+    else if (r === "end") body = `<div class="center" style="flex:none"><div class="bigemoji" id="rem"></div><h2 id="rh"></h2><p style="font-size:1.4rem;font-weight:800;color:var(--gold)" id="rp"></p><p class="muted">${me.kid ? "🧒 Child player" : "Grown-up player"} · <button id="edit" style="text-decoration:underline;color:var(--muted)">change</button></p></div>
+      ${isHost ? `<div style="font-weight:800">Next game</div><button class="btn gold big" id="again">▶ Play again</button><div class="muted" id="snote" style="text-align:center"></div><div id="sets"></div><button class="btn" id="tolobby">Back to the lobby</button>` : `<p class="muted" style="text-align:center">Waiting for the host to start the next game.</p>`}`;
+    if (r.startsWith("play-")) { app.innerHTML = `<div class="pw">${top()}<div class="ctl" id="ctl"></div>${hostBar}</div>`; }
+    else app.innerHTML = `<div class="pw">${top()}<div class="pbody">${body}${hostBar}</div></div>`;
+    pill();
+    const on = (s, f) => { const e = $(s); if (e) e.onclick = f; };
+    on("#edit", joinForm); on("#start", () => send({ t: "start" })); on("#again", () => send({ t: "again" })); on("#tolobby", () => send({ t: "lobby" }));
+    on("#nx", () => send({ t: "next" })); on("#skp", () => { if (confirm("Skip this game? Nobody scores for it.")) send({ t: "skip" }); });
+    const sets = $("#sets"); if (sets) sets.onclick = e => { const x = readSet(e); if (x) send({ t: "set", k: x.k, v: x.v }); };
+  }
+  function upd(r) {
+    if ($("#sets")) { $("#sets").innerHTML = setsHTML(ST.settings); const n = ST.players.length; $("#snote").textContent = n < 2 ? "Waiting for more players…" : `${n} players ready`; if ($("#start")) $("#start").disabled = n < 2; }
+    const cnt = $("#cnt"); if (cnt) cnt.textContent = `Starting in ${Math.ceil(Math.max(0, localEnd - Date.now()) / 1000)}…`;
+    if (r === "result" || r === "board" || r === "end") {
+      const pl = ST.players.slice().sort((a, b) => b.score - a.score), pos = pl.findIndex(p => p.id === id) + 1, m = mine();
+      if (r === "result" && ST.last) { const pts = ST.last.pts[id] ?? 0; $("#rem").textContent = INFO[ST.last.game].e; $("#rh").textContent = ST.last.skipped ? "Skipped" : pts != null ? (pts === 10 ? "You won that one!" : `+${pts} points`) : "Results on the TV"; $("#rp").textContent = `${m.score} points in total`; }
+      else { $("#rem").textContent = pos === 1 ? "🏆" : "🎮"; $("#rh").textContent = r === "end" ? (pos === 1 ? "You're the champion!" : `You came ${ord(pos)}`) : `You're ${ord(pos)} overall`; $("#rp").textContent = `${m.score} points`; }
+    }
+    if (r.startsWith("play-")) playUI(ST.game);
+  }
+
+  // ---------- controllers ----------
+  function playUI(game) {
+    const g = ST.g || {}, ctl = $("#ctl"); if (!ctl) return;
+    if (game === "sumo") {
+      const out = g.alive && !g.alive.includes(id), k = "sumo|" + (out ? "out" : "in");
+      if (k !== subKey) { subKey = k; if (out) { ctl.innerHTML = `<div class="center"><div class="bigemoji">🌊</div><h2>Splash! You're out</h2><p class="muted">Watch the TV. Next round starts soon.</p></div>`; joy.x = joy.y = 0; } else sumoUI(ctl); }
+    } else if (game === "curl") {
+      const myTurn = g.turn === id, k = "curl|" + (myTurn ? g.state : "wait") + "|" + g.turn;
+      if (k !== subKey) { subKey = k; curlUI(ctl, g, myTurn); }
+      const lf = $("#left"); if (lf && g.left) lf.textContent = "●".repeat(Math.max(0, g.left[id] || 0)) || "none left";
+    } else if (game === "tug") {
+      const ti = g.teams ? (g.teams[0].includes(id) ? 0 : g.teams[1].includes(id) ? 1 : -1) : -1, k = "tug|" + ti + "|" + g.state;
+      if (k !== subKey) { subKey = k; tugUI(ctl, g, ti); }
+    } else if (game === "draw") {
+      if (subKey !== "draw") { subKey = "draw"; ctl.innerHTML = `<div class="tapzone" id="qz"><div class="big" id="qb"></div><div class="sub" id="qs"></div></div>`; const z = $("#qz"); z.onpointerdown = e => { e.preventDefault(); qdTap(e); }; drawQD(); }
+    }
+  }
+  function sumoUI(ctl) {
+    ctl.innerHTML = `<div class="area" id="area"><div class="hint">Put your thumb anywhere here and drag to waddle</div><div class="base hidden" id="base"></div><div class="knob hidden" id="knob"></div></div>
+      <button class="bigbtn" id="dash">DASH<span class="cool" id="cool" style="width:0"></span></button>`;
+    const area = $("#area"), base = $("#base"), knob = $("#knob"), RAD = 70; let cx = 0, cy = 0, pid = null;
+    area.onpointerdown = e => { if (pid != null) return; pid = e.pointerId; try { area.setPointerCapture(pid); } catch (_) { } const r = area.getBoundingClientRect(); cx = e.clientX - r.left; cy = e.clientY - r.top; base.style.left = knob.style.left = cx + "px"; base.style.top = knob.style.top = cy + "px"; base.classList.remove("hidden"); knob.classList.remove("hidden"); area.querySelector(".hint").style.opacity = 0; };
+    area.onpointermove = e => { if (e.pointerId !== pid) return; const r = area.getBoundingClientRect(); let dx = e.clientX - r.left - cx, dy = e.clientY - r.top - cy; const d = Math.hypot(dx, dy); if (d > RAD) { dx *= RAD / d; dy *= RAD / d; } knob.style.left = cx + dx + "px"; knob.style.top = cy + dy + "px"; joy.x = Math.round(dx / RAD * 100) / 100; joy.y = Math.round(dy / RAD * 100) / 100; };
+    area.onpointerup = area.onpointercancel = e => { if (e.pointerId !== pid) return; pid = null; joy.x = joy.y = 0; base.classList.add("hidden"); knob.classList.add("hidden"); };
+    const db = $("#dash");
+    db.onpointerdown = e => { e.preventDefault(); db.classList.add("down"); if (Date.now() - dashAt < 1400) return; dashAt = Date.now(); vib(15); send({ t: "dash" }); };
+    db.onpointerup = db.onpointercancel = db.onpointerleave = () => db.classList.remove("down");
+  }
+  function curlUI(ctl, g, myTurn) {
+    const p = mine(), name = (ST.players.find(x => x.id === g.turn) || {}).name || "";
+    if (myTurn && g.state === "aim") {
+      ctl.innerHTML = `<div class="swipe" id="sw"><div class="arrow">⬆</div><div class="lbl">Swipe up to throw!<br><span style="font-weight:600;font-size:.9rem">Faster = further. Angle left or right to aim.</span></div><div class="stone" id="stn"><i style="background:${p.color}"></i></div></div>`;
+      vib([40, 40, 40]);
+      const sw = $("#sw"), stn = $("#stn"); let pts = [], pid = null;
+      sw.onpointerdown = e => { if (pid != null) return; pid = e.pointerId; try { sw.setPointerCapture(pid); } catch (_) { } pts = [[e.clientX, e.clientY, e.timeStamp]]; };
+      sw.onpointermove = e => { if (e.pointerId !== pid) return; pts.push([e.clientX, e.clientY, e.timeStamp]); if (pts.length > 40) pts.shift(); const r = sw.getBoundingClientRect(); stn.style.left = (e.clientX - r.left) + "px"; stn.style.bottom = Math.max(0, r.bottom - e.clientY - 44) + "px"; };
+      sw.onpointerup = sw.onpointercancel = e => {
+        if (e.pointerId !== pid) return; pid = null; pts.push([e.clientX, e.clientY, e.timeStamp]);
+        const end = pts[pts.length - 1], startP = pts.find(q => end[2] - q[2] <= 110) || pts[0], dt = Math.max(16, end[2] - startP[2]);
+        const vy = (startP[1] - end[1]) / dt, vx = (end[0] - startP[0]) / dt;
+        stn.style.left = "50%"; stn.style.bottom = "12%";
+        if (vy < .25) { toast("Swipe up faster!"); return; }
+        const power = clamp((Math.hypot(vx, vy) - .3) / 2.4, 0, 1), aim = clamp(vx / vy, -1, 1);
+        send({ t: "throw", p: Math.round(power * 1000) / 1000, a: Math.round(aim * 1000) / 1000 }); vib(30);
+        sw.innerHTML = `<div class="lbl" style="top:40%">Thrown! Get ready to sweep…</div>`;
+      };
+    } else if (myTurn && g.state === "moving") {
+      ctl.innerHTML = `<div class="tapzone" id="swp" style="background:#ffc93c;color:#1b1300"><div class="big">SWEEP!</div><div class="sub">Tap tap tap to make it go further</div></div>`;
+      const z = $("#swp"); z.onpointerdown = e => { e.preventDefault(); send({ t: "sweep" }); vib(8); z.classList.add("pressed"); setTimeout(() => z.classList.remove("pressed"), 60); };
+    } else {
+      ctl.innerHTML = `<div class="center"><div class="bigemoji">🥌</div><h2>${g.state === "score" ? "Scoring…" : esc(name) + " is throwing"}</h2><p class="muted">Watch the TV</p><p>Your stones left: <b id="left" style="color:var(--gold)"></b></p></div>`;
+    }
+  }
+  function tugUI(ctl, g, ti) {
+    if (ti < 0) { ctl.innerHTML = `<div class="center"><h2>Watching</h2></div>`; return; }
+    const col = g.cols[ti], nm = g.names[ti];
+    ctl.innerHTML = `<div style="margin:1em 1em 0;height:1.2rem;border-radius:99px;background:linear-gradient(90deg,${g.cols[0]} 0 50%,${g.cols[1]} 50% 100%);position:relative;opacity:.9"><div id="tugbar" style="position:absolute;top:-.3rem;width:1.8rem;height:1.8rem;border-radius:50%;background:#fff;transform:translateX(-50%);left:${50 + tugPos * 50}%;box-shadow:0 2px 6px rgba(0,0,0,.4)"></div></div>
+      <div class="tapzone" id="tz" style="background:${col};color:#fff"><div class="sub" style="font-size:1.3rem">${esc(nm)}</div><div class="big">${g.state === "pull" ? "TAP!" : g.state === "count" ? "GET READY" : "…"}</div><div class="sub">${g.state === "pull" ? "As fast as you can!" : "Pull your way when it says PULL"}</div></div>`;
+    const z = $("#tz"); z.onpointerdown = e => { e.preventDefault(); if (ST.g.state !== "pull") return; tapN++; z.classList.add("pressed"); setTimeout(() => z.classList.remove("pressed"), 50); };
+    if (g.state === "pull") vib(60);
+  }
+  function drawQD() {
+    const z = $("#qz"), b = $("#qb"), s = $("#qs"); if (!z) return;
+    const st = qd.done ? (qd.msg === "early" ? "early" : "done") : qd.s;
+    const look = { wait: ["#2a3158", "WAIT…", "Tap when it goes GREEN"], fake: ["#ff4b4b", "NOT YET!", "Don't tap on red!"], go: ["#33d17a", "TAP!", ""], early: ["#7a1c1c", "TOO EARLY", "Out of this round"], done: ["#1d6b45", qd.msg, "Nice shooting!"], res: ["#2a3158", "…", "Next round soon"] }[st] || ["#2a3158", "WAIT…", ""];
+    z.style.background = look[0]; z.style.color = "#fff"; b.textContent = look[1]; s.textContent = look[2];
+  }
+  function qdTap(e) {
+    if (qd.done || !qd.r) return;
+    if (qd.s === "go") { const rt = e.timeStamp - qd.goT; qd.done = true; qd.msg = (rt / 1000).toFixed(3) + "s"; send({ t: "qd", r: qd.r, rt: Math.round(rt) }); vib(20); }
+    else if (qd.s === "wait" || qd.s === "fake") { qd.done = true; qd.msg = "early"; send({ t: "qd", r: qd.r, early: 1 }); vib(200); }
+    drawQD();
+  }
+  function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1300); }
+
+  // ---------- send loops ----------
+  function tick() {
+    if (ST && ST.phase === "play" && ST.game === "sumo") {
+      const now = Date.now(), gap = dcOpen() ? 30 : 66;
+      if ((joy.x !== sent.x || joy.y !== sent.y || now - sent.t > 500) && now - sent.t >= gap) { send({ t: "joy", x: joy.x, y: joy.y }); sent.x = joy.x; sent.y = joy.y; sent.t = now; }
+    }
+  }
+  setInterval(tick, 30);
+  setInterval(() => { if (tapN) { const n = Math.min(tapN, 4); tapN = 0; send({ t: "taps", n }); } }, 100);
+  setInterval(() => { const c = $("#cnt"); if (c) upd(role()); }, 500);
+
+  // ---------- start ----------
+  if (!me) joinForm(); else render();
+  try { own = await chan("party-" + room + "-" + id, onPrivate); mainCh = await chan("party-" + room, onMain); }
+  catch (e) { app.innerHTML = `<div class="home"><h2>Couldn't connect</h2><p class="muted">Check your internet and try again.</p><button class="btn gold" onclick="location.reload()">Try again</button></div>`; return; }
+  join();
+  setInterval(() => {
+    if (!me) return;
+    if (Date.now() - lastState > 8000 || !welcomed) { welcomed = welcomed && Date.now() - lastState <= 8000; join(); }
+    else send({ t: "hi" });
+  }, 2500);
+  try { if (navigator.wakeLock) { let wl = await navigator.wakeLock.request("screen"); document.addEventListener("visibilitychange", async () => { if (document.visibilityState === "visible") try { wl = await navigator.wakeLock.request("screen"); } catch (e) { } }); } } catch (e) { }
+}
+</script>
+</body>
+</html>

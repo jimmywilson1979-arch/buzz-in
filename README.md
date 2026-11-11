@@ -70,8 +70,24 @@ Each player takes a turn to draw on their phone; the drawing appears live in a g
 - **🎄 Christmas edition** (Edition in the lobby, on automatically in December): Christmas words and pictures for grown-ups and kids, falling snow, a bow on the frame, and prints dated "Christmas".
 - Installs as its own home-screen app with its own icon (`manifest-draw.webmanifest`, `draw-icon-*.png`, `draw-og.jpg` for link previews).
 
+## Buzz In Party (party games)
+**Play:** https://jimmywilson1979-arch.github.io/buzz-in/party.html
+
+Same set-up as Buzz In: the TV screen opens the lobby, phones scan the QR code to join. Four mini-games played in a row with an overall leaderboard
+(10 / 7 / 5 / 4 / 3 / 2 points for 1st to 6th in each game):
+- **🐧 Penguin Sumo** – joystick + DASH, push everyone off a shrinking ice floe. 3 rounds.
+- **💪 Tug of War** – two auto-balanced teams tap as fast as they can. Best of 3 (uneven teams are evened out).
+- **🤠 Quick Draw** – wait for green, tap fastest. Red decoys and early taps knock you out of the round. 5 rounds. Reaction time is measured on the phone itself, so the connection speed doesn't matter.
+- **🥌 Curling** – swipe up to throw (speed = distance, angle = aim), tap SWEEP to carry it further. Closest stone wins.
+
+Lobby settings: which games, Standard / 🎄 Christmas theme, and **Kids boost** (players who tick "a child is playing" get heavier penguins,
+stronger taps, a head start in Quick Draw and help with curling power). The first player to join is the host (start, next, skip from their phone).
+The end screen has the settings and Play again, no rejoining needed.
+Controls use a direct Wi-Fi link between phone and laptop (WebRTC) when possible, falling back to the cloud.
+
 ## Files
 - `index.html` – the game page (TV, phones, Family Round set-up, TV guide)
+- `party.html` – Buzz In Party mini-games (self-contained), with `manifest-party.webmanifest` and `party-*` icons
 - `draw.html` – Doodle Gallery drawing game (self-contained)
 - `pad-test.html` – controller test: phones as joystick, air pointer or touchpad, with a cloud vs direct (WebRTC) ping comparison
 - `admin.html` – owner admin page; installs as its own home-screen app ("BI Admin")

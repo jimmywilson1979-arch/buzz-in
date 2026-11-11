@@ -1,0 +1,16 @@
+{
+  "id": "party.html",
+  "name": "Buzz In Party – Family Party Games",
+  "short_name": "Buzz In Party",
+  "description": "Party games on the TV. Your phone is the controller.",
+  "start_url": "party.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#090b14",
+  "theme_color": "#090b14",
+  "icons": [
+    { "src": "party-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "party-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

@@ -4,7 +4,7 @@
   "short_name": "Doodle Gallery",
   "description": "Draw on your phone, your masterpiece appears framed on the TV, everyone else guesses.",
   "start_url": "draw.html",
-  "scope": "./",
+  "scope": "draw.html",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#2a1820",

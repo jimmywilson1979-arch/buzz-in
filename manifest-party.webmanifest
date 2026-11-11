@@ -4,7 +4,7 @@
   "short_name": "Buzz In Party",
   "description": "Party games on the TV. Your phone is the controller.",
   "start_url": "party.html",
-  "scope": "./",
+  "scope": "party.html",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#090b14",

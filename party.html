@@ -154,6 +154,12 @@ body.ph{overflow:hidden;overscroll-behavior:none;touch-action:manipulation}
 .hrow .silk{width:1.8em;height:1.8em;border-radius:.4em;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6);flex:none}
 .hrow .hn{flex:1;font-weight:700}.hrow .ho{font-family:var(--display);font-weight:800;font-size:1.3rem;color:var(--gold)}
 .chip:disabled{opacity:.35}
+.ccgrid{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:.8em;padding:0 1em}
+.ccb{border-radius:1.4em;opacity:.8;touch-action:none;transition:filter .1s,transform .1s}
+.ccb.lit{opacity:1;filter:brightness(1.5);transform:scale(.97)}
+.ccdots{display:flex;gap:.4em;justify-content:center;padding:1em;flex-wrap:wrap}
+.ccdots i{width:.9em;height:.9em;border-radius:50%;background:var(--line)}
+.ccdots i.on{background:var(--gold)}
 /* snow (Christmas) */
 .snow{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:3}
 .snow i{position:absolute;top:-2vh;border-radius:50%;background:#fff;opacity:.75;animation:fall linear infinite}
@@ -197,9 +203,15 @@ const INFO = {
   boat: { t: "Blow Boat Race", e: "⛵", how: "Blow into the bottom of your phone (or shout!) to fill your sail. First boat across the lake wins. No microphone? Tap to paddle instead.", kid: "Kids' puffs count extra." },
   fish: { t: "Gone Fishing", e: "🎣", how: "Swipe up to cast. Wait for a proper BITE, not a nibble, then tap HOOK. Wind your finger round the reel, but stop when it fights or the line snaps! Most points of fish in 100 seconds wins.", kid: "Kids get longer to hook and stronger lines." },
   cards: { t: "Play Your Cards Right", e: "🃏", how: "Will the next card be higher or lower? Choose on your phone before time runs out. A pair means everyone's wrong! Most correct after 3 rows wins.", kid: "Everyone has the same chance in this one!" },
+  copy: { t: "Copy Cat", e: "🐱", how: "Watch the coloured squares light up on the TV, then tap them in the same order on your phone. One more colour each round. Get one wrong and you're out!", kid: "Kids get a spare life." },
+  darts: { t: "Darts", e: "🎯", how: "Flick up on your phone to throw. Too gentle lands low, too hard lands high; angle it to aim. 3 darts a round, 3 rounds. Trebles and the bullseye score big!", kid: "Kids' darts wobble less." },
+  bowl: { t: "Bowling", e: "🎳", how: "Everyone bowls on their own lane at once. Swipe up to roll: faster hits harder, angle it to aim. Strikes and spares score bonus points. 3 frames.", kid: "Kids get bumpers, so no gutter balls!" },
+  hoops: { t: "Basketball", e: "🏀", how: "Flick up to shoot at the hoop as often as you like. Speed sets the distance, angle aims left or right. 2 points a basket, 3 for a swish. Watch out, the hoop moves at the end!", kid: "Kids get a bigger hoop." },
+  snow: { t: "Snowball Fight", e: "❄️", how: "Run around with the joystick and press THROW to fire a snowball the way you're facing. Hit someone to freeze them for a second. Hide behind the snow walls! Most hits in 60 seconds wins.", kid: "Kids throw bigger snowballs." },
+  catch: { t: "Catch the Presents", e: "🎁", how: "Santa's dropping presents! Run left and right with the joystick to catch them in your sack. Gold presents are worth 3, but dodge the coal: it costs 2 and knocks you dizzy.", kid: "Kids get a bigger sack." },
   derby: { t: "Derby Day", e: "🏇", how: "Everyone gets 100 pretend coins. Back a horse on your phone, then watch the race. Winners are paid at the odds shown. Most coins after 3 races wins!", kid: "Kids start with 150 coins." },
 };
-const GAME_IDS = ["sumo", "tug", "draw", "curl", "boat", "fish", "cards", "derby"];
+const GAME_IDS = ["sumo", "tug", "draw", "curl", "boat", "fish", "cards", "derby", "copy", "darts", "bowl", "hoops", "snow", "catch"];
 const PTS = [10, 7, 5, 4, 3, 2];
 function setsHTML(st) {
   return `<div class="setrow"><b>Games (tap to include)</b>${GAME_IDS.map(g => `<button class="chip ${st.games.includes(g) ? "on" : ""}" data-game="${g}">${INFO[g].e} ${INFO[g].t}</button>`).join("")}</div>
@@ -1012,7 +1024,382 @@ function Derby(C) {
   return api;
 }
 
-const MAKERS = { sumo: Sumo, curl: Curling, tug: Tug, draw: QuickDraw, boat: Boat, fish: Fish, cards: Cards, derby: Derby };
+const gauss = () => (Math.random() + Math.random() + Math.random() - 1.5) / .5;
+
+// ---------- Copy Cat ----------
+const CC_COLS = ["#e53935", "#1e88e5", "#43a047", "#fdd835"];
+function CopyCat(C) {
+  const api = { id: "copy", done: false }, ps = C.players, MAX = 15;
+  const seq = Array.from({ length: MAX }, () => Math.random() * 4 | 0);
+  const S = { len: 2, state: "count", at: T(), res: {}, out: {}, lives: {}, best: {}, cap: {}, flash: -1, limit: 0, msg: "" };
+  ps.forEach(p => { S.lives[p.id] = C.boost && p.kid ? 2 : 1; S.best[p.id] = 0; S.cap[p.id] = 5 + (Math.random() * 5 | 0); });
+  const still = () => ps.filter(p => !S.out[p.id] && C.alive(p.id));
+  const step = () => Math.max(380, 680 - S.len * 22);
+  function newRound() { S.len++; S.state = "watch"; S.at = T(); S.res = {}; }
+  api.input = (p, m) => { if (m.t === "cc" && S.state === "repeat" && m.r === S.len && !S.out[p.id] && S.res[p.id] == null) S.res[p.id] = !!m.ok; };
+  api.update = () => {
+    const t = T() - S.at;
+    if (S.state === "count") { if (t > 3000) newRound(); return; }
+    if (S.state === "watch") {
+      const st = step(), i = Math.floor((t - 300) / st), inLit = t > 300 && ((t - 300) % st) < st * .68;
+      S.flash = i >= 0 && i < S.len && inLit ? seq[i] : -1;
+      if (t > 300 + S.len * st + 250) { S.state = "repeat"; S.at = T(); S.flash = -1; S.limit = 3000 + S.len * 750; }
+      return;
+    }
+    if (S.state === "repeat") {
+      for (const p of ps) if (p.bot && !S.out[p.id] && S.res[p.id] == null && t > S.len * 420 + 300) S.res[p.id] = S.len <= S.cap[p.id];
+      if (still().every(p => S.res[p.id] != null) || t > S.limit) {
+        for (const p of still()) { if (S.res[p.id]) S.best[p.id] = S.len; else { S.lives[p.id]--; if (S.lives[p.id] <= 0) { S.out[p.id] = true; C.buzz(p.id, [200]); } } }
+        S.state = "result"; S.at = T();
+      }
+      return;
+    }
+    if (S.state === "result" && t > 2200) {
+      if (!still().length || S.len >= MAX) { const top = rankBy(ps.map(p => p.id), id => S.best[id], true)[0]; S.msg = `${top.map(id => ps.find(p => p.id === id).name).join(" & ")} remembered ${S.best[top[0]]}!`; S.state = "end"; S.at = T(); }
+      else newRound();
+      return;
+    }
+    if (S.state === "end" && t > 4500) api.done = true;
+  };
+  api.draw = (ctx, W, H) => {
+    const now = T();
+    ctx.fillStyle = C.xmas ? "#10221a" : "#141936"; ctx.fillRect(0, 0, W, H);
+    const s = H * .25, gap = H * .03, x0 = W / 2 - s - gap / 2, y0 = H * .2;
+    for (let i = 0; i < 4; i++) {
+      const x = x0 + (i % 2) * (s + gap), y = y0 + (i / 2 | 0) * (s + gap), lit = S.flash === i;
+      ctx.save(); if (lit) { ctx.shadowColor = CC_COLS[i]; ctx.shadowBlur = 60; }
+      ctx.fillStyle = CC_COLS[i]; ctx.globalAlpha = lit ? 1 : .28; ctx.beginPath(); ctx.roundRect(x, y, s, s, s * .18); ctx.fill(); ctx.restore();
+      if (lit) { ctx.fillStyle = "rgba(255,255,255,.35)"; ctx.beginPath(); ctx.roundRect(x + s * .08, y + s * .08, s * .84, s * .3, s * .12); ctx.fill(); }
+    }
+    const msg = S.state === "watch" ? `Watch carefully… ${S.len} colours` : S.state === "repeat" ? `Your turn! Copy it on your phone  ${Math.max(0, Math.ceil((S.limit - (now - S.at)) / 1000))}` : S.state === "count" ? "Get ready to remember!" : S.state === "end" ? S.msg : "";
+    label(ctx, msg, W / 2, H * .12, H * .045, S.state === "repeat" ? "#ffc93c" : "#fff");
+    ps.forEach((p, i) => {
+      const x = W * (i + 1) / (ps.length + 1), r = S.res[p.id], st = S.out[p.id] ? "OUT" : S.state === "repeat" ? (r == null ? "…" : r ? "✓" : "✗") : S.state === "result" ? (r ? "✓" : "✗") : "";
+      label(ctx, p.name, x, H * .84, H * .028, S.out[p.id] ? "rgba(255,255,255,.4)" : p.color);
+      label(ctx, `${st}  best ${S.best[p.id]}${S.lives[p.id] > 1 ? "  ❤️" : ""}`, x, H * .9, H * .024, S.out[p.id] ? "#ff8a80" : "#fff");
+    });
+  };
+  api.hud = () => `🟥 Copy Cat · ${Math.max(3, S.len)} colours`;
+  api.phone = () => ({ state: S.state, len: S.len, seq: S.state === "repeat" ? seq.slice(0, S.len) : null, out: Object.keys(S.out), res: S.res, best: S.best, lives: S.lives });
+  api.ranking = () => rankBy(ps.map(p => p.id), id => S.best[id], true);
+  return api;
+}
+
+// ---------- Darts ----------
+const DART_ORDER = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
+function dartScore(x, y) {
+  const r = Math.hypot(x, y);
+  if (r <= .0374) return [50, "BULLSEYE"]; if (r <= .0935) return [25, "Outer bull"]; if (r > 1) return [0, "Missed the board"];
+  const a = ((Math.atan2(x, -y) * 180 / Math.PI) + 360 + 9) % 360, n = DART_ORDER[Math.floor(a / 18)];
+  if (r >= .582 && r <= .629) return [n * 3, "Treble " + n]; if (r >= .953) return [n * 2, "Double " + n]; return [n, String(n)];
+}
+function Darts(C) {
+  const api = { id: "darts", done: false }, ps = C.players, ROUNDS = 3, PER = 3;
+  const S = { round: 0, state: "count", at: T(), darts: [], thrown: {}, total: {}, botAt: {}, msg: "" };
+  ps.forEach(p => S.total[p.id] = 0);
+  function newRound() { S.round++; S.thrown = {}; S.darts = []; S.state = "throw"; S.at = T(); ps.forEach(p => { S.thrown[p.id] = 0; S.botAt[p.id] = T() + 1500 + Math.random() * 1500; }); }
+  function land(p, x, y) {
+    const [s, lbl] = dartScore(x, y); S.darts.push({ id: p.id, color: p.color, x, y, s, lbl, t: T() }); S.total[p.id] += s; S.thrown[p.id]++;
+    C.priv(p.id, { t: "toast", m: s ? `${lbl}! +${s}` : lbl }); if (s >= 50 || lbl.startsWith("Treble")) C.buzz(p.id, [40, 40, 120]);
+  }
+  api.input = (p, m) => {
+    if (m.t !== "throw" || S.state !== "throw" || (S.thrown[p.id] || 0) >= PER) return;
+    const kid = C.boost && p.kid, wob = kid ? .07 : .12; let pw = clamp(+m.p || 0, 0, 1); if (kid) pw = .55 + (pw - .55) * .6;
+    land(p, clamp(+m.a || 0, -1, 1) * 1.4 + gauss() * wob, -(pw - .55) * 2.6 + gauss() * wob);
+  };
+  api.update = () => {
+    const t = T() - S.at;
+    if (S.state === "count") { if (t > 3000) newRound(); return; }
+    if (S.state === "throw") {
+      for (const p of ps) if (p.bot && S.thrown[p.id] < PER && T() > S.botAt[p.id]) { const aimBull = Math.random() < .5; land(p, gauss() * .22, (aimBull ? 0 : -.6) + gauss() * .22); S.botAt[p.id] = T() + 1200 + Math.random() * 1200; }
+      if (ps.filter(p => C.alive(p.id)).every(p => S.thrown[p.id] >= PER) || t > 35000) { S.state = "roundEnd"; S.at = T(); }
+      return;
+    }
+    if (S.state === "roundEnd" && t > 3500) { if (S.round >= ROUNDS) { const top = rankBy(ps.map(p => p.id), id => S.total[id], true)[0]; S.msg = `${top.map(id => ps.find(p => p.id === id).name).join(" & ")} wins with ${S.total[top[0]]}!`; S.state = "end"; S.at = T(); } else newRound(); return; }
+    if (S.state === "end" && t > 4500) api.done = true;
+  };
+  api.draw = (ctx, W, H) => {
+    const now = T(), cx = W * .42, cy = H * .55, R = H * .36;
+    const g = ctx.createRadialGradient(cx, cy, R * .5, cx, cy, W); g.addColorStop(0, C.xmas ? "#3a1a1a" : "#3b2a1c"); g.addColorStop(1, "#120b07"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "#111"; ctx.beginPath(); ctx.arc(cx, cy, R * 1.18, 0, 7); ctx.fill();
+    for (let i = 0; i < 20; i++) {
+      const a0 = (i * 18 - 9 - 90) * Math.PI / 180, a1 = a0 + 18 * Math.PI / 180, dark = i % 2 === 0;
+      const ring = (r0, r1, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(cx, cy, R * r1, a0, a1); ctx.arc(cx, cy, R * r0, a1, a0, true); ctx.closePath(); ctx.fill(); };
+      ring(.0935, .582, dark ? "#1b1b1b" : "#f3e5c0"); ring(.582, .629, dark ? "#d32f2f" : "#2e7d32"); ring(.629, .953, dark ? "#1b1b1b" : "#f3e5c0"); ring(.953, 1, dark ? "#d32f2f" : "#2e7d32");
+      const am = (a0 + a1) / 2; label(ctx, String(DART_ORDER[i]), cx + Math.cos(am) * R * 1.09, cy + Math.sin(am) * R * 1.09, R * .085, "#fff");
+    }
+    ctx.fillStyle = "#2e7d32"; ctx.beginPath(); ctx.arc(cx, cy, R * .0935, 0, 7); ctx.fill(); ctx.fillStyle = "#d32f2f"; ctx.beginPath(); ctx.arc(cx, cy, R * .0374, 0, 7); ctx.fill();
+    for (const d of S.darts) {
+      const x = cx + d.x * R, y = cy + d.y * R, age = now - d.t;
+      ctx.strokeStyle = "#ddd"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + R * .06, y + R * .1); ctx.stroke();
+      ctx.fillStyle = d.color; ctx.beginPath(); ctx.moveTo(x + R * .06, y + R * .1); ctx.lineTo(x + R * .1, y + R * .13); ctx.lineTo(x + R * .04, y + R * .15); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(x, y, 3, 0, 7); ctx.fill();
+      if (age < 1400) label(ctx, d.s ? `${d.lbl} ${d.s}` : d.lbl, x, y - R * (.08 + age / 9000), H * .03, d.color);
+    }
+    const px = W * .8;
+    label(ctx, S.state === "end" ? S.msg : `Round ${S.round} of ${ROUNDS}`, px, H * .14, H * .04, "#ffc93c");
+    label(ctx, "Flick up on your phone", px, H * .2, H * .024, "#c8b8a8");
+    ps.slice().sort((a, b) => S.total[b.id] - S.total[a.id]).forEach((p, i) => {
+      label(ctx, `${p.name}  ${S.total[p.id]}`, px, H * (.3 + i * .08), H * .032, p.color);
+      label(ctx, "🎯".repeat(Math.max(0, PER - (S.thrown[p.id] || 0))) || "✓", px, H * (.34 + i * .08), H * .022, "#fff");
+    });
+    if (S.state === "count") bigText(ctx, W, H, "Darts at the ready!", "#fff", H * .08);
+  };
+  api.hud = () => `🎯 Darts · Round ${Math.max(1, S.round)} of ${ROUNDS}`;
+  api.phone = () => ({ state: S.state, round: S.round, thrown: S.thrown, total: S.total });
+  api.ranking = () => rankBy(ps.map(p => p.id), id => S.total[id], true);
+  return api;
+}
+
+// ---------- Bowling ----------
+function Bowling(C) {
+  const api = { id: "bowl", done: false }, ps = C.players, FRAMES = 3, BR = .24, PR = .13, LEN = 10;
+  const pinPos = []; for (let k = 0; k < 4; k++) for (let j = 0; j <= k; j++) pinPos.push([(j - k / 2) * .62, 8.4 + k * .36]);
+  const S = { state: "count", at: T(), msg: "" };
+  const lanes = ps.map(p => ({ p, id: p.id, frame: 1, ball: 1, score: 0, frames: [], pins: pinPos.map(([x, y]) => ({ x, y, x0: x, y0: y, vx: 0, vy: 0, down: false, gone: false })), b: null, state: "ready", at: T(), first: 0, botAt: T() + 2000 + Math.random() * 1500, bumpers: C.boost && p.kid, done: false, flash: "" }));
+  function resetPins(L, all) { L.pins.forEach(pn => { if (all || !pn.down) { pn.x = pn.x0; pn.y = pn.y0; pn.vx = pn.vy = 0; if (all) { pn.down = false; pn.gone = false; } } else pn.gone = true; }); }
+  function throwBall(L, p, a) { if (L.state !== "ready" || L.done) return; const v = 4.2 + clamp(p, 0, 1) * 5, ang = clamp(a, -1, 1) * .13; L.b = { x: 0, y: .6, vx: v * Math.sin(ang), vy: v * Math.cos(ang), gutter: false }; L.state = "roll"; L.at = T(); }
+  api.input = (p, m) => { const L = lanes.find(l => l.id === p.id); if (L && m.t === "throw" && S.state === "play") throwBall(L, +m.p || 0, +m.a || 0); };
+  function settle(L) {
+    const down = L.pins.filter(pn => !pn.gone && (pn.down || Math.hypot(pn.x - pn.x0, pn.y - pn.y0) > .12)); down.forEach(pn => pn.down = true);
+    const knocked = L.pins.filter(pn => pn.down && !pn.gone).length, total = L.pins.filter(pn => pn.down).length;
+    if (L.ball === 1) {
+      if (total === 10) { L.score += 20; L.frames.push("X"); L.flash = "STRIKE!"; C.priv(L.id, { t: "toast", m: "STRIKE! 🎳 +20" }); C.buzz(L.id, [50, 50, 50, 50, 300]); nextFrame(L); }
+      else { L.first = knocked; L.score += knocked; L.ball = 2; L.flash = knocked ? `${knocked}` : "Gutter!"; C.priv(L.id, { t: "toast", m: knocked ? `${knocked} pins` : "Gutter ball!" }); resetPins(L, false); L.state = "ready"; L.at = T(); L.botAt = T() + 1800 + Math.random() * 1200; }
+    } else {
+      if (total === 10) { L.score += knocked + 5; L.frames.push(L.first + "/"); L.flash = "SPARE!"; C.priv(L.id, { t: "toast", m: "SPARE! +5 bonus" }); C.buzz(L.id, [50, 50, 200]); }
+      else { L.score += knocked; L.frames.push(L.first + "," + knocked); L.flash = `${knocked}`; C.priv(L.id, { t: "toast", m: `${knocked} more` }); }
+      nextFrame(L);
+    }
+  }
+  function nextFrame(L) { if (L.frame >= FRAMES) { L.done = true; L.state = "done"; return; } L.frame++; L.ball = 1; resetPins(L, true); L.state = "ready"; L.at = T(); L.botAt = T() + 2200 + Math.random() * 1500; }
+  api.update = dt => {
+    const t = T() - S.at;
+    if (S.state === "count") { if (t > 3000) { S.state = "play"; S.at = T(); lanes.forEach(L => { L.at = T(); }); } return; }
+    if (S.state === "end") { if (t > 4500) api.done = true; return; }
+    for (const L of lanes) {
+      if (L.p.bot && L.state === "ready" && T() > L.botAt) throwBall(L, .5 + gauss() * .15, gauss() * .3);
+      if (L.state === "roll" || L.state === "settle") {
+        const steps = 4, h = dt / steps;
+        for (let k = 0; k < steps; k++) {
+          const b = L.b;
+          if (b && L.state === "roll") {
+            b.x += b.vx * h; b.y += b.vy * h;
+            if (Math.abs(b.x) > 1 - BR) { if (L.bumpers) { b.x = Math.sign(b.x) * (1 - BR); b.vx = -b.vx * .8; } else if (!b.gutter) { b.gutter = true; b.vx = 0; b.x = Math.sign(b.x) * 1.12; } }
+            if (!b.gutter) for (const pn of L.pins) { if (pn.gone) continue; const dx = pn.x - b.x, dy = pn.y - b.y, d = Math.hypot(dx, dy); if (d < BR + PR && d > 0) { const nx = dx / d, ny = dy / d, rel = b.vx * nx + b.vy * ny; if (rel > 0) { pn.vx += nx * rel * 1.6; pn.vy += ny * rel * 1.6; b.vx -= nx * rel * .25; b.vy -= ny * rel * .25; } pn.x = b.x + nx * (BR + PR); pn.y = b.y + ny * (BR + PR); } }
+            if (b.y > LEN + .8) { L.state = "settle"; L.at = T(); }
+          }
+          for (let i = 0; i < 10; i++) { const a = L.pins[i]; if (a.gone) continue; a.x += a.vx * h; a.y += a.vy * h; const f = Math.exp(-2.2 * h); a.vx *= f; a.vy *= f;
+            for (let j = i + 1; j < 10; j++) { const c = L.pins[j]; if (c.gone) continue; const dx = c.x - a.x, dy = c.y - a.y, d = Math.hypot(dx, dy); if (d < PR * 2 && d > 0) { const nx = dx / d, ny = dy / d, rel = (a.vx - c.vx) * nx + (a.vy - c.vy) * ny; if (rel > 0) { const jj = rel * .9; a.vx -= jj * nx; a.vy -= jj * ny; c.vx += jj * nx; c.vy += jj * ny; } const o = (PR * 2 - d) / 2; a.x -= nx * o; a.y -= ny * o; c.x += nx * o; c.y += ny * o; } } }
+        }
+        if (L.state === "roll" && T() - L.at > 6000) { L.state = "settle"; L.at = T(); }
+        if (L.state === "settle" && T() - L.at > 1300) { L.b = null; settle(L); }
+      }
+    }
+    if (lanes.every(L => L.done || !C.alive(L.id)) || t > 150000) { const top = rankBy(lanes.map(l => l.id), id => lanes.find(l => l.id === id).score, true)[0]; S.msg = `${top.map(id => ps.find(p => p.id === id).name).join(" & ")} wins with ${lanes.find(l => l.id === top[0]).score}!`; S.state = "end"; S.at = T(); }
+  };
+  api.draw = (ctx, W, H) => {
+    const now = T(); ctx.fillStyle = "#1a1230"; ctx.fillRect(0, 0, W, H);
+    const n = lanes.length, lw = Math.min(W * .9 / n, H * .32), gapx = (W - lw * n) / (n + 1), top = H * .14, bot = H * .9;
+    lanes.forEach((L, i) => {
+      const x0 = gapx + i * (lw + gapx), cxl = x0 + lw / 2, sx = lw / 2 / 1.25, sy = (bot - top) / (LEN + 1.2), Y = y => bot - y * sy, X = x => cxl + x * sx;
+      ctx.fillStyle = "#3a3f4b"; ctx.fillRect(X(-1.25), top, sx * 2.5, bot - top);
+      const lg = ctx.createLinearGradient(X(-1), 0, X(1), 0); lg.addColorStop(0, "#d9a066"); lg.addColorStop(.5, "#f0c48a"); lg.addColorStop(1, "#d9a066"); ctx.fillStyle = lg; ctx.fillRect(X(-1), top, sx * 2, bot - top);
+      if (L.bumpers) { ctx.fillStyle = "#ff7ac0"; ctx.fillRect(X(-1.18), top, sx * .15, bot - top); ctx.fillRect(X(1.03), top, sx * .15, bot - top); }
+      ctx.fillStyle = "rgba(120,60,20,.5)"; for (let k = 0; k < 5; k++) { ctx.beginPath(); ctx.moveTo(X((k - 2) * .35), Y(2.4)); ctx.lineTo(X((k - 2) * .35 - .08), Y(2.1)); ctx.lineTo(X((k - 2) * .35 + .08), Y(2.1)); ctx.fill(); }
+      for (const pn of L.pins) { if (pn.gone) continue; const fallen = pn.down || Math.hypot(pn.x - pn.x0, pn.y - pn.y0) > .12; ctx.fillStyle = fallen ? "rgba(255,255,255,.55)" : "#fff"; ctx.beginPath(); ctx.ellipse(X(pn.x), Y(pn.y), PR * sx * (fallen ? 1.5 : 1), PR * sx * (fallen ? .7 : 1), fallen ? Math.atan2(pn.vy, pn.vx) : 0, 0, 7); ctx.fill(); if (!fallen) { ctx.strokeStyle = "#d32f2f"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X(pn.x), Y(pn.y), PR * sx * .55, 0, 7); ctx.stroke(); } }
+      if (L.b) { ctx.fillStyle = L.p.color; ctx.beginPath(); ctx.arc(X(L.b.x), Y(L.b.y), BR * sx, 0, 7); ctx.fill(); ctx.fillStyle = "rgba(0,0,0,.35)"; for (const [dx, dy] of [[-.06, .05], [.05, .07], [0, -.04]]) { ctx.beginPath(); ctx.arc(X(L.b.x + dx), Y(L.b.y + dy), BR * sx * .15, 0, 7); ctx.fill(); } }
+      label(ctx, L.p.name, cxl, top - H * .055, Math.min(H * .028, lw * .14), L.p.color);
+      label(ctx, `${L.score}`, cxl, top - H * .02, Math.min(H * .03, lw * .15), "#ffc93c");
+      label(ctx, L.done ? `Done · ${L.frames.join(" ")}` : `Frame ${L.frame} · ball ${L.ball}`, cxl, bot + H * .035, Math.min(H * .022, lw * .1), "#c8c0e0");
+      if (L.flash && now - L.at < 1600 && (L.flash === "STRIKE!" || L.flash === "SPARE!" || L.flash === "Gutter!")) label(ctx, L.flash, cxl, (top + bot) / 2, Math.min(H * .06, lw * .22), "#ffc93c");
+      if (L.state === "ready" && !L.p.bot && now % 1600 < 1000) label(ctx, "Swipe up!", cxl, Y(1.4), Math.min(H * .026, lw * .12), "#fff");
+    });
+    if (S.state === "count") bigText(ctx, W, H, "Let's bowl!", "#fff", H * .1);
+    if (S.state === "end") bigText(ctx, W, H, S.msg, "#fff", H * .07);
+  };
+  api.hud = () => `🎳 Bowling · ${FRAMES} frames`;
+  api.phone = () => ({ state: S.state, lanes: Object.fromEntries(lanes.map(L => [L.id, { st: L.state, f: L.frame, b: L.ball, s: L.score, bump: L.bumpers }])) });
+  api.ranking = () => rankBy(lanes.map(l => l.id), id => lanes.find(l => l.id === id).score, true);
+  return api;
+}
+
+// ---------- Basketball ----------
+function Hoops(C) {
+  const api = { id: "hoops", done: false }, ps = C.players, DUR = 45000;
+  const S = { state: "count", at: T(), balls: [], pts: {}, cool: {}, botAt: {}, hx: .5, msg: "" };
+  ps.forEach((p, i) => { S.pts[p.id] = 0; S.cool[p.id] = 0; S.botAt[p.id] = T() + 4000 + Math.random() * 1500; });
+  const px = i => (i + 1) / (ps.length + 1), K = .9;
+  function shoot(p, pw, a) {
+    if (S.state !== "play" || T() < S.cool[p.id]) return; S.cool[p.id] = T() + 650;
+    const i = ps.indexOf(p), x0 = px(i), lx = x0 + a * K - S.hx, ly = (pw - .55) * .5, tol = .05 * (C.boost && p.kid ? 1.45 : 1), d = Math.hypot(lx, ly * .8);
+    const res = d < tol * .4 ? "swish" : d < tol ? "in" : d < tol * 1.7 ? "rim" : "miss";
+    S.balls.push({ p, x0, tx: S.hx + lx, ty: ly, res, t: T() });
+    setTimeout(() => {
+      if (res === "swish" || res === "in") { const n = res === "swish" ? 3 : 2; S.pts[p.id] += n; C.priv(p.id, { t: "toast", m: res === "swish" ? "SWISH! +3" : "In! +2" }); C.buzz(p.id, [40, 40, 120]); }
+      else C.priv(p.id, { t: "toast", m: res === "rim" ? "Off the rim!" : ly < -tol ? "Too short!" : ly > tol ? "Too long!" : lx < 0 ? "Too far left!" : "Too far right!" });
+    }, 850);
+  }
+  api.input = (p, m) => { if (m.t === "throw") shoot(ps.find(q => q.id === p.id), clamp(+m.p || 0, 0, 1), clamp(+m.a || 0, -1, 1)); };
+  api.update = () => {
+    const t = T() - S.at;
+    if (S.state === "count") { if (t > 3000) { S.state = "play"; S.at = T(); } return; }
+    if (S.state === "end") { if (t > 4500) api.done = true; return; }
+    S.hx = t > DUR - 15000 ? .5 + .18 * Math.sin((t - (DUR - 15000)) / 1100) : .5;
+    for (const p of ps) if (p.bot && T() > S.botAt[p.id]) { const i = ps.indexOf(p); shoot(p, .55 + gauss() * .045, (S.hx - px(i)) / K + gauss() * .03); S.botAt[p.id] = T() + 1500 + Math.random() * 1000; }
+    S.balls = S.balls.filter(b => T() - b.t < 1700);
+    if (t > DUR) { const top = rankBy(ps.map(p => p.id), id => S.pts[id], true)[0]; S.msg = `${top.map(id => ps.find(p => p.id === id).name).join(" & ")} wins with ${S.pts[top[0]]} points!`; S.state = "end"; S.at = T(); }
+  };
+  api.draw = (ctx, W, H) => {
+    const now = T();
+    ctx.fillStyle = "#1c1a2e"; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "#c97c3a"; ctx.beginPath(); ctx.moveTo(0, H * .62); ctx.lineTo(W, H * .62); ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,.4)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(W / 2, H * .75, W * .3, H * .1, 0, Math.PI, 0); ctx.stroke();
+    const hx = S.hx * W, hy = H * .32, rw = H * .07;
+    ctx.fillStyle = "#fff"; ctx.fillRect(hx - H * .13, hy - H * .19, H * .26, H * .17); ctx.strokeStyle = "#d32f2f"; ctx.lineWidth = 4; ctx.strokeRect(hx - H * .13, hy - H * .19, H * .26, H * .17); ctx.strokeRect(hx - H * .045, hy - H * .1, H * .09, H * .07);
+    const ballAt = (b, u) => { const x = (b.x0 + (b.tx - b.x0) * u) * W, y0 = H * .92, yT = hy - b.ty * H * .9; return [x, y0 + (yT - y0) * u - Math.sin(Math.PI * u) * H * .38, H * .045 * (1 - .5 * u)]; };
+    const drawBall = (x, y, r, col) => { ctx.fillStyle = "#e8742c"; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.strokeStyle = "#5a2a0a"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.moveTo(x - r, y); ctx.lineTo(x + r, y); ctx.moveTo(x, y - r); ctx.lineTo(x, y + r); ctx.stroke(); ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, r + 2, 0, 7); ctx.stroke(); };
+    for (const b of S.balls) { const u = (now - b.t) / 850; if (u <= 1) { const [x, y, r] = ballAt(b, u); drawBall(x, y, r, b.p.color); } }
+    ctx.strokeStyle = "#ff6a00"; ctx.lineWidth = 6; ctx.beginPath(); ctx.ellipse(hx, hy, rw, rw * .25, 0, 0, 7); ctx.stroke();
+    ctx.strokeStyle = "rgba(255,255,255,.7)"; ctx.lineWidth = 2; for (let k = -3; k <= 3; k++) { ctx.beginPath(); ctx.moveTo(hx + k * rw / 3.2, hy + 2); ctx.lineTo(hx + k * rw / 5, hy + H * .08); ctx.stroke(); }
+    for (const b of S.balls) { const u = (now - b.t - 850) / 800; if (u < 0 || u > 1) continue; const [x0, y0, r] = ballAt(b, 1); const sc = b.res === "swish" || b.res === "in"; drawBall(sc ? x0 : x0 + (b.res === "rim" ? (b.tx < S.hx ? -1 : 1) * u * H * .15 : 0), y0 + u * H * (sc ? .2 : .4), r, b.p.color); if (sc && u < .6) label(ctx, b.res === "swish" ? "SWISH!" : "+2", hx, hy - H * .24, H * .045, b.p.color); }
+    ps.forEach((p, i) => { const x = px(i) * W; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(x, H * .95, H * .02, 0, 7); ctx.fill(); label(ctx, `${p.name} ${S.pts[p.id]}`, x, H * .88, H * .028, p.color); });
+    if (S.state === "play") { const s = Math.max(0, Math.ceil((DUR - (now - S.at)) / 1000)); label(ctx, `⏱ ${s}${s <= 15 ? "  The hoop is moving!" : ""}`, W / 2, H * .9 - H * .78, H * .04, s <= 15 ? "#ff8a80" : "#fff"); }
+    if (S.state === "count") bigText(ctx, W, H * .9, "Shoot hoops!", "#fff", H * .1);
+    if (S.state === "end") bigText(ctx, W, H * .9, S.msg, "#fff", H * .07);
+  };
+  api.hud = () => "🏀 Basketball";
+  api.phone = () => ({ state: S.state, pts: S.pts });
+  api.ranking = () => rankBy(ps.map(p => p.id), id => S.pts[id], true);
+  return api;
+}
+
+// ---------- Snowball Fight ----------
+function Snowball(C) {
+  const api = { id: "snow", done: false }, ps = C.players, n = ps.length, A = C.aspect(), DUR = 60000, R = .034;
+  const walls = [[A * .28, .38, .06, .2], [A * .66, .38, .06, .2], [A * .47, .2, .12, .05], [A * .47, .74, .12, .05]];
+  const S = { state: "count", at: T(), balls: [], msg: "" };
+  const pl = ps.map((p, i) => { const a = i / n * Math.PI * 2; return { p, id: p.id, x: A / 2 + Math.cos(a) * A * .38, y: .55 + Math.sin(a) * .3, jx: 0, jy: 0, fx: -Math.cos(a), fy: -Math.sin(a), hits: 0, hit: 0, stun: 0, cool: 0, botT: 0 }; });
+  const inWall = (x, y, r) => walls.find(([wx, wy, ww, wh]) => x + r > wx - ww / 2 && x - r < wx + ww / 2 && y + r > wy - wh / 2 && y - r < wy + wh / 2);
+  function throwBall(q) { if (S.state !== "play" || T() < q.cool || T() < q.stun) return; q.cool = T() + 650; S.balls.push({ q, x: q.x + q.fx * R, y: q.y + q.fy * R, vx: q.fx * 1.05, vy: q.fy * 1.05, r: C.boost && q.p.kid ? .02 : .013, t: T() }); }
+  api.input = (p, m) => { const q = pl.find(z => z.id === p.id); if (!q) return; if (m.t === "joy") { q.jx = clamp(+m.x || 0, -1, 1); q.jy = clamp(+m.y || 0, -1, 1); } if (m.t === "throw") throwBall(q); };
+  api.update = dt => {
+    const t = T() - S.at;
+    if (S.state === "count") { if (t > 3000) { S.state = "play"; S.at = T(); } return; }
+    if (S.state === "end") { if (t > 4500) api.done = true; return; }
+    for (const q of pl) {
+      if (q.p.bot) {
+        let best = null, bd = 9; for (const o of pl) if (o !== q) { const d = Math.hypot(o.x - q.x, o.y - q.y); if (d < bd) { bd = d; best = o; } }
+        if (best) { const dx = best.x - q.x, dy = best.y - q.y, l = Math.hypot(dx, dy) || 1, k = bd > .38 ? .7 : bd < .22 ? -.5 : 0; q.jx = dx / l * k + Math.sin(T() / 700 + q.x * 9) * .35; q.jy = dy / l * k + Math.cos(T() / 900 + q.y * 9) * .35; if (bd < .55 && T() > q.botT) { q.fx = dx / l; q.fy = dy / l; throwBall(q); q.botT = T() + 900 + Math.random() * 900; } }
+      }
+      if (T() < q.stun) continue;
+      const l = Math.hypot(q.jx, q.jy);
+      if (l > .15 && !(q.p.bot && T() < q.botT - 600)) { q.fx = q.jx / l; q.fy = q.jy / l; }
+      const nx = q.x + q.jx * .42 * dt, ny = q.y + q.jy * .42 * dt;
+      if (!inWall(nx, q.y, R)) q.x = clamp(nx, R, A - R); if (!inWall(q.x, ny, R)) q.y = clamp(ny, .14 + R, .96 - R);
+    }
+    for (const b of S.balls) {
+      b.x += b.vx * dt; b.y += b.vy * dt;
+      if (inWall(b.x, b.y, b.r) || b.x < 0 || b.x > A || b.y < .12 || b.y > 1 || T() - b.t > 1400) { b.dead = true; continue; }
+      for (const q of pl) if (q !== b.q && T() > q.stun && Math.hypot(q.x - b.x, q.y - b.y) < R + b.r) { b.dead = true; b.q.hits++; q.hit++; q.stun = T() + 1100; C.buzz(q.id, [150]); C.buzz(b.q.id, [30, 30, 60]); break; }
+    }
+    S.balls = S.balls.filter(b => !b.dead);
+    if (t > DUR) { const top = api.ranking()[0]; S.msg = `${top.map(id => ps.find(p => p.id === id).name).join(" & ")} wins with ${pl.find(q => q.id === top[0]).hits} hits!`; S.state = "end"; S.at = T(); }
+  };
+  api.draw = (ctx, W, H) => {
+    const now = T(), sc = H, ox = (W - A * sc) / 2, X = x => ox + x * sc, Y = y => y * sc;
+    ctx.fillStyle = "#4f6f99"; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "#f7fbff"; ctx.fillRect(X(0), Y(.12), A * sc, Y(.98) - Y(.12));
+    for (let i = 0; i < 40; i++) { ctx.fillStyle = "rgba(170,195,225,.35)"; ctx.beginPath(); ctx.arc(X((i * 0.37) % A), Y(.15 + ((i * .61) % .8)), 6, 0, 7); ctx.fill(); }
+    for (const [wx, wy, ww, wh] of walls) { ctx.fillStyle = "#cfe0f2"; ctx.beginPath(); ctx.roundRect(X(wx - ww / 2), Y(wy - wh / 2), ww * sc, wh * sc, 12); ctx.fill(); ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.roundRect(X(wx - ww / 2), Y(wy - wh / 2), ww * sc, wh * sc * .45, 12); ctx.fill(); }
+    for (const b of S.balls) { ctx.fillStyle = "rgba(0,0,0,.12)"; ctx.beginPath(); ctx.arc(X(b.x) + 3, Y(b.y) + 6, b.r * sc, 0, 7); ctx.fill(); ctx.fillStyle = "#fff"; ctx.strokeStyle = "#9db7d5"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X(b.x), Y(b.y), b.r * sc, 0, 7); ctx.fill(); ctx.stroke(); }
+    for (const q of pl) {
+      const x = X(q.x), y = Y(q.y), r = R * sc, st = now < q.stun;
+      ctx.fillStyle = "rgba(0,0,0,.15)"; ctx.beginPath(); ctx.ellipse(x, y + r * .9, r, r * .35, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = q.p.color; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+      ctx.fillStyle = "#ffd9b3"; ctx.beginPath(); ctx.arc(x + q.fx * r * .35, y + q.fy * r * .35 - r * .2, r * .5, 0, 7); ctx.fill();
+      if (C.xmas) hat(ctx, x + q.fx * r * .35, y + q.fy * r * .35 - r * .6, r * .4, -.2); else { ctx.fillStyle = q.p.color; ctx.beginPath(); ctx.arc(x + q.fx * r * .35, y + q.fy * r * .35 - r * .45, r * .42, Math.PI, 0); ctx.fill(); }
+      if (st) { ctx.fillStyle = "rgba(180,220,255,.55)"; ctx.beginPath(); ctx.arc(x, y, r * 1.35, 0, 7); ctx.fill(); label(ctx, "❄", x, y - r * 1.6, H * .03); }
+      label(ctx, `${q.p.name} ${q.hits}`, x, y - r * 2.1, H * .024, q.p.color);
+    }
+    if (S.state === "play") { const s = Math.max(0, Math.ceil((DUR - (now - S.at)) / 1000)); label(ctx, `⏱ ${s}`, W - H * .08, H * .08, H * .04, "#fff"); }
+    if (S.state === "count") bigText(ctx, W, H, "Snowball fight!", "#fff", H * .1);
+    if (S.state === "end") bigText(ctx, W, H, S.msg, "#fff", H * .07);
+  };
+  api.hud = () => "❄️ Snowball Fight";
+  api.phone = () => ({ state: S.state });
+  api.ranking = () => rankBy(pl.map(q => q.id), id => { const q = pl.find(z => z.id === id); return q.hits * 100 - q.hit; }, true);
+  return api;
+}
+
+// ---------- Catch the Presents ----------
+function Catch(C) {
+  const api = { id: "catch", done: false }, ps = C.players, A = C.aspect(), DUR = 60000, GY = .86;
+  const S = { state: "count", at: T(), items: [], sleigh: 0, next: 0, pops: [], msg: "" };
+  const pl = ps.map((p, i) => ({ p, id: p.id, x: A * (i + 1) / (ps.length + 1), jx: 0, pts: 0, stun: 0, w: C.boost && p.kid ? .085 : .06 }));
+  api.input = (p, m) => { const q = pl.find(z => z.id === p.id); if (q && m.t === "joy") q.jx = clamp(+m.x || 0, -1, 1); };
+  api.update = dt => {
+    const t = T() - S.at;
+    if (S.state === "count") { if (t > 3000) { S.state = "play"; S.at = T(); S.next = T(); } return; }
+    if (S.state === "end") { if (t > 4500) api.done = true; return; }
+    S.sleigh = (t / 5000 % 1) * (A + .4) - .2;
+    if (T() > S.next) { const r = Math.random(), k = r < .09 ? "gold" : r < .32 ? "coal" : "gift"; S.items.push({ k, x: clamp(S.sleigh + (Math.random() - .5) * .2, .05, A - .05), y: .14, vy: .22 + Math.random() * .12 + t / DUR * .12, sw: Math.random() * 6 }); S.next = T() + Math.max(260, 900 - t / DUR * 550) / Math.max(1, Math.sqrt(ps.length / 2)); }
+    for (const q of pl) {
+      if (q.p.bot) { let best = null, bd = 9; for (const it of S.items) if (it.k !== "coal" && !it.dead) { const tl = (GY - it.y) / it.vy, d = Math.abs(it.x - q.x) - (1.2 - tl) * .1; if (tl > 0 && d < bd) { bd = d; best = it; } } const nearCoal = S.items.find(it => it.k === "coal" && !it.dead && Math.abs(it.x - q.x) < .07 && it.y > .6); q.jx = nearCoal ? (q.x > nearCoal.x ? 1 : -1) : best ? clamp((best.x - q.x) * 8, -.85, .85) : 0; }
+      if (T() < q.stun) continue;
+      q.x = clamp(q.x + q.jx * .75 * dt, .04, A - .04);
+    }
+    for (const it of S.items) {
+      it.y += it.vy * dt; it.sw += dt * 3; it.x += Math.sin(it.sw) * .02 * dt;
+      if (it.y >= GY - .03 && !it.dead) {
+        const q = pl.find(z => T() >= z.stun && Math.abs(z.x - it.x) < z.w);
+        if (q) { it.dead = true; const v = it.k === "gold" ? 3 : it.k === "coal" ? -2 : 1; q.pts += v; if (it.k === "coal") { q.stun = T() + 800; C.buzz(q.id, [200]); } else C.buzz(q.id, 30); S.pops.push({ x: it.x, t: T(), v, col: q.p.color }); }
+        else if (it.y > GY + .05) it.dead = true;
+      }
+    }
+    S.items = S.items.filter(it => !it.dead);
+    if (t > DUR) { const top = api.ranking()[0]; S.msg = `${top.map(id => ps.find(p => p.id === id).name).join(" & ")} wins with ${pl.find(q => q.id === top[0]).pts}!`; S.state = "end"; S.at = T(); }
+  };
+  api.draw = (ctx, W, H) => {
+    const now = T(), sc = H, ox = (W - A * sc) / 2, X = x => ox + x * sc, Y = y => y * sc;
+    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, C.xmas ? "#0a1230" : "#4a7fc1"); g.addColorStop(1, C.xmas ? "#25386b" : "#a8d4ff"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    for (let i = 0; i < 30; i++) { ctx.fillStyle = "rgba(255,255,255,.6)"; ctx.fillRect((i * 97) % W, (i * 53) % (H * .5), 2, 2); }
+    ctx.fillStyle = C.xmas ? "#eef4fb" : "#6fbf5a"; ctx.fillRect(0, Y(GY), W, H - Y(GY));
+    const sx = X(S.sleigh), sy = Y(.1) + Math.sin(now / 400) * 6;
+    if (S.state === "play") {
+      ctx.fillStyle = "#8b5a2b"; for (let k = 0; k < 2; k++) { ctx.beginPath(); ctx.ellipse(sx + H * (.08 + k * .07), sy, H * .025, H * .015, 0, 0, 7); ctx.fill(); }
+      ctx.strokeStyle = "#c8a165"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sx + H * .03, sy); ctx.lineTo(sx + H * .15, sy); ctx.stroke();
+      ctx.fillStyle = "#c62828"; ctx.beginPath(); ctx.roundRect(sx - H * .05, sy - H * .03, H * .08, H * .045, H * .01); ctx.fill();
+      ctx.strokeStyle = "#ffc93c"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(sx - H * .06, sy + H * .02); ctx.lineTo(sx + H * .04, sy + H * .02); ctx.stroke();
+      ctx.fillStyle = "#c62828"; ctx.beginPath(); ctx.arc(sx - H * .015, sy - H * .045, H * .018, 0, 7); ctx.fill(); ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(sx - H * .015, sy - H * .035, H * .01, 0, Math.PI); ctx.fill();
+    }
+    for (const it of S.items) {
+      const x = X(it.x), y = Y(it.y), s = H * .028;
+      if (it.k === "coal") { ctx.fillStyle = "#222"; ctx.beginPath(); ctx.moveTo(x - s, y); ctx.lineTo(x - s * .3, y - s); ctx.lineTo(x + s, y - s * .4); ctx.lineTo(x + s * .7, y + s * .8); ctx.lineTo(x - s * .5, y + s * .9); ctx.closePath(); ctx.fill(); }
+      else { ctx.fillStyle = it.k === "gold" ? "#ffc93c" : ["#e53935", "#1e88e5", "#43a047", "#8e24aa"][Math.floor(it.sw) % 4]; ctx.fillRect(x - s, y - s, s * 2, s * 2); ctx.fillStyle = it.k === "gold" ? "#fff" : "#ffd43b"; ctx.fillRect(x - s * .18, y - s, s * .36, s * 2); ctx.fillRect(x - s, y - s * .18, s * 2, s * .36); if (it.k === "gold") { ctx.save(); ctx.shadowColor = "#ffc93c"; ctx.shadowBlur = 20; ctx.strokeStyle = "#fff"; ctx.strokeRect(x - s, y - s, s * 2, s * 2); ctx.restore(); } }
+    }
+    for (const q of pl) {
+      const x = X(q.x), y = Y(GY), st = now < q.stun, s = H * .04;
+      ctx.fillStyle = q.p.color; ctx.beginPath(); ctx.roundRect(x - s * .5, y - s * 1.6, s, s * 1.3, s * .3); ctx.fill();
+      ctx.fillStyle = "#ffd9b3"; ctx.beginPath(); ctx.arc(x, y - s * 1.9, s * .42, 0, 7); ctx.fill();
+      if (C.xmas) hat(ctx, x, y - s * 2.2, s * .35, -.15);
+      ctx.fillStyle = "#8d6e63"; ctx.beginPath(); ctx.ellipse(x, y - s * 1.75 - s * .3, q.w * sc, s * .28, 0, 0, Math.PI); ctx.fill();
+      ctx.strokeStyle = "#5d4037"; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(x, y - s * 2.05, q.w * sc, s * .14, 0, 0, 7); ctx.stroke();
+      if (st) label(ctx, "😵", x, y - s * 2.8, H * .035);
+      label(ctx, `${q.p.name} ${q.pts}`, x, y + H * .05, H * .026, q.p.color);
+    }
+    S.pops = S.pops.filter(pp => now - pp.t < 900); for (const pp of S.pops) label(ctx, (pp.v > 0 ? "+" : "") + pp.v, X(pp.x), Y(GY) - H * (.14 + (now - pp.t) / 9000), H * .04, pp.v > 0 ? pp.col : "#ff5d5d");
+    if (S.state === "play") { const s = Math.max(0, Math.ceil((DUR - (now - S.at)) / 1000)); label(ctx, `⏱ ${s}   🎁 +1   ✨ +3   coal −2`, W / 2, H * .2, H * .032, "#fff"); }
+    if (S.state === "count") bigText(ctx, W, H, "Catch the presents!", "#fff", H * .09);
+    if (S.state === "end") bigText(ctx, W, H, S.msg, "#fff", H * .07);
+  };
+  api.hud = () => "🎁 Catch the Presents";
+  api.phone = () => ({ state: S.state });
+  api.ranking = () => rankBy(pl.map(q => q.id), id => pl.find(q => q.id === id).pts, true);
+  return api;
+}
+
+const MAKERS = { sumo: Sumo, curl: Curling, tug: Tug, draw: QuickDraw, boat: Boat, fish: Fish, cards: Cards, derby: Derby, copy: CopyCat, darts: Darts, bowl: Bowling, hoops: Hoops, snow: Snowball, catch: Catch };
 
 // ======================================================================
 // TV
@@ -1359,19 +1746,24 @@ async function phoneMain(codeRaw) {
     else if (game === "fish") fishUI(ctl, g);
     else if (game === "cards") cardsUI(ctl, g);
     else if (game === "derby") derbyUI(ctl, g);
+    else if (game === "copy") copyUI(ctl, g);
+    else if (game === "darts") dartsUI(ctl, g);
+    else if (game === "bowl") bowlUI(ctl, g);
+    else if (game === "hoops") hoopsUI(ctl, g);
+    else if (game === "snow" || game === "catch") joyGameUI(ctl, g, game);
     else if (game === "draw") {
       if (subKey !== "draw") { subKey = "draw"; ctl.innerHTML = `<div class="tapzone" id="qz"><div class="big" id="qb"></div><div class="sub" id="qs"></div></div>`; const z = $("#qz"); z.onpointerdown = e => { e.preventDefault(); qdTap(e); }; drawQD(); }
     }
   }
-  function sumoUI(ctl) {
-    ctl.innerHTML = `<div class="area" id="area"><div class="hint">Put your thumb anywhere here and drag to waddle</div><div class="base hidden" id="base"></div><div class="knob hidden" id="knob"></div></div>
-      <button class="bigbtn" id="dash">DASH<span class="cool" id="cool" style="width:0"></span></button>`;
+  function sumoUI(ctl, btn = "DASH", msg = "dash", cool = 1400, hint = "Put your thumb anywhere here and drag to waddle") {
+    ctl.innerHTML = `<div class="area" id="area"><div class="hint">${hint}</div><div class="base hidden" id="base"></div><div class="knob hidden" id="knob"></div></div>
+      ${btn ? `<button class="bigbtn" id="dash">${btn}<span class="cool" id="cool" style="width:0"></span></button>` : ""}`;
     const area = $("#area"), base = $("#base"), knob = $("#knob"), RAD = 70; let cx = 0, cy = 0, pid = null;
     area.onpointerdown = e => { if (pid != null) return; pid = e.pointerId; try { area.setPointerCapture(pid); } catch (_) { } const r = area.getBoundingClientRect(); cx = e.clientX - r.left; cy = e.clientY - r.top; base.style.left = knob.style.left = cx + "px"; base.style.top = knob.style.top = cy + "px"; base.classList.remove("hidden"); knob.classList.remove("hidden"); area.querySelector(".hint").style.opacity = 0; };
     area.onpointermove = e => { if (e.pointerId !== pid) return; const r = area.getBoundingClientRect(); let dx = e.clientX - r.left - cx, dy = e.clientY - r.top - cy; const d = Math.hypot(dx, dy); if (d > RAD) { dx *= RAD / d; dy *= RAD / d; } knob.style.left = cx + dx + "px"; knob.style.top = cy + dy + "px"; joy.x = Math.round(dx / RAD * 100) / 100; joy.y = Math.round(dy / RAD * 100) / 100; };
     area.onpointerup = area.onpointercancel = e => { if (e.pointerId !== pid) return; pid = null; joy.x = joy.y = 0; base.classList.add("hidden"); knob.classList.add("hidden"); };
-    const db = $("#dash");
-    db.onpointerdown = e => { e.preventDefault(); db.classList.add("down"); if (Date.now() - dashAt < 1400) return; dashAt = Date.now(); vib(15); send({ t: "dash" }); };
+    const db = $("#dash"); if (!db) return;
+    db.onpointerdown = e => { e.preventDefault(); db.classList.add("down"); if (Date.now() - dashAt < cool) return; dashAt = Date.now(); vib(15); send({ t: msg }); };
     db.onpointerup = db.onpointercancel = db.onpointerleave = () => db.classList.remove("down");
   }
   function curlUI(ctl, g, myTurn) {
@@ -1569,6 +1961,48 @@ async function phoneMain(codeRaw) {
     else info.textContent = "Tap a horse, then a stake.";
   }
 
+  // ---------- Copy Cat ----------
+  function copyUI(ctl, g) {
+    const out = (g.out || []).includes(id), k = "copy|" + g.state + "|" + g.len + "|" + (out ? 1 : 0);
+    if (k === subKey) return; subKey = k;
+    if (out) { ctl.innerHTML = `<div class="center"><div class="bigemoji">🙈</div><h2>You're out!</h2><p class="muted">You remembered ${g.best[id] || 0}. Watch the others on the TV.</p></div>`; return; }
+    if (g.state !== "repeat") { ctl.innerHTML = `<div class="center"><div class="bigemoji">👀</div><h2>${g.state === "watch" ? "Watch the TV!" : g.state === "result" ? "Next one's longer…" : "Get ready"}</h2><p class="muted">Remember the order of the colours</p>${(g.lives || {})[id] > 1 ? `<p>❤️ You have a spare life</p>` : ""}</div>`; return; }
+    let idx = 0, done = false;
+    ctl.innerHTML = `<div class="muted" id="ccm" style="text-align:center;padding:.7em;font-weight:700">Copy the ${g.len} colours</div><div class="ccgrid">${CC_COLS.map((c, i) => `<button class="ccb" data-cc="${i}" style="background:${c}"></button>`).join("")}</div><div class="ccdots" id="ccd"></div>`;
+    const dots = () => { $("#ccd").innerHTML = g.seq.map((_, i) => `<i class="${i < idx ? "on" : ""}"></i>`).join(""); };
+    ctl.querySelectorAll("[data-cc]").forEach(b => b.onpointerdown = e => {
+      e.preventDefault(); if (done) return; b.classList.add("lit"); setTimeout(() => b.classList.remove("lit"), 160); vib(10);
+      if (+b.dataset.cc === g.seq[idx]) { idx++; if (idx === g.len) { done = true; send({ t: "cc", r: g.len, ok: true }); $("#ccm").textContent = "✓ Perfect! Wait for the others"; vib([40, 40, 120]); } }
+      else { done = true; send({ t: "cc", r: g.len, ok: false }); $("#ccm").textContent = "✗ Oops, wrong colour!"; vib(250); }
+      dots();
+    });
+    dots();
+  }
+  // ---------- Darts / Basketball / Bowling (all flicks) ----------
+  function dartsUI(ctl, g) {
+    const n = (g.thrown || {})[id] || 0, k = "darts|" + g.state + "|" + g.round + "|" + n;
+    if (k === subKey) return; subKey = k;
+    if (g.state === "throw" && n < 3) swipePad(ctl, `Flick up to throw! ${"🎯".repeat(3 - n)}`, "Too gentle lands low, too hard lands high. Angle it to aim.", "#ffd43b", (p, a) => { send({ t: "throw", p: Math.round(p * 1000) / 1000, a: Math.round(a * 1000) / 1000 }); vib(20); });
+    else ctl.innerHTML = `<div class="center"><div class="bigemoji">🎯</div><h2>${g.state === "throw" ? "All 3 thrown!" : g.state === "roundEnd" ? "Round over" : "Get ready"}</h2><p class="muted">Your score: <b style="color:var(--gold)">${(g.total || {})[id] || 0}</b></p></div>`;
+  }
+  function hoopsUI(ctl, g) {
+    const k = "hoops|" + g.state; if (k === subKey) return; subKey = k;
+    if (g.state === "play") swipePad(ctl, "Flick up to shoot!", "Speed sets the distance, angle aims left or right. Shoot as often as you like!", "#e8742c", (p, a) => { send({ t: "throw", p: Math.round(p * 1000) / 1000, a: Math.round(a * 1000) / 1000 }); vib(20); });
+    else ctl.innerHTML = `<div class="center"><div class="bigemoji">🏀</div><h2>${g.state === "end" ? "Time's up!" : "Get ready"}</h2></div>`;
+  }
+  function bowlUI(ctl, g) {
+    const L = (g.lanes || {})[id] || {}, k = "bowl|" + g.state + "|" + L.st + "|" + L.f + "|" + L.b;
+    if (k === subKey) return; subKey = k;
+    if (g.state === "play" && L.st === "ready") swipePad(ctl, `Frame ${L.f}, ball ${L.b}: swipe up to bowl!`, (L.bump ? "Bumpers are up, no gutter balls! " : "") + "Faster = harder. Angle it to aim.", "#7c4dff", (p, a) => { send({ t: "throw", p: Math.round(p * 1000) / 1000, a: Math.round(a * 1000) / 1000 }); vib(25); });
+    else ctl.innerHTML = `<div class="center"><div class="bigemoji">🎳</div><h2>${L.st === "done" ? "All done!" : L.st === "roll" || L.st === "settle" ? "Rolling…" : "Get ready"}</h2><p class="muted">Score: <b style="color:var(--gold)">${L.s || 0}</b></p></div>`;
+  }
+  // ---------- Snowball Fight / Catch the Presents (joystick games) ----------
+  function joyGameUI(ctl, g, game) {
+    const k = game + "|" + (g.state === "play" ? "play" : "wait"); if (k === subKey) return; subKey = k;
+    if (g.state !== "play") { ctl.innerHTML = `<div class="center"><div class="bigemoji">${game === "snow" ? "❄️" : "🎁"}</div><h2>${g.state === "end" ? "Time's up!" : "Get ready"}</h2><p class="muted">${game === "snow" ? "Joystick to move, THROW to throw a snowball the way you're facing." : "Joystick to run left and right. Catch presents, dodge the coal!"}</p></div>`; joy.x = joy.y = 0; return; }
+    if (game === "snow") sumoUI(ctl, "THROW", "throw", 650); else sumoUI(ctl, "", "", 0, "Slide left and right to run");
+  }
+
   function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1300); }
 
   // ---------- send loops ----------
@@ -1578,7 +2012,7 @@ async function phoneMain(codeRaw) {
       if (ST.g && ST.g.state === "race" && now - lastBlow >= (dcOpen() ? 50 : 80)) { lastBlow = now; send({ t: "blow", v: Math.round(lv * 100) / 100 }); }
     }
     if (reelAcc > .02 && Date.now() - lastBlow >= 80) { lastBlow = Date.now(); send({ t: "reel", a: Math.round(reelAcc * 100) / 100 }); reelAcc = 0; }
-    if (ST && ST.phase === "play" && ST.game === "sumo") {
+    if (ST && ST.phase === "play" && (ST.game === "sumo" || ST.game === "snow" || ST.game === "catch")) {
       const now = Date.now(), gap = dcOpen() ? 30 : 66;
       if ((joy.x !== sent.x || joy.y !== sent.y || now - sent.t > 500) && now - sent.t >= gap) { send({ t: "joy", x: joy.x, y: joy.y }); sent.x = joy.x; sent.y = joy.y; sent.t = now; }
     }

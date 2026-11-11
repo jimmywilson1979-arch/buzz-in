@@ -73,7 +73,7 @@ Each player takes a turn to draw on their phone; the drawing appears live in a g
 ## Buzz In Party (party games)
 **Play:** https://jimmywilson1979-arch.github.io/buzz-in/party.html
 
-Same set-up as Buzz In: the TV screen opens the lobby, phones scan the QR code to join. Eight mini-games (pick which ones in the lobby) played in a row with an overall leaderboard
+Same set-up as Buzz In: the TV screen opens the lobby, phones scan the QR code to join. Fourteen mini-games (pick which ones in the lobby) played in a row with an overall leaderboard
 (10 / 7 / 5 / 4 / 3 / 2 points for 1st to 6th in each game):
 - **🐧 Penguin Sumo** – joystick + DASH, push everyone off a shrinking ice floe. 3 rounds.
 - **💪 Tug of War** – two auto-balanced teams tap as fast as they can. Best of 3 (uneven teams are evened out).
@@ -82,6 +82,12 @@ Same set-up as Buzz In: the TV screen opens the lobby, phones scan the QR code t
 - **⛵ Blow Boat Race** – blow into the phone's microphone (or shout) to fill your sail; tap-to-paddle if there's no mic.
 - **🎣 Gone Fishing** – swipe to cast, wait for a real bite (striking on a nibble scares it off), tap HOOK, wind your finger round the reel and stop when the fish fights or the line snaps. 100 seconds, most points of fish wins. Golden carp are worth the most; old boots are worth nothing.
 - **🃏 Play Your Cards Right** – higher or lower on your phone, 3 rows of 6 cards. Aces high, a pair beats everyone.
+- **🐱 Copy Cat** – remember the colour sequence on the TV and tap it back on your phone; one more colour each round.
+- **🎯 Darts** – flick to throw (power = height, angle = aim), 3 darts × 3 rounds, proper dartboard scoring.
+- **🎳 Bowling** – everyone bowls on their own lane at once, 3 frames, strike/spare bonuses; kids get bumpers.
+- **🏀 Basketball** – flick to shoot as often as you like for 45 seconds; 2 a basket, 3 for a swish; the hoop moves at the end.
+- **❄️ Snowball Fight** – joystick + THROW, hit someone to freeze them, hide behind snow walls; most hits in 60 seconds.
+- **🎁 Catch the Presents** – run left and right to catch presents from Santa's sleigh; gold +3, coal −2.
 - **🏇 Derby Day** – 100 pretend coins each, back a horse at fractional odds, 3 races. Results are drawn fairly from the odds shown. Most coins wins.
 
 Lobby settings: which games, Standard / 🎄 Christmas theme, **🤖 Computer players** (Auto adds 2 robot opponents when one person is playing alone, or choose 0–3), and **Kids boost** (players who tick "a child is playing" get heavier penguins,

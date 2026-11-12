@@ -120,7 +120,14 @@ body.ph{overflow:hidden;overscroll-behavior:none;touch-action:manipulation}
 .swipe .stone{position:absolute;left:50%;bottom:12%;width:5.5rem;height:5.5rem;border-radius:50%;transform:translate(-50%,0);background:radial-gradient(circle at 40% 35%,#c9ccd6,#7c8191 70%,#5d6271);box-shadow:0 .4rem 1rem rgba(0,0,0,.35);pointer-events:none}
 .swipe .stone i{position:absolute;left:30%;right:30%;top:42%;height:16%;border-radius:.4rem}
 .swipe .arrow{position:absolute;left:50%;top:10%;transform:translateX(-50%);font-size:3.5rem;color:#1d3d5c;animation:bob 1s ease-in-out infinite;pointer-events:none}
-.swipe .lbl{position:absolute;left:0;right:0;top:34%;text-align:center;color:#1d3d5c;font-weight:800;font-size:1.3rem;pointer-events:none}
+.swipe .lbl{position:absolute;left:0;right:0;top:34%;text-align:center;color:#1d3d5c;font-weight:800;font-size:1.3rem;pointer-events:none;transition:opacity .15s}
+.swipe .aimsvg{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.swipe .aimsvg line,.swipe .aimsvg circle{fill:none;stroke-width:5;stroke-linecap:round;opacity:0}
+.swipe .aimsvg line{stroke-dasharray:12 10}
+.swipe .aimtxt{position:absolute;left:0;right:0;top:20%;text-align:center;font-weight:800;font-size:1.6rem;color:#1d3d5c;opacity:0;pointer-events:none}
+.swipe.aiming .aimsvg line,.swipe.aiming .aimsvg circle{opacity:.85}
+.swipe.aiming .aimtxt{opacity:1}
+.swipe.aiming .lbl,.swipe.aiming .arrow{opacity:.15}
 @keyframes bob{50%{transform:translate(-50%,-.6rem)}}
 .flash{animation:fl .3s}
 @keyframes fl{from{box-shadow:inset 0 0 0 8px var(--gold)}to{box-shadow:inset 0 0 0 0 transparent}}
@@ -204,9 +211,9 @@ const INFO = {
   fish: { t: "Gone Fishing", e: "🎣", how: "Swipe up to cast. Wait for a proper BITE, not a nibble, then tap HOOK. Wind your finger round the reel, but stop when it fights or the line snaps! Most points of fish in 100 seconds wins.", kid: "Kids get longer to hook and stronger lines." },
   cards: { t: "Play Your Cards Right", e: "🃏", how: "Will the next card be higher or lower? Choose on your phone before time runs out. A pair means everyone's wrong! Most correct after 3 rows wins.", kid: "Everyone has the same chance in this one!" },
   copy: { t: "Copy Cat", e: "🐱", how: "Watch the coloured squares light up on the TV, then tap them in the same order on your phone. One more colour each round. Get one wrong and you're out!", kid: "Kids get a spare life." },
-  darts: { t: "Darts", e: "🎯", how: "Flick up on your phone to throw. Too gentle lands low, too hard lands high; angle it to aim. 3 darts a round, 3 rounds. Trebles and the bullseye score big!", kid: "Kids' darts wobble less." },
-  bowl: { t: "Bowling", e: "🎳", how: "Everyone bowls on their own lane at once. Swipe up to roll: faster hits harder, angle it to aim. Strikes and spares score bonus points. 3 frames.", kid: "Kids get bumpers, so no gutter balls!" },
-  hoops: { t: "Basketball", e: "🏀", how: "Flick up to shoot at the hoop as often as you like. Speed sets the distance, angle aims left or right. 2 points a basket, 3 for a swish. Watch out, the hoop moves at the end!", kid: "Kids get a bigger hoop." },
+  darts: { t: "Darts", e: "🎯", how: "Flick up on your phone to throw. Straight up aims at the middle; angle your swipe left or right to aim, and a dotted line shows where. Too gentle lands low, too hard lands high. 3 darts a round, 3 rounds. Trebles and the bullseye score big!", kid: "Kids' darts wobble less." },
+  bowl: { t: "Bowling", e: "🎳", how: "Everyone bowls on their own lane at once. Swipe up to roll: faster hits harder. Straight up rolls down the middle; angle your swipe to aim, and a dotted line on your lane shows where. Strikes and spares score bonus points. 3 frames.", kid: "Kids get bumpers, so no gutter balls!" },
+  hoops: { t: "Basketball", e: "🏀", how: "Flick up to shoot at the hoop as often as you like. Straight up aims at the hoop from wherever you stand; angle left or right when it moves. Speed sets the distance. 2 points a basket, 3 for a swish. Watch out, the hoop moves at the end!", kid: "Kids get a bigger hoop." },
   snow: { t: "Snowball Fight", e: "❄️", how: "Run around with the joystick and press THROW to fire a snowball the way you're facing. Hit someone to freeze them for a second. Hide behind the snow walls! Most hits in 60 seconds wins.", kid: "Kids throw bigger snowballs." },
   catch: { t: "Catch the Presents", e: "🎁", how: "Santa's dropping presents! Run left and right with the joystick to catch them in your sack. Gold presents are worth 3, but dodge the coal: it costs 2 and knocks you dizzy.", kid: "Kids get a bigger sack." },
   derby: { t: "Derby Day", e: "🏇", how: "Everyone gets 100 pretend coins. Back a horse on your phone, then watch the race. Winners are paid at the odds shown. Most coins after 3 races wins!", kid: "Kids start with 150 coins." },
@@ -401,7 +408,7 @@ function Curling(C) {
   const api = { id: "curl", done: false }, ps = C.players, n = ps.length, each = n <= 3 ? 3 : n <= 5 ? 2 : 1;
   const order = []; for (let k = 0; k < each; k++) ps.forEach(p => order.push(p.id));
   const A = C.aspect(), top = .17, bot = .9, hy = (top + bot) / 2, hx = A - .33, sx = .2, D = hx - sx, MU = .34, SR = .028, HOUSE = .17;
-  const S = { stones: [], turn: -1, state: "", at: 0, cur: null, sweeps: [], best: {}, msg: "" };
+  const S = { stones: [], turn: -1, state: "", at: 0, cur: null, sweeps: [], best: {}, aim: null, msg: "" };
   const name = id => (ps.find(p => p.id === id) || {}).name || "";
   function next() {
     S.turn++;
@@ -419,7 +426,9 @@ function Curling(C) {
   }
   next();
   api.input = (p, m) => {
+    if (m.t === "aim" && order[S.turn] === p.id) S.aim = aimSet(m);
     if (m.t === "throw" && S.state === "aim" && order[S.turn] === p.id) {
+      S.aim = null;
       let pw = clamp(+m.p || 0, 0, 1); const kid = ps.find(q => q.id === p.id).kid; if (C.boost && kid) pw = .38 + pw * .3;
       const v = Math.sqrt(2 * MU * D * (.45 + pw * 1.15)), a = clamp(+m.a || 0, -1, 1) * .1;
       const pl = ps.find(q => q.id === p.id);
@@ -477,7 +486,9 @@ function Curling(C) {
     ctx.beginPath(); ctx.moveTo(X(hx - .45), Y(top)); ctx.lineTo(X(hx - .45), Y(bot)); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(X(.08), Y(hy)); ctx.lineTo(X(A - .06), Y(hy)); ctx.stroke();
     ctx.fillStyle = "#333"; ctx.fillRect(X(sx) - 8, Y(hy) - 14, 10, 28);
-    if (S.state === "aim") { ctx.setLineDash([8, 10]); ctx.strokeStyle = "rgba(255,180,0,.6)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(X(sx), Y(hy)); ctx.lineTo(X(hx), Y(hy)); ctx.stroke(); ctx.setLineDash([]); }
+    if (S.state === "aim") { const ca = aimFresh(S.aim), cp = ps.find(p => p.id === order[S.turn]);
+      if (ca != null && cp) aimLine(ctx, X(sx), Y(hy), X(hx), Y(hy + D * Math.tan(ca * .1)), cp.color, H);
+      else { ctx.setLineDash([8, 10]); ctx.strokeStyle = "rgba(255,180,0,.6)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(X(sx), Y(hy)); ctx.lineTo(X(hx), Y(hy)); ctx.stroke(); ctx.setLineDash([]); } }
     const si = S.state === "moving" ? sweepI() : 0;
     for (const s of S.stones) {
       if (s.out) continue; const x = X(s.x), y = Y(s.y), r = SR * sc;
@@ -734,7 +745,9 @@ function Fish(C) {
   function setMode(q, m) { q.mode = m; q.at = T(); }
   api.input = (p, m) => {
     const q = pl.find(z => z.id === p.id); if (!q || S.state !== "fish") return;
+    if (m.t === "aim") { q.aim = aimSet(m); return; }
     if (m.t === "cast" && q.mode === "idle") {
+      q.aim = null;
       const pw = clamp(+m.p || 0, 0, 1), a = clamp(+m.a || 0, -1, 1);
       q.from = { x: q.x, y: DOCK - .03 }; q.bob = { x: clamp(q.x + a * .5, .06 * A, .94 * A), y: clamp(DOCK - .1 - pw * .55, TOP + .04, BOT) }; setMode(q, "flying");
     }
@@ -824,6 +837,8 @@ function Fish(C) {
       if (C.xmas) hat(ctx, px, py - H * .088, H * .014, -.2);
       const tip = { x: px + H * .05, y: py - H * .12 };
       ctx.strokeStyle = "#3b2a1a"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(px + H * .01, py - H * .04); ctx.lineTo(tip.x, tip.y); ctx.stroke();
+      const fa = q.mode === "idle" ? aimFresh(q.aim) : null;
+      if (fa != null) aimLine(ctx, px, py - H * .1, X(clamp(q.x + fa * .5, .06 * A, .94 * A)), Y(TOP + .04), q.p.color, H);
       if (q.bob) {
         let bx, by; if (q.mode === "flying") { const u = Math.min(1, (now - q.at) / 650); bx = X(q.from.x + (q.bob.x - q.from.x) * u); by = Y(q.from.y + (q.bob.y - q.from.y) * u) - Math.sin(u * Math.PI) * H * .15; } else { bx = X(q.bob.x); by = Y(q.bob.y); }
         if (q.mode === "reel") { bx = X(q.fish.x); by = Y(q.fish.y); }
@@ -1085,6 +1100,17 @@ function CopyCat(C) {
   return api;
 }
 
+// ---------- Aiming (shared by the flick games) ----------
+// Phones send {t:"aim", a} while a swipe is in progress, so the TV can show where it's heading.
+const aimFresh = o => o && o.a != null && T() - o.t < 1500 ? o.a : null;
+const aimSet = m => ({ a: m.a == null ? null : clamp(+m.a || 0, -1, 1), t: T() });
+function aimLine(ctx, x0, y0, x1, y1, col, H) {
+  ctx.save(); ctx.globalAlpha = .9; ctx.setLineDash([H * .018, H * .014]); ctx.strokeStyle = col; ctx.lineWidth = Math.max(3, H * .006);
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke(); ctx.setLineDash([]);
+  ctx.beginPath(); ctx.arc(x1, y1, H * .016, 0, 7); ctx.stroke(); ctx.restore();
+}
+const sideHint = (a, more) => a < 0 ? `It went left. Angle your swipe a bit more to the right${more || ""}.` : `It went right. Angle your swipe a bit more to the left${more || ""}.`;
+
 // ---------- Darts ----------
 const DART_ORDER = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
 function dartScore(x, y) {
@@ -1095,15 +1121,18 @@ function dartScore(x, y) {
 }
 function Darts(C) {
   const api = { id: "darts", done: false }, ps = C.players, ROUNDS = 3, PER = 3;
-  const S = { round: 0, state: "count", at: T(), darts: [], thrown: {}, total: {}, botAt: {}, msg: "" };
+  const S = { round: 0, state: "count", at: T(), darts: [], thrown: {}, total: {}, botAt: {}, aim: {}, msg: "" };
   ps.forEach(p => S.total[p.id] = 0);
   function newRound() { S.round++; S.thrown = {}; S.darts = []; S.state = "throw"; S.at = T(); ps.forEach(p => { S.thrown[p.id] = 0; S.botAt[p.id] = T() + 1500 + Math.random() * 1500; }); }
   function land(p, x, y) {
     const [s, lbl] = dartScore(x, y); S.darts.push({ id: p.id, color: p.color, x, y, s, lbl, t: T() }); S.total[p.id] += s; S.thrown[p.id]++;
-    C.priv(p.id, { t: "toast", m: s ? `${lbl}! +${s}` : lbl }); if (s >= 50 || lbl.startsWith("Treble")) C.buzz(p.id, [40, 40, 120]);
+    const tip = s ? "" : Math.abs(x) > Math.abs(y) ? " " + sideHint(x) : y < 0 ? " Too high. Flick a little gentler." : " Too low. Flick a little harder.";
+    C.priv(p.id, { t: "toast", m: (s ? `${lbl}! +${s}` : lbl) + tip }); if (s >= 50 || lbl.startsWith("Treble")) C.buzz(p.id, [40, 40, 120]);
   }
   api.input = (p, m) => {
+    if (m.t === "aim") { S.aim[p.id] = aimSet(m); return; }
     if (m.t !== "throw" || S.state !== "throw" || (S.thrown[p.id] || 0) >= PER) return;
+    S.aim[p.id] = null;
     const kid = C.boost && p.kid, wob = kid ? .07 : .12; let pw = clamp(+m.p || 0, 0, 1); if (kid) pw = .55 + (pw - .55) * .6;
     land(p, clamp(+m.a || 0, -1, 1) * 1.4 + gauss() * wob, -(pw - .55) * 2.6 + gauss() * wob);
   };
@@ -1129,6 +1158,7 @@ function Darts(C) {
       const am = (a0 + a1) / 2; label(ctx, String(DART_ORDER[i]), cx + Math.cos(am) * R * 1.09, cy + Math.sin(am) * R * 1.09, R * .085, "#fff");
     }
     ctx.fillStyle = "#2e7d32"; ctx.beginPath(); ctx.arc(cx, cy, R * .0935, 0, 7); ctx.fill(); ctx.fillStyle = "#d32f2f"; ctx.beginPath(); ctx.arc(cx, cy, R * .0374, 0, 7); ctx.fill();
+    if (S.state === "throw") for (const p of ps) { const a = aimFresh(S.aim[p.id]); if (a == null || (S.thrown[p.id] || 0) >= PER) continue; const x = cx + a * 1.4 * R; aimLine(ctx, x, cy + R * 1.25, x, cy - R * 1.12, p.color, H); label(ctx, p.name, x, cy - R * 1.22, H * .026, p.color); }
     for (const d of S.darts) {
       const x = cx + d.x * R, y = cy + d.y * R, age = now - d.t;
       ctx.strokeStyle = "#ddd"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + R * .06, y + R * .1); ctx.stroke();
@@ -1138,7 +1168,7 @@ function Darts(C) {
     }
     const px = W * .8;
     label(ctx, S.state === "end" ? S.msg : `Round ${S.round} of ${ROUNDS}`, px, H * .14, H * .04, "#ffc93c");
-    label(ctx, "Flick up on your phone", px, H * .2, H * .024, "#c8b8a8");
+    label(ctx, "Flick up on your phone. The dotted line shows your aim", px, H * .2, H * .022, "#c8b8a8");
     ps.slice().sort((a, b) => S.total[b.id] - S.total[a.id]).forEach((p, i) => {
       label(ctx, `${p.name}  ${S.total[p.id]}`, px, H * (.3 + i * .08), H * .032, p.color);
       label(ctx, "🎯".repeat(Math.max(0, PER - (S.thrown[p.id] || 0))) || "✓", px, H * (.34 + i * .08), H * .022, "#fff");
@@ -1158,14 +1188,14 @@ function Bowling(C) {
   const S = { state: "count", at: T(), msg: "" };
   const lanes = ps.map(p => ({ p, id: p.id, frame: 1, ball: 1, score: 0, frames: [], pins: pinPos.map(([x, y]) => ({ x, y, x0: x, y0: y, vx: 0, vy: 0, down: false, gone: false })), b: null, state: "ready", at: T(), first: 0, botAt: T() + 2000 + Math.random() * 1500, bumpers: C.boost && p.kid, done: false, flash: "" }));
   function resetPins(L, all) { L.pins.forEach(pn => { if (all || !pn.down) { pn.x = pn.x0; pn.y = pn.y0; pn.vx = pn.vy = 0; if (all) { pn.down = false; pn.gone = false; } } else pn.gone = true; }); }
-  function throwBall(L, p, a) { if (L.state !== "ready" || L.done) return; const v = 4.2 + clamp(p, 0, 1) * 5, ang = clamp(a, -1, 1) * .13; L.b = { x: 0, y: .6, vx: v * Math.sin(ang), vy: v * Math.cos(ang), gutter: false }; L.state = "roll"; L.at = T(); }
-  api.input = (p, m) => { const L = lanes.find(l => l.id === p.id); if (L && m.t === "throw" && S.state === "play") throwBall(L, +m.p || 0, +m.a || 0); };
+  function throwBall(L, p, a) { if (L.state !== "ready" || L.done) return; L.aim = null; L.lastA = clamp(a, -1, 1); const v = 4.2 + clamp(p, 0, 1) * 5, ang = clamp(a, -1, 1) * .13; L.b = { x: 0, y: .6, vx: v * Math.sin(ang), vy: v * Math.cos(ang), gutter: false }; L.state = "roll"; L.at = T(); }
+  api.input = (p, m) => { const L = lanes.find(l => l.id === p.id); if (L && m.t === "aim") L.aim = aimSet(m); if (L && m.t === "throw" && S.state === "play") throwBall(L, +m.p || 0, +m.a || 0); };
   function settle(L) {
     const down = L.pins.filter(pn => !pn.gone && (pn.down || Math.hypot(pn.x - pn.x0, pn.y - pn.y0) > .12)); down.forEach(pn => pn.down = true);
     const knocked = L.pins.filter(pn => pn.down && !pn.gone).length, total = L.pins.filter(pn => pn.down).length;
     if (L.ball === 1) {
       if (total === 10) { L.score += 20; L.frames.push("X"); L.flash = "STRIKE!"; C.priv(L.id, { t: "toast", m: "STRIKE! 🎳 +20" }); C.buzz(L.id, [50, 50, 50, 50, 300]); nextFrame(L); }
-      else { L.first = knocked; L.score += knocked; L.ball = 2; L.flash = knocked ? `${knocked}` : "Gutter!"; C.priv(L.id, { t: "toast", m: knocked ? `${knocked} pins` : "Gutter ball!" }); resetPins(L, false); L.state = "ready"; L.at = T(); L.botAt = T() + 1800 + Math.random() * 1200; }
+      else { L.first = knocked; L.score += knocked; L.ball = 2; L.flash = knocked ? `${knocked}` : "Gutter!"; C.priv(L.id, { t: "toast", m: knocked ? `${knocked} pins` : "Gutter ball! " + sideHint(L.lastA || 0) }); resetPins(L, false); L.state = "ready"; L.at = T(); L.botAt = T() + 1800 + Math.random() * 1200; }
     } else {
       if (total === 10) { L.score += knocked + 5; L.frames.push(L.first + "/"); L.flash = "SPARE!"; C.priv(L.id, { t: "toast", m: "SPARE! +5 bonus" }); C.buzz(L.id, [50, 50, 200]); }
       else { L.score += knocked; L.frames.push(L.first + "," + knocked); L.flash = `${knocked}`; C.priv(L.id, { t: "toast", m: `${knocked} more` }); }
@@ -1213,7 +1243,9 @@ function Bowling(C) {
       label(ctx, `${L.score}`, cxl, top - H * .02, Math.min(H * .03, lw * .15), "#ffc93c");
       label(ctx, L.done ? `Done · ${L.frames.join(" ")}` : `Frame ${L.frame} · ball ${L.ball}`, cxl, bot + H * .035, Math.min(H * .022, lw * .1), "#c8c0e0");
       if (L.flash && now - L.at < 1600 && (L.flash === "STRIKE!" || L.flash === "SPARE!" || L.flash === "Gutter!")) label(ctx, L.flash, cxl, (top + bot) / 2, Math.min(H * .06, lw * .22), "#ffc93c");
-      if (L.state === "ready" && !L.p.bot && now % 1600 < 1000) label(ctx, "Swipe up!", cxl, Y(1.4), Math.min(H * .026, lw * .12), "#fff");
+      const la = L.state === "ready" ? aimFresh(L.aim) : null;
+      if (la != null) aimLine(ctx, X(0), Y(.6), X(clamp(8.4 * Math.tan(la * .13), -1.2, 1.2)), Y(8.4), L.p.color, H);
+      else if (L.state === "ready" && !L.p.bot && now % 1600 < 1000) label(ctx, "Swipe up!", cxl, Y(1.4), Math.min(H * .026, lw * .12), "#fff");
     });
     if (S.state === "count") bigText(ctx, W, H, "Let's bowl!", "#fff", H * .1);
     if (S.state === "end") bigText(ctx, W, H, S.msg, "#fff", H * .07);
@@ -1227,26 +1259,26 @@ function Bowling(C) {
 // ---------- Basketball ----------
 function Hoops(C) {
   const api = { id: "hoops", done: false }, ps = C.players, DUR = 45000;
-  const S = { state: "count", at: T(), balls: [], pts: {}, cool: {}, botAt: {}, hx: .5, msg: "" };
+  const S = { state: "count", at: T(), balls: [], pts: {}, cool: {}, botAt: {}, aim: {}, hx: .5, msg: "" };
   ps.forEach((p, i) => { S.pts[p.id] = 0; S.cool[p.id] = 0; S.botAt[p.id] = T() + 4000 + Math.random() * 1500; });
-  const px = i => (i + 1) / (ps.length + 1), K = .9;
+  const px = i => (i + 1) / (ps.length + 1), K = .5; // a straight-up flick aims at the hoop's home spot, wherever you stand
   function shoot(p, pw, a) {
     if (S.state !== "play" || T() < S.cool[p.id]) return; S.cool[p.id] = T() + 650;
-    const i = ps.indexOf(p), x0 = px(i), lx = x0 + a * K - S.hx, ly = (pw - .55) * .5, tol = .05 * (C.boost && p.kid ? 1.45 : 1), d = Math.hypot(lx, ly * .8);
+    S.aim[p.id] = null; const i = ps.indexOf(p), x0 = px(i), lx = .5 + a * K - S.hx, ly = (pw - .55) * .5, tol = .05 * (C.boost && p.kid ? 1.45 : 1), d = Math.hypot(lx, ly * .8);
     const res = d < tol * .4 ? "swish" : d < tol ? "in" : d < tol * 1.7 ? "rim" : "miss";
     S.balls.push({ p, x0, tx: S.hx + lx, ty: ly, res, t: T() });
     setTimeout(() => {
       if (res === "swish" || res === "in") { const n = res === "swish" ? 3 : 2; S.pts[p.id] += n; C.priv(p.id, { t: "toast", m: res === "swish" ? "SWISH! +3" : "In! +2" }); C.buzz(p.id, [40, 40, 120]); }
-      else C.priv(p.id, { t: "toast", m: res === "rim" ? "Off the rim!" : ly < -tol ? "Too short!" : ly > tol ? "Too long!" : lx < 0 ? "Too far left!" : "Too far right!" });
+      else C.priv(p.id, { t: "toast", m: res === "rim" ? "Off the rim!" : ly < -tol ? "Too short! Flick a bit harder." : ly > tol ? "Too long! Flick a bit softer." : sideHint(lx) });
     }, 850);
   }
-  api.input = (p, m) => { if (m.t === "throw") shoot(ps.find(q => q.id === p.id), clamp(+m.p || 0, 0, 1), clamp(+m.a || 0, -1, 1)); };
+  api.input = (p, m) => { if (m.t === "aim") S.aim[p.id] = aimSet(m); if (m.t === "throw") shoot(ps.find(q => q.id === p.id), clamp(+m.p || 0, 0, 1), clamp(+m.a || 0, -1, 1)); };
   api.update = () => {
     const t = T() - S.at;
     if (S.state === "count") { if (t > 3000) { S.state = "play"; S.at = T(); } return; }
     if (S.state === "end") { if (t > 4500) api.done = true; return; }
     S.hx = t > DUR - 15000 ? .5 + .18 * Math.sin((t - (DUR - 15000)) / 1100) : .5;
-    for (const p of ps) if (p.bot && T() > S.botAt[p.id]) { const i = ps.indexOf(p); shoot(p, .55 + gauss() * .045, (S.hx - px(i)) / K + gauss() * .03); S.botAt[p.id] = T() + 1500 + Math.random() * 1000; }
+    for (const p of ps) if (p.bot && T() > S.botAt[p.id]) { const i = ps.indexOf(p); shoot(p, .55 + gauss() * .045, (S.hx - .5) / K + gauss() * .055); S.botAt[p.id] = T() + 1500 + Math.random() * 1000; }
     S.balls = S.balls.filter(b => T() - b.t < 1700);
     if (t > DUR) { const top = rankBy(ps.map(p => p.id), id => S.pts[id], true)[0]; S.msg = `${top.map(id => ps.find(p => p.id === id).name).join(" & ")} wins with ${S.pts[top[0]]} points!`; S.state = "end"; S.at = T(); }
   };
@@ -1263,6 +1295,7 @@ function Hoops(C) {
     ctx.strokeStyle = "#ff6a00"; ctx.lineWidth = 6; ctx.beginPath(); ctx.ellipse(hx, hy, rw, rw * .25, 0, 0, 7); ctx.stroke();
     ctx.strokeStyle = "rgba(255,255,255,.7)"; ctx.lineWidth = 2; for (let k = -3; k <= 3; k++) { ctx.beginPath(); ctx.moveTo(hx + k * rw / 3.2, hy + 2); ctx.lineTo(hx + k * rw / 5, hy + H * .08); ctx.stroke(); }
     for (const b of S.balls) { const u = (now - b.t - 850) / 800; if (u < 0 || u > 1) continue; const [x0, y0, r] = ballAt(b, 1); const sc = b.res === "swish" || b.res === "in"; drawBall(sc ? x0 : x0 + (b.res === "rim" ? (b.tx < S.hx ? -1 : 1) * u * H * .15 : 0), y0 + u * H * (sc ? .2 : .4), r, b.p.color); if (sc && u < .6) label(ctx, b.res === "swish" ? "SWISH!" : "+2", hx, hy - H * .24, H * .045, b.p.color); }
+    if (S.state === "play") ps.forEach((p, i) => { const a = aimFresh(S.aim[p.id]); if (a != null) aimLine(ctx, px(i) * W, H * .93, (.5 + a * K) * W, hy, p.color, H); });
     ps.forEach((p, i) => { const x = px(i) * W; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(x, H * .95, H * .02, 0, 7); ctx.fill(); label(ctx, `${p.name} ${S.pts[p.id]}`, x, H * .88, H * .028, p.color); });
     if (S.state === "play") { const s = Math.max(0, Math.ceil((DUR - (now - S.at)) / 1000)); label(ctx, `⏱ ${s}${s <= 15 ? "  The hoop is moving!" : ""}`, W / 2, H * .9 - H * .78, H * .04, s <= 15 ? "#ff8a80" : "#fff"); }
     if (S.state === "count") bigText(ctx, W, H * .9, "Shoot hoops!", "#fff", H * .1);
@@ -1769,21 +1802,12 @@ async function phoneMain(codeRaw) {
   function curlUI(ctl, g, myTurn) {
     const p = mine(), name = (ST.players.find(x => x.id === g.turn) || {}).name || "";
     if (myTurn && g.state === "aim") {
-      ctl.innerHTML = `<div class="swipe" id="sw"><div class="arrow">⬆</div><div class="lbl">Swipe up to throw!<br><span style="font-weight:600;font-size:.9rem">Faster = further. Angle left or right to aim.</span></div><div class="stone" id="stn"><i style="background:${p.color}"></i></div></div>`;
+      ctl.innerHTML = `<div class="swipe" id="sw"><div class="arrow">⬆</div><div class="lbl">Swipe up to throw!<br><span style="font-weight:600;font-size:.9rem">Straight up aims at the target. Angle your swipe to aim. Faster = further.</span></div><div class="stone" id="stn"><i style="background:${p.color}"></i></div></div>`;
       vib([40, 40, 40]);
-      const sw = $("#sw"), stn = $("#stn"); let pts = [], pid = null;
-      sw.onpointerdown = e => { if (pid != null) return; pid = e.pointerId; try { sw.setPointerCapture(pid); } catch (_) { } pts = [[e.clientX, e.clientY, e.timeStamp]]; };
-      sw.onpointermove = e => { if (e.pointerId !== pid) return; pts.push([e.clientX, e.clientY, e.timeStamp]); if (pts.length > 40) pts.shift(); const r = sw.getBoundingClientRect(); stn.style.left = (e.clientX - r.left) + "px"; stn.style.bottom = Math.max(0, r.bottom - e.clientY - 44) + "px"; };
-      sw.onpointerup = sw.onpointercancel = e => {
-        if (e.pointerId !== pid) return; pid = null; pts.push([e.clientX, e.clientY, e.timeStamp]);
-        const end = pts[pts.length - 1], startP = pts.find(q => end[2] - q[2] <= 110) || pts[0], dt = Math.max(16, end[2] - startP[2]);
-        const vy = (startP[1] - end[1]) / dt, vx = (end[0] - startP[0]) / dt;
-        stn.style.left = "50%"; stn.style.bottom = "12%";
-        if (vy < .25) { toast("Swipe up faster!"); return; }
-        const power = clamp((Math.hypot(vx, vy) - .3) / 2.4, 0, 1), aim = clamp(vx / vy, -1, 1);
+      bindSwipe($("#sw"), $("#stn"), p.color, (power, aim) => {
         send({ t: "throw", p: Math.round(power * 1000) / 1000, a: Math.round(aim * 1000) / 1000 }); vib(30);
-        sw.innerHTML = `<div class="lbl" style="top:40%">Thrown! Get ready to sweep…</div>`;
-      };
+        $("#sw").innerHTML = `<div class="lbl" style="top:40%">Thrown! Get ready to sweep…</div>`;
+      });
     } else if (myTurn && g.state === "moving") {
       ctl.innerHTML = `<div class="tapzone" id="swp" style="background:#ffc93c;color:#1b1300"><div class="big">SWEEP!</div><div class="sub">Tap tap tap to make it go further</div></div>`;
       const z = $("#swp"); z.onpointerdown = e => { e.preventDefault(); send({ t: "sweep" }); vib(8); z.classList.add("pressed"); setTimeout(() => z.classList.remove("pressed"), 60); };
@@ -1851,15 +1875,38 @@ async function phoneMain(codeRaw) {
   // ---------- swipe pad (used for fishing casts) ----------
   function swipePad(ctl, title, sub, colour, cb) {
     ctl.innerHTML = `<div class="swipe" id="sw"><div class="arrow">⬆</div><div class="lbl">${title}<br><span style="font-weight:600;font-size:.9rem">${sub}</span></div><div class="stone" id="stn" style="background:radial-gradient(circle at 40% 35%,#fff,${colour} 70%)"></div></div>`;
-    const sw = $("#sw"), stn = $("#stn"); let pts = [], pid = null;
-    sw.onpointerdown = e => { if (pid != null) return; pid = e.pointerId; try { sw.setPointerCapture(pid); } catch (_) { } pts = [[e.clientX, e.clientY, e.timeStamp]]; };
-    sw.onpointermove = e => { if (e.pointerId !== pid) return; pts.push([e.clientX, e.clientY, e.timeStamp]); if (pts.length > 40) pts.shift(); const r = sw.getBoundingClientRect(); stn.style.left = (e.clientX - r.left) + "px"; stn.style.bottom = Math.max(0, r.bottom - e.clientY - 44) + "px"; };
+    bindSwipe($("#sw"), $("#stn"), colour, cb);
+  }
+  // Swipe-to-throw: aim comes from the whole swipe (start to finish) and is drawn as a line while you swipe,
+  // and sent to the TV so it can show it too. Power comes from how fast the end of the flick is.
+  function bindSwipe(sw, stn, colour, cb) {
+    sw.insertAdjacentHTML("beforeend", `<svg class="aimsvg"><line/><circle r="14"/></svg><div class="aimtxt"></div>`);
+    const ln = sw.querySelector(".aimsvg line"), dot = sw.querySelector(".aimsvg circle"), txt = sw.querySelector(".aimtxt");
+    ln.style.stroke = dot.style.stroke = colour; txt.style.color = colour === "#ffd43b" ? "#8a6d00" : colour;
+    let pts = [], pid = null, start = null, sentAt = 0, sentA = null;
+    const aimAt = (x, y) => { const up = start[1] - y; return up < 20 ? null : clamp((x - start[0]) / up, -1, 1); };
+    const word = a => { const m = Math.abs(a); if (m < .06) return "⬆ Straight"; const w = (m < .22 ? "A little " : m < .55 ? "" : "Far ") + (a < 0 ? "left" : "right"); return a < 0 ? "◀ " + w[0].toUpperCase() + w.slice(1) : w[0].toUpperCase() + w.slice(1) + " ▶"; };
+    const hide = () => { sw.classList.remove("aiming"); if (sentA != null) { send({ t: "aim", a: null }); sentA = null; } };
+    const show = a => {
+      const r = sw.getBoundingClientRect(), x0 = start[0] - r.left, y0 = start[1] - r.top, y1 = r.height * .06, x1 = x0 + a * (y0 - y1);
+      ln.setAttribute("x1", x0); ln.setAttribute("y1", y0); ln.setAttribute("x2", x1); ln.setAttribute("y2", y1); dot.setAttribute("cx", x1); dot.setAttribute("cy", y1);
+      txt.textContent = word(a); sw.classList.add("aiming");
+      const now = Date.now(); if (now - sentAt >= 110 && (sentA == null || Math.abs(a - sentA) > .008)) { sentAt = now; sentA = a; send({ t: "aim", a: Math.round(a * 1000) / 1000 }); }
+    };
+    sw.onpointerdown = e => { if (pid != null) return; pid = e.pointerId; try { sw.setPointerCapture(pid); } catch (_) { } start = [e.clientX, e.clientY]; pts = [[e.clientX, e.clientY, e.timeStamp]]; };
+    sw.onpointermove = e => {
+      if (e.pointerId !== pid) return; pts.push([e.clientX, e.clientY, e.timeStamp]); if (pts.length > 40) pts.shift();
+      const r = sw.getBoundingClientRect(); stn.style.left = (e.clientX - r.left) + "px"; stn.style.bottom = Math.max(0, r.bottom - e.clientY - 44) + "px";
+      const a = aimAt(e.clientX, e.clientY); if (a != null) show(a);
+    };
     sw.onpointerup = sw.onpointercancel = e => {
       if (e.pointerId !== pid) return; pid = null; pts.push([e.clientX, e.clientY, e.timeStamp]);
       const end = pts[pts.length - 1], st = pts.find(q => end[2] - q[2] <= 110) || pts[0], dt = Math.max(16, end[2] - st[2]);
       const vy = (st[1] - end[1]) / dt, vx = (end[0] - st[0]) / dt; stn.style.left = "50%"; stn.style.bottom = "12%";
-      if (vy < .25) { toast("Swipe up faster!"); return; }
-      cb(clamp((Math.hypot(vx, vy) - .3) / 2.4, 0, 1), clamp(vx / vy, -1, 1));
+      const aim = aimAt(end[0], end[1]);
+      if (e.type === "pointercancel" || vy < .25 || aim == null) { hide(); if (e.type !== "pointercancel") toast("Flick up faster at the end!"); return; }
+      sentA = null; sw.classList.remove("aiming");
+      cb(clamp((Math.hypot(vx, vy) - .3) / 2.4, 0, 1), aim);
     };
   }
 
@@ -1870,7 +1917,7 @@ async function phoneMain(codeRaw) {
     if (k !== subKey) {
       subKey = k;
       if (g.state === "count") ctl.innerHTML = `<div class="center"><div class="bigemoji">🎣</div><h2>Get ready to cast</h2><p class="muted">Watch the TV and aim for the shadows. The golden ones are worth the most!</p></div>`;
-      else if (bucket === "cast") swipePad(ctl, "Swipe up to cast!", "Harder = further out. Angle it to aim at a fish.", "#ff5d5d", (p, a) => { send({ t: "cast", p: Math.round(p * 1000) / 1000, a: Math.round(a * 1000) / 1000 }); vib(25); });
+      else if (bucket === "cast") swipePad(ctl, "Swipe up to cast!", "The line shows your aim. Harder = further out.", "#ff5d5d", (p, a) => { send({ t: "cast", p: Math.round(p * 1000) / 1000, a: Math.round(a * 1000) / 1000 }); vib(25); });
       else if (bucket === "hook") {
         ctl.innerHTML = `<div class="tapzone" id="hk" style="background:#1d3d5c;color:#fff"><div class="big" id="hkt">WAIT…</div><div class="sub" id="hks">Wait for a proper BITE. Don't strike on a nibble!</div></div><button class="btn" id="rc" style="margin:0 1em 1em">Reel in and cast again</button>`;
         $("#hk").onpointerdown = e => { e.preventDefault(); send({ t: "hook" }); vib(20); };
@@ -1982,18 +2029,18 @@ async function phoneMain(codeRaw) {
   function dartsUI(ctl, g) {
     const n = (g.thrown || {})[id] || 0, k = "darts|" + g.state + "|" + g.round + "|" + n;
     if (k === subKey) return; subKey = k;
-    if (g.state === "throw" && n < 3) swipePad(ctl, `Flick up to throw! ${"🎯".repeat(3 - n)}`, "Too gentle lands low, too hard lands high. Angle it to aim.", "#ffd43b", (p, a) => { send({ t: "throw", p: Math.round(p * 1000) / 1000, a: Math.round(a * 1000) / 1000 }); vib(20); });
+    if (g.state === "throw" && n < 3) swipePad(ctl, `Flick up to throw! ${"🎯".repeat(3 - n)}`, "Straight up aims at the middle. The line shows your aim. Too gentle lands low, too hard lands high.", "#ffd43b", (p, a) => { send({ t: "throw", p: Math.round(p * 1000) / 1000, a: Math.round(a * 1000) / 1000 }); vib(20); });
     else ctl.innerHTML = `<div class="center"><div class="bigemoji">🎯</div><h2>${g.state === "throw" ? "All 3 thrown!" : g.state === "roundEnd" ? "Round over" : "Get ready"}</h2><p class="muted">Your score: <b style="color:var(--gold)">${(g.total || {})[id] || 0}</b></p></div>`;
   }
   function hoopsUI(ctl, g) {
     const k = "hoops|" + g.state; if (k === subKey) return; subKey = k;
-    if (g.state === "play") swipePad(ctl, "Flick up to shoot!", "Speed sets the distance, angle aims left or right. Shoot as often as you like!", "#e8742c", (p, a) => { send({ t: "throw", p: Math.round(p * 1000) / 1000, a: Math.round(a * 1000) / 1000 }); vib(20); });
+    if (g.state === "play") swipePad(ctl, "Flick up to shoot!", "Straight up aims at the hoop. The line shows your aim. Speed sets the distance.", "#e8742c", (p, a) => { send({ t: "throw", p: Math.round(p * 1000) / 1000, a: Math.round(a * 1000) / 1000 }); vib(20); });
     else ctl.innerHTML = `<div class="center"><div class="bigemoji">🏀</div><h2>${g.state === "end" ? "Time's up!" : "Get ready"}</h2></div>`;
   }
   function bowlUI(ctl, g) {
     const L = (g.lanes || {})[id] || {}, k = "bowl|" + g.state + "|" + L.st + "|" + L.f + "|" + L.b;
     if (k === subKey) return; subKey = k;
-    if (g.state === "play" && L.st === "ready") swipePad(ctl, `Frame ${L.f}, ball ${L.b}: swipe up to bowl!`, (L.bump ? "Bumpers are up, no gutter balls! " : "") + "Faster = harder. Angle it to aim.", "#7c4dff", (p, a) => { send({ t: "throw", p: Math.round(p * 1000) / 1000, a: Math.round(a * 1000) / 1000 }); vib(25); });
+    if (g.state === "play" && L.st === "ready") swipePad(ctl, `Frame ${L.f}, ball ${L.b}: swipe up to bowl!`, (L.bump ? "Bumpers are up, no gutter balls! " : "") + "Straight up rolls down the middle. The line shows your aim. Faster = harder.", "#7c4dff", (p, a) => { send({ t: "throw", p: Math.round(p * 1000) / 1000, a: Math.round(a * 1000) / 1000 }); vib(25); });
     else ctl.innerHTML = `<div class="center"><div class="bigemoji">🎳</div><h2>${L.st === "done" ? "All done!" : L.st === "roll" || L.st === "settle" ? "Rolling…" : "Get ready"}</h2><p class="muted">Score: <b style="color:var(--gold)">${L.s || 0}</b></p></div>`;
   }
   // ---------- Snowball Fight / Catch the Presents (joystick games) ----------

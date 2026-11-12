@@ -90,6 +90,8 @@ Same set-up as Buzz In: the TV screen opens the lobby, phones scan the QR code t
 - **🎁 Catch the Presents** – run left and right to catch presents from Santa's sleigh; gold +3, coal −2.
 - **🏇 Derby Day** – 100 pretend coins each, back a horse at fractional odds, 3 races. Results are drawn fairly from the odds shown. Most coins wins.
 
+**Aiming in the flick games** (Curling, Gone Fishing, Darts, Bowling, Basketball): the aim comes from the direction of the whole swipe, start to finish. Straight up aims at the middle (in Basketball, at the hoop from wherever you stand). While you swipe, a dotted line shows the aim on the phone and on the TV; how fast the flick is at the end sets the power. Misses come with a tip, such as "It went left. Angle your swipe a bit more to the right."
+
 Lobby settings: which games, Standard / 🎄 Christmas theme, **🤖 Computer players** (Auto adds 2 robot opponents when one person is playing alone, or choose 0–3), and **Kids boost** (players who tick "a child is playing" get heavier penguins,
 stronger taps, a head start in Quick Draw and help with curling power). The first player to join is the host (start, next, skip from their phone).
 The end screen has the settings and Play again, no rejoining needed.

@@ -397,7 +397,7 @@ async function tvMain() {
     const t = S.turn;
     const left = t ? (t.paused != null ? t.paused : Math.max(0, t.endsAt - now())) : 0;
     return {
-      phase: S.phase, settings: S.settings, host: hostId(), turnNo: S.turnNo, total: S.totalTurns, own: customSongs().length,
+      phase: S.phase, settings: S.settings, host: hostId(), turnNo: S.turnNo, total: S.totalTurns, own: customSongs().length, solo: !!t && guessers().length === 0,
       players: S.order.map(id => S.players[id]).filter(Boolean).map(p => ({ id: p.id, name: p.name, kid: p.kid, color: p.color, score: p.score })),
       drawer: t && t.drawer, left, paused: !!(t && t.paused != null), dur: t ? t.dur : 0,
       hint: t && t.song && S.settings.guess === "type" ? hint(t) : null,
@@ -425,15 +425,16 @@ async function tvMain() {
   // ---- game flow ----
   function start() {
     const el = eligible();
-    if (el.length < 2) return;
+    if (el.length < 1) return;
     ls.set("piano_settings", S.settings);
     S.order.forEach(id => S.players[id] && (S.players[id].score = 0));
     S.concert = []; S.feed = []; S.turnNo = 0;
-    S.queue = []; for (let i = 0; i < S.settings.laps; i++) S.queue.push(...el.map(p => p.id));
+    const reps = el.length === 1 ? Math.max(3, S.settings.laps) : S.settings.laps; // on your own you get at least 3 songs
+    S.queue = []; for (let i = 0; i < reps; i++) S.queue.push(...el.map(p => p.id));
     S.totalTurns = S.queue.length;
     nextTurn();
   }
-  function playAgain() { if (eligible().length >= 2) start(); else toLobby(); }
+  function playAgain() { if (eligible().length >= 1) start(); else toLobby(); }
   function toLobby() { S.phase = "lobby"; S.turn = null; push(); }
   function pools(kid) {
     const xm = S.settings.edition === "xmas";
@@ -583,6 +584,7 @@ async function tvMain() {
       case "start": if (isHost && S.phase === "lobby") start(); break;
       case "again": if (isHost && S.phase === "end") playAgain(); break;
       case "lobby": if (isHost && S.phase === "end") toLobby(); break;
+      case "finish": if (isPianist && S.phase === "play" && guessers().length === 0) endTurn(); break;
       case "skip": if ((isHost || isPianist) && (S.phase === "play" || S.phase === "choose")) endTurn(true); break;
       case "choose": if (isPianist) choose(m.i); break;
       case "key": if (S.phase === "play" && isPianist) keyDown(m); break;
@@ -656,8 +658,8 @@ async function tvMain() {
     if (S.phase === "lobby") {
       $("#sets").innerHTML = setsHTML(S.settings, customSongs().length);
       const n = eligible().length;
-      $("#start").disabled = n < 2;
-      $("#snote").textContent = n < 2 ? (S.settings.who === "kids" ? "Needs at least 2 kids (tick “a child is playing” when joining)." : "Needs at least 2 players.") : `${n} pianists ready. The first player to join can also start from their phone.`;
+      $("#start").disabled = n < 1;
+      $("#snote").textContent = n < 1 ? (S.settings.who === "kids" ? "Needs at least 1 kid (tick “a child is playing” when joining)." : "Waiting for someone to join.") : n === 1 ? "1 pianist: solo test mode. You play every turn (3 songs) and nobody guesses. Tap ✓ Done on your phone to hear the real tune. Get 2 or more for the proper game." : `${n} pianists ready. The first player to join can also start from their phone.`;
       $("#sets").onclick = e => { const b = e.target.closest("[data-set]"); if (b) { const { k, v } = setFromBtn(b); S.settings[k] = v; push(); } };
       $("#start").onclick = () => { Synth.init(); start(); };
     }
@@ -667,7 +669,7 @@ async function tvMain() {
       $("#sets").innerHTML = setsHTML(S.settings, customSongs().length);
       $("#sets").onclick = e => { const b = e.target.closest("[data-set]"); if (b) { const { k, v } = setFromBtn(b); S.settings[k] = v; push(); } };
       const n = eligible().length;
-      $("#snote").textContent = n < 2 ? (S.settings.who === "kids" ? "Kids only needs at least 2 kids. Play again will open the lobby so more can join." : "Needs at least 2 players.") : "";
+      $("#snote").textContent = n < 1 ? (S.settings.who === "kids" ? "Kids only needs at least 1 kid. Play again will open the lobby so more can join." : "Nobody's here to play.") : n === 1 ? "Solo test mode: you'll play every turn." : "";
       $("#again").onclick = playAgain; $("#tolobby").onclick = toLobby;
       return;
     }
@@ -884,7 +886,7 @@ async function phoneMain(codeRaw) {
       <div class="pvtop"><span class="dot" style="width:.9em;height:.9em;border-radius:50%;background:${p.color};flex:none"></span>
         <span class="song">${s.e} Play <b>${esc(s.t)}</b>${s.mem ? " · from memory" : ""}</span>
         ${s.mem ? "" : `<button class="btn" id="gd">${guide === "lights" ? "🔤 Letters" : "💡 Lights"}</button><button class="btn" id="fromtop">🔁 From the top</button>`}
-        <button class="btn" id="snd">${phoneSound ? "🔊" : "🔈"}</button><button class="btn" id="dskip">Skip</button><span class="ptm" id="ptm"></span></div>
+        <button class="btn" id="snd">${phoneSound ? "🔊" : "🔈"}</button>${ST.solo ? `<button class="btn gold" id="dfin">✓ Done</button>` : ""}<button class="btn" id="dskip">Skip</button><span class="ptm" id="ptm"></span></div>
       <div class="lane" id="lane"></div>
       <div class="kb ${!s.mem && guide === "lights" ? "nolabels" : ""}" id="kb">${keys}</div>
       <div id="judge"></div></div>`;
@@ -906,6 +908,7 @@ async function phoneMain(codeRaw) {
     on("#fromtop", () => { idx = 0; paintGuide(); });
     on("#snd", () => { phoneSound = !phoneSound; ls.set("piano_phonesound", phoneSound); if (phoneSound) Synth.init(); $("#snd").textContent = phoneSound ? "🔊" : "🔈"; toast(phoneSound ? "Sound on this phone too" : "Sound from the TV only"); });
     on("#dskip", () => { if (confirm("Skip this song? Nobody scores for it.")) send({ t: "skip" }); });
+    on("#dfin", () => send({ t: "finish" }));
     judgeShown = false; paintGuide();
   }
   function advance(m, el) {
@@ -1011,8 +1014,8 @@ async function phoneMain(codeRaw) {
     if ((r === "lobby" || r === "end") && $("#sets")) {
       $("#sets").innerHTML = setsHTML(ST.settings, ST.own);
       const n = ST.players.filter(p => ST.settings.who === "kids" ? p.kid : true).length;
-      if ($("#start")) $("#start").disabled = n < 2;
-      $("#snote").textContent = n < 2 ? (r === "end" ? "Not enough players for these settings yet. Play again will open the lobby." : "Waiting for more players…") : `${n} pianists ready`;
+      if ($("#start")) $("#start").disabled = n < 1;
+      $("#snote").textContent = n < 1 ? (r === "end" ? "Not enough players for these settings yet. Play again will open the lobby." : "Waiting for players…") : n === 1 ? "Just you: solo test mode. You play every turn and nobody guesses." : `${n} pianists ready`;
     }
     if (r === "type") { const h = $("#hint"); if (h) h.textContent = ST.hint || ""; const m = $("#mine"); if (m) m.innerHTML = myGuesses.slice(-6).map(g => `<span class="chip">${esc(g)}</span>`).join(""); }
     if (r === "buzz") {

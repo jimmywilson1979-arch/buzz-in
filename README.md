@@ -77,8 +77,12 @@ Same set-up as Buzz In and Doodle Gallery. On their turn, a player's phone becom
 and turned round for you if the phone is upright). The notes play through the TV, and everyone else guesses the song.
 - **Note guide:** Glowing keys (the next key lights up) or Note letters (the tune shown as letters, colour-coded by octave).
   Kids always start on glowing keys and can switch to letters on their phone. A strip above the keys shows the rhythm.
-- **Songs:** Built-in tunes (30 out-of-copyright songs: nursery rhymes, carols, folk and classical) or From memory
-  (the pianist gets only a song title, such as "Mr Brightside", and works it out by ear; no melody is stored), or Both.
+- **Songs:** Built-in tunes (52 out-of-copyright songs: nursery rhymes, carols, folk, anthems and classical), From memory
+  (the pianist gets only a song title, such as "Mr Brightside", and works it out by ear; no melody is stored),
+  ⭐ Our songs (made in My songs, below), or 🎲 Mix of all.
+- **🎼 My songs (song maker):** in the lobby on any phone. Play a tune on the sideways piano (the timing is recorded),
+  undo, clear or play it back, then name it and pick a picture. Songs are saved on that phone and sent to the TV when it
+  joins, so they come up in ⭐ Our songs and Mix, with glowing keys for whoever plays them. Made-up tunes, or songs you know.
 - **Guessing:** Type answers (marked automatically, close guesses get "So close!", letter hints as time runs down) or Buzz in.
   Kids guess by tapping one of four song pictures. Kids only mode works as in Doodle Gallery.
 - Sound comes from the TV (click once to switch it on). Notes are scheduled a fraction of a second after they arrive so the

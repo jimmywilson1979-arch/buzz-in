@@ -212,7 +212,7 @@ const ord = n => n + (["th", "st", "nd", "rd"][(n % 100 - 20) % 10] || ["th", "s
 
 // ===== Songs =====
 // t title, e picture, k kid-friendly, x Christmas, a other accepted answers, n notes ("E4:1 R:.5 …", beats), bpm
-const SONGS = [{"t": "Jingle Bells", "e": "🔔", "k": 1, "x": 1, "a": [], "n": "E4:1 E4:1 E4:2 E4:1 E4:1 E4:2 E4:1 G4:1 C4:1.5 D4:.5 E4:4 F4:1 F4:1 F4:1.5 F4:.5 F4:1 E4:1 E4:1 E4:.5 E4:.5 E4:1 D4:1 D4:1 E4:1 D4:2 G4:2", "bpm": 150}, {"t": "Twinkle Twinkle Little Star", "e": "⭐", "k": 1, "x": 0, "a": ["twinkle twinkle"], "n": "C4:1 C4:1 G4:1 G4:1 A4:1 A4:1 G4:2 F4:1 F4:1 E4:1 E4:1 D4:1 D4:1 C4:2", "bpm": 120}, {"t": "Silent Night", "e": "🌙", "k": 1, "x": 1, "a": [], "n": "G4:1.5 A4:.5 G4:1 E4:3 G4:1.5 A4:.5 G4:1 E4:3 D5:2 D5:1 B4:3 C5:2 C5:1 G4:3", "bpm": 110}, {"t": "Ode to Joy", "e": "🎻", "k": 0, "x": 0, "a": ["ode to joy"], "n": "E4:1 E4:1 F4:1 G4:1 G4:1 F4:1 E4:1 D4:1 C4:1 C4:1 D4:1 E4:1 E4:1.5 D4:.5 D4:2", "bpm": 130}, {"t": "Für Elise", "e": "🎹", "k": 0, "x": 0, "a": ["fur elise", "for elise"], "n": "E5:.5 D#5:.5 E5:.5 D#5:.5 E5:.5 B4:.5 D5:.5 C5:.5 A4:1.5 R:.5 C4:.5 E4:.5 A4:.5 B4:1.5 R:.5 E4:.5 G#4:.5 B4:.5 C5:1.5", "bpm": 130}, {"t": "Beethoven's 5th Symphony", "e": "🎼", "k": 0, "x": 0, "a": ["beethovens 5th", "beethoven 5", "beethovens fifth", "fifth symphony", "5th symphony"], "n": "G4:.4 G4:.4 G4:.4 Eb4:2.5 R:.6 F4:.4 F4:.4 F4:.4 D4:3", "bpm": 110}, {"t": "In the Hall of the Mountain King", "e": "⛰️", "k": 0, "x": 0, "a": ["mountain king"], "n": "A3:.5 B3:.5 C4:.5 D4:.5 E4:.5 C4:.5 E4:1 D#4:.5 B3:.5 D#4:1 D4:.5 Bb3:.5 D4:1 A3:.5 B3:.5 C4:.5 D4:.5 E4:.5 C4:.5 E4:.5 A4:.5 G4:.5 E4:.5 C4:.5 E4:.5 G4:2", "bpm": 140}, {"t": "William Tell Overture", "e": "🏹", "k": 0, "x": 0, "a": ["william tell", "lone ranger"], "n": "B4:.25 B4:.25 B4:.5 B4:.25 B4:.25 B4:.5 B4:.25 B4:.25 E5:.5 F#5:.5 G5:1 R:.5 B4:.25 B4:.25 B4:.5 B4:.25 B4:.25 B4:.5 B4:.25 B4:.25 E5:.5 F#5:.5 G5:1", "bpm": 120}, {"t": "Happy Birthday", "e": "🎂", "k": 1, "x": 0, "a": [], "n": "G4:.75 G4:.25 A4:1 G4:1 C5:1 B4:2 G4:.75 G4:.25 A4:1 G4:1 D5:1 C5:2 G4:.75 G4:.25 G5:1 E5:1 C5:1 B4:1 A4:2 F5:.75 F5:.25 E5:1 C5:1 D5:1 C5:2", "bpm": 120}, {"t": "We Wish You a Merry Christmas", "e": "🎅", "k": 1, "x": 1, "a": ["we wish you"], "n": "D4:1 G4:1 G4:.5 A4:.5 G4:.5 F#4:.5 E4:1 E4:1 E4:1 A4:1 A4:.5 B4:.5 A4:.5 G4:.5 F#4:1 D4:1 D4:1 B4:1 B4:.5 C5:.5 B4:.5 A4:.5 G4:1 E4:1 D4:.5 D4:.5 E4:1 A4:1 F#4:1 G4:2", "bpm": 150}, {"t": "Deck the Halls", "e": "🎄", "k": 1, "x": 1, "a": ["deck the hall"], "n": "G4:1.5 F4:.5 E4:1 D4:1 C4:1 D4:1 E4:1 C4:1 D4:.5 E4:.5 F4:.5 D4:.5 E4:1.5 D4:.5 C4:1 B3:1 C4:2", "bpm": 140}, {"t": "Mary Had a Little Lamb", "e": "🐑", "k": 1, "x": 0, "a": ["little lamb"], "n": "E4:1 D4:1 C4:1 D4:1 E4:1 E4:1 E4:2 D4:1 D4:1 D4:2 E4:1 G4:1 G4:2 E4:1 D4:1 C4:1 D4:1 E4:1 E4:1 E4:1 E4:1 D4:1 D4:1 E4:1 D4:1 C4:2", "bpm": 140}, {"t": "Here Comes the Bride", "e": "👰", "k": 0, "x": 0, "a": ["wedding march", "bridal chorus"], "n": "G4:1 C5:.75 C5:.25 C5:2 G4:1 D5:.75 B4:.25 C5:2", "bpm": 90}, {"t": "Greensleeves", "e": "🍃", "k": 0, "x": 0, "a": ["green sleeves"], "n": "A4:1 C5:2 D5:1 E5:1.5 F5:.5 E5:1 D5:2 B4:1 G4:1.5 A4:.5 B4:1 C5:2 A4:1 A4:1.5 G#4:.5 A4:1 B4:2 G#4:1 E4:2", "bpm": 170}, {"t": "Auld Lang Syne", "e": "🥂", "k": 0, "x": 1, "a": ["old lang syne", "auld lang sine"], "n": "C4:1 F4:1.5 F4:.5 F4:1 A4:1 G4:1.5 F4:.5 G4:1 A4:1 F4:1.5 F4:.5 A4:1 C5:1 D5:3", "bpm": 110}, {"t": "The Entertainer", "e": "🎩", "k": 0, "x": 0, "a": ["entertainer"], "n": "D4:.25 D#4:.25 E4:.25 C5:.5 E4:.25 C5:.5 E4:.25 C5:1.25 C5:.25 D5:.25 D#5:.25 E5:.25 C5:.25 D5:.25 E5:.5 B4:.25 D5:.5 C5:1.5", "bpm": 100}, {"t": "Old MacDonald Had a Farm", "e": "🚜", "k": 1, "x": 0, "a": ["old macdonald", "old mcdonald"], "n": "G4:1 G4:1 G4:1 D4:1 E4:1 E4:1 D4:2 B4:1 B4:1 A4:1 A4:1 G4:2", "bpm": 150}, {"t": "Row, Row, Row Your Boat", "e": "🚣", "k": 1, "x": 0, "a": ["row your boat", "row row row"], "n": "C4:1.5 C4:1.5 C4:1 D4:.5 E4:1.5 E4:1 D4:.5 E4:1 F4:.5 G4:3", "bpm": 200}, {"t": "Eine kleine Nachtmusik", "e": "🎻", "k": 0, "x": 0, "a": ["nachtmusik", "eine kleine", "little night music"], "n": "G4:1 D4:.5 G4:1 D4:.5 G4:.5 D4:.5 G4:.5 B4:.5 D5:2 C5:1 A4:.5 C5:1 A4:.5 C5:.5 A4:.5 F#4:.5 A4:.5 D4:2", "bpm": 130}, {"t": "Frère Jacques", "e": "😴", "k": 1, "x": 0, "a": ["frere jacques", "are you sleeping", "brother john"], "n": "C4:1 D4:1 E4:1 C4:1 C4:1 D4:1 E4:1 C4:1 E4:1 F4:1 G4:2 E4:1 F4:1 G4:2", "bpm": 130}, {"t": "London Bridge Is Falling Down", "e": "🌉", "k": 1, "x": 0, "a": ["london bridge"], "n": "G4:1.5 A4:.5 G4:1 F4:1 E4:1 F4:1 G4:2 D4:1 E4:1 F4:2 E4:1 F4:1 G4:2 G4:1.5 A4:.5 G4:1 F4:1 E4:1 F4:1 G4:2 D4:2 G4:2 E4:1 C4:3", "bpm": 150}, {"t": "Incy Wincy Spider", "e": "🕷️", "k": 1, "x": 0, "a": ["incy wincy", "itsy bitsy"], "n": "G3:.5 C4:1 C4:.5 C4:1 D4:.5 E4:1.5 E4:1 E4:.5 D4:1 C4:.5 D4:1 E4:.5 C4:1.5", "bpm": 170}, {"t": "Pop Goes the Weasel", "e": "🐿️", "k": 1, "x": 0, "a": ["pop goes"], "n": "C4:1 C4:.5 D4:1 D4:.5 E4:.5 G4:.5 E4:.5 C4:1 G3:.5 C4:1 C4:.5 D4:1 D4:.5 E4:1.5 C4:1", "bpm": 170}, {"t": "O Come All Ye Faithful", "e": "⛪", "k": 0, "x": 1, "a": ["come all ye faithful", "adeste fideles"], "n": "G4:1 G4:2 D4:1 G4:1 A4:2 D4:2 B4:1 A4:1 B4:1 C5:1 B4:2 A4:1", "bpm": 110}, {"t": "Good King Wenceslas", "e": "👑", "k": 0, "x": 1, "a": ["good king"], "n": "G4:1 G4:1 G4:1 A4:1 G4:1 G4:1 D4:2 E4:1 D4:1 E4:1 F#4:1 G4:2 G4:2", "bpm": 120}, {"t": "Hark! The Herald Angels Sing", "e": "👼", "k": 0, "x": 1, "a": ["hark the herald", "herald angels"], "n": "D4:1 G4:1 G4:1.5 F#4:.5 G4:1 B4:1 B4:1 A4:1 D5:1 D5:1 D5:1.5 C5:.5 B4:1 A4:1 B4:2", "bpm": 120}, {"t": "Joy to the World", "e": "🌍", "k": 0, "x": 1, "a": [], "n": "D5:2 C#5:.75 B4:.25 A4:1.5 G4:.5 F#4:1 E4:1 D4:2 A4:.5 B4:1.5 B4:.5 C#5:1.5 C#5:.5 D5:3", "bpm": 110}, {"t": "O Christmas Tree", "e": "🌲", "k": 1, "x": 1, "a": ["o tannenbaum", "oh christmas tree"], "n": "D4:1 G4:.75 G4:.25 G4:1.5 A4:.5 B4:.75 B4:.25 B4:1.5 B4:.5 A4:.5 B4:.5 C5:1 F#4:1 A4:1 G4:2", "bpm": 100}, {"t": "God Rest Ye Merry Gentlemen", "e": "🕯️", "k": 0, "x": 1, "a": ["god rest ye", "merry gentlemen"], "n": "E4:1 E4:1 B4:1 B4:1 A4:1 G4:1 F#4:1 E4:1 D4:1 E4:1 F#4:1 G4:1 A4:1 B4:3", "bpm": 140}, {"t": "Away in a Manger", "e": "👶", "k": 1, "x": 1, "a": [], "n": "C5:1 C5:1.5 Bb4:.5 A4:1 A4:1.5 G4:.5 F4:1 F4:1 E4:1 D4:1 C4:2", "bpm": 110}];
+const SONGS = [{"t": "Jingle Bells", "e": "🔔", "k": 1, "x": 1, "a": [], "n": "E4:1 E4:1 E4:2 E4:1 E4:1 E4:2 E4:1 G4:1 C4:1.5 D4:.5 E4:4 F4:1 F4:1 F4:1.5 F4:.5 F4:1 E4:1 E4:1 E4:.5 E4:.5 E4:1 D4:1 D4:1 E4:1 D4:2 G4:2", "bpm": 150}, {"t": "Twinkle Twinkle Little Star", "e": "⭐", "k": 1, "x": 0, "a": ["twinkle twinkle"], "n": "C4:1 C4:1 G4:1 G4:1 A4:1 A4:1 G4:2 F4:1 F4:1 E4:1 E4:1 D4:1 D4:1 C4:2", "bpm": 120}, {"t": "Silent Night", "e": "🌙", "k": 1, "x": 1, "a": [], "n": "G4:1.5 A4:.5 G4:1 E4:3 G4:1.5 A4:.5 G4:1 E4:3 D5:2 D5:1 B4:3 C5:2 C5:1 G4:3", "bpm": 110}, {"t": "Ode to Joy", "e": "🎻", "k": 0, "x": 0, "a": ["ode to joy"], "n": "E4:1 E4:1 F4:1 G4:1 G4:1 F4:1 E4:1 D4:1 C4:1 C4:1 D4:1 E4:1 E4:1.5 D4:.5 D4:2", "bpm": 130}, {"t": "Für Elise", "e": "🎹", "k": 0, "x": 0, "a": ["fur elise", "for elise"], "n": "E5:.5 D#5:.5 E5:.5 D#5:.5 E5:.5 B4:.5 D5:.5 C5:.5 A4:1.5 R:.5 C4:.5 E4:.5 A4:.5 B4:1.5 R:.5 E4:.5 G#4:.5 B4:.5 C5:1.5", "bpm": 130}, {"t": "Beethoven's 5th Symphony", "e": "🎼", "k": 0, "x": 0, "a": ["beethovens 5th", "beethoven 5", "beethovens fifth", "fifth symphony", "5th symphony"], "n": "G4:.4 G4:.4 G4:.4 Eb4:2.5 R:.6 F4:.4 F4:.4 F4:.4 D4:3", "bpm": 110}, {"t": "In the Hall of the Mountain King", "e": "⛰️", "k": 0, "x": 0, "a": ["mountain king"], "n": "A3:.5 B3:.5 C4:.5 D4:.5 E4:.5 C4:.5 E4:1 D#4:.5 B3:.5 D#4:1 D4:.5 Bb3:.5 D4:1 A3:.5 B3:.5 C4:.5 D4:.5 E4:.5 C4:.5 E4:.5 A4:.5 G4:.5 E4:.5 C4:.5 E4:.5 G4:2", "bpm": 140}, {"t": "William Tell Overture", "e": "🏹", "k": 0, "x": 0, "a": ["william tell", "lone ranger"], "n": "B4:.25 B4:.25 B4:.5 B4:.25 B4:.25 B4:.5 B4:.25 B4:.25 E5:.5 F#5:.5 G5:1 R:.5 B4:.25 B4:.25 B4:.5 B4:.25 B4:.25 B4:.5 B4:.25 B4:.25 E5:.5 F#5:.5 G5:1", "bpm": 120}, {"t": "Happy Birthday", "e": "🎂", "k": 1, "x": 0, "a": [], "n": "G4:.75 G4:.25 A4:1 G4:1 C5:1 B4:2 G4:.75 G4:.25 A4:1 G4:1 D5:1 C5:2 G4:.75 G4:.25 G5:1 E5:1 C5:1 B4:1 A4:2 F5:.75 F5:.25 E5:1 C5:1 D5:1 C5:2", "bpm": 120}, {"t": "We Wish You a Merry Christmas", "e": "🎅", "k": 1, "x": 1, "a": ["we wish you"], "n": "D4:1 G4:1 G4:.5 A4:.5 G4:.5 F#4:.5 E4:1 E4:1 E4:1 A4:1 A4:.5 B4:.5 A4:.5 G4:.5 F#4:1 D4:1 D4:1 B4:1 B4:.5 C5:.5 B4:.5 A4:.5 G4:1 E4:1 D4:.5 D4:.5 E4:1 A4:1 F#4:1 G4:2", "bpm": 150}, {"t": "Deck the Halls", "e": "🎄", "k": 1, "x": 1, "a": ["deck the hall"], "n": "G4:1.5 F4:.5 E4:1 D4:1 C4:1 D4:1 E4:1 C4:1 D4:.5 E4:.5 F4:.5 D4:.5 E4:1.5 D4:.5 C4:1 B3:1 C4:2", "bpm": 140}, {"t": "Mary Had a Little Lamb", "e": "🐑", "k": 1, "x": 0, "a": ["little lamb"], "n": "E4:1 D4:1 C4:1 D4:1 E4:1 E4:1 E4:2 D4:1 D4:1 D4:2 E4:1 G4:1 G4:2 E4:1 D4:1 C4:1 D4:1 E4:1 E4:1 E4:1 E4:1 D4:1 D4:1 E4:1 D4:1 C4:2", "bpm": 140}, {"t": "Here Comes the Bride", "e": "👰", "k": 0, "x": 0, "a": ["wedding march", "bridal chorus"], "n": "G4:1 C5:.75 C5:.25 C5:2 G4:1 D5:.75 B4:.25 C5:2", "bpm": 90}, {"t": "Greensleeves", "e": "🍃", "k": 0, "x": 0, "a": ["green sleeves"], "n": "A4:1 C5:2 D5:1 E5:1.5 F5:.5 E5:1 D5:2 B4:1 G4:1.5 A4:.5 B4:1 C5:2 A4:1 A4:1.5 G#4:.5 A4:1 B4:2 G#4:1 E4:2", "bpm": 170}, {"t": "Auld Lang Syne", "e": "🥂", "k": 0, "x": 1, "a": ["old lang syne", "auld lang sine"], "n": "C4:1 F4:1.5 F4:.5 F4:1 A4:1 G4:1.5 F4:.5 G4:1 A4:1 F4:1.5 F4:.5 A4:1 C5:1 D5:3", "bpm": 110}, {"t": "The Entertainer", "e": "🎩", "k": 0, "x": 0, "a": ["entertainer"], "n": "D4:.25 D#4:.25 E4:.25 C5:.5 E4:.25 C5:.5 E4:.25 C5:1.25 C5:.25 D5:.25 D#5:.25 E5:.25 C5:.25 D5:.25 E5:.5 B4:.25 D5:.5 C5:1.5", "bpm": 100}, {"t": "Old MacDonald Had a Farm", "e": "🚜", "k": 1, "x": 0, "a": ["old macdonald", "old mcdonald"], "n": "G4:1 G4:1 G4:1 D4:1 E4:1 E4:1 D4:2 B4:1 B4:1 A4:1 A4:1 G4:2", "bpm": 150}, {"t": "Row, Row, Row Your Boat", "e": "🚣", "k": 1, "x": 0, "a": ["row your boat", "row row row"], "n": "C4:1.5 C4:1.5 C4:1 D4:.5 E4:1.5 E4:1 D4:.5 E4:1 F4:.5 G4:3", "bpm": 200}, {"t": "Eine kleine Nachtmusik", "e": "🎻", "k": 0, "x": 0, "a": ["nachtmusik", "eine kleine", "little night music"], "n": "G4:1 D4:.5 G4:1 D4:.5 G4:.5 D4:.5 G4:.5 B4:.5 D5:2 C5:1 A4:.5 C5:1 A4:.5 C5:.5 A4:.5 F#4:.5 A4:.5 D4:2", "bpm": 130}, {"t": "Frère Jacques", "e": "😴", "k": 1, "x": 0, "a": ["frere jacques", "are you sleeping", "brother john"], "n": "C4:1 D4:1 E4:1 C4:1 C4:1 D4:1 E4:1 C4:1 E4:1 F4:1 G4:2 E4:1 F4:1 G4:2", "bpm": 130}, {"t": "London Bridge Is Falling Down", "e": "🌉", "k": 1, "x": 0, "a": ["london bridge"], "n": "G4:1.5 A4:.5 G4:1 F4:1 E4:1 F4:1 G4:2 D4:1 E4:1 F4:2 E4:1 F4:1 G4:2 G4:1.5 A4:.5 G4:1 F4:1 E4:1 F4:1 G4:2 D4:2 G4:2 E4:1 C4:3", "bpm": 150}, {"t": "Incy Wincy Spider", "e": "🕷️", "k": 1, "x": 0, "a": ["incy wincy", "itsy bitsy"], "n": "G3:.5 C4:1 C4:.5 C4:1 D4:.5 E4:1.5 E4:1 E4:.5 D4:1 C4:.5 D4:1 E4:.5 C4:1.5", "bpm": 170}, {"t": "Pop Goes the Weasel", "e": "🐿️", "k": 1, "x": 0, "a": ["pop goes"], "n": "C4:1 C4:.5 D4:1 D4:.5 E4:.5 G4:.5 E4:.5 C4:1 G3:.5 C4:1 C4:.5 D4:1 D4:.5 E4:1.5 C4:1", "bpm": 170}, {"t": "O Come All Ye Faithful", "e": "⛪", "k": 0, "x": 1, "a": ["come all ye faithful", "adeste fideles"], "n": "G4:1 G4:2 D4:1 G4:1 A4:2 D4:2 B4:1 A4:1 B4:1 C5:1 B4:2 A4:1", "bpm": 110}, {"t": "Good King Wenceslas", "e": "👑", "k": 0, "x": 1, "a": ["good king"], "n": "G4:1 G4:1 G4:1 A4:1 G4:1 G4:1 D4:2 E4:1 D4:1 E4:1 F#4:1 G4:2 G4:2", "bpm": 120}, {"t": "Hark! The Herald Angels Sing", "e": "👼", "k": 0, "x": 1, "a": ["hark the herald", "herald angels"], "n": "D4:1 G4:1 G4:1.5 F#4:.5 G4:1 B4:1 B4:1 A4:1 D5:1 D5:1 D5:1.5 C5:.5 B4:1 A4:1 B4:2", "bpm": 120}, {"t": "Joy to the World", "e": "🌍", "k": 0, "x": 1, "a": [], "n": "D5:2 C#5:.75 B4:.25 A4:1.5 G4:.5 F#4:1 E4:1 D4:2 A4:.5 B4:1.5 B4:.5 C#5:1.5 C#5:.5 D5:3", "bpm": 110}, {"t": "O Christmas Tree", "e": "🌲", "k": 1, "x": 1, "a": ["o tannenbaum", "oh christmas tree"], "n": "D4:1 G4:.75 G4:.25 G4:1.5 A4:.5 B4:.75 B4:.25 B4:1.5 B4:.5 A4:.5 B4:.5 C5:1 F#4:1 A4:1 G4:2", "bpm": 100}, {"t": "God Rest Ye Merry Gentlemen", "e": "🕯️", "k": 0, "x": 1, "a": ["god rest ye", "merry gentlemen"], "n": "E4:1 E4:1 B4:1 B4:1 A4:1 G4:1 F#4:1 E4:1 D4:1 E4:1 F#4:1 G4:1 A4:1 B4:3", "bpm": 140}, {"t": "Away in a Manger", "e": "👶", "k": 1, "x": 1, "a": [], "n": "C5:1 C5:1.5 Bb4:.5 A4:1 A4:1.5 G4:.5 F4:1 F4:1 E4:1 D4:1 C4:2", "bpm": 110},{"t": "When the Saints Go Marching In", "e": "🎺", "k": 1, "x": 0, "a": ["when the saints", "the saints", "oh when the saints"], "n": "C4:1 E4:1 F4:1 G4:5 C4:1 E4:1 F4:1 G4:5 C4:1 E4:1 F4:1 G4:2 E4:2 C4:2 E4:2 D4:4", "bpm": 180},{"t": "Amazing Grace", "e": "🙏", "k": 0, "x": 0, "a": [], "n": "D4:1 G4:2 B4:.5 G4:.5 B4:2 A4:1 G4:2 E4:1 D4:2 D4:1 G4:2 B4:.5 G4:.5 B4:2 A4:1 D5:3", "bpm": 90},{"t": "Brahms' Lullaby", "e": "🍼", "k": 1, "x": 0, "a": ["brahms lullaby", "lullaby", "cradle song", "lullaby and goodnight"], "n": "E4:.5 E4:.5 G4:2 E4:.5 E4:.5 G4:2 E4:.5 G4:.5 C5:1 B4:1.5 A4:.5 A4:1 G4:1 D4:.5 E4:.5 F4:1 D4:1 D4:.5 E4:.5 F4:2 D4:.5 F4:.5 B4:.5 A4:.5 G4:1 B4:1 C5:2", "bpm": 110},{"t": "The Can-Can", "e": "💃", "k": 0, "x": 0, "a": ["can can", "cancan", "galop infernal", "infernal galop"], "n": "C4:1 D4:.5 F4:.25 E4:.25 D4:.5 G4:.5 R:.5 G4:.5 R:.5 G4:.5 A4:.25 E4:.25 F4:.5 D4:.5 R:.5 D4:.5 R:.5 D4:.5 F4:.25 E4:.25 D4:.5 C4:.5 C5:.5 B4:.5 A4:.5 G4:.5 F4:.5 E4:.5 D4:.5", "bpm": 150},{"t": "Swan Lake", "e": "🦢", "k": 0, "x": 0, "a": ["swan lake"], "n": "F#4:3 B3:.5 C#4:.5 D4:.5 E4:.5 F#4:1.5 D4:.5 F#4:1.5 D4:.5 F#4:1.5 B3:.5 D4:.5 B3:.5 G3:.5 D4:.5 B3:3", "bpm": 90},{"t": "God Save the King", "e": "🇬🇧", "k": 0, "x": 0, "a": ["god save the queen", "national anthem", "god save"], "n": "G4:1 G4:1 A4:1 F#4:1.5 G4:.5 A4:1 B4:1 B4:1 C5:1 B4:1.5 A4:.5 G4:1 A4:1 G4:1 F#4:1 G4:3", "bpm": 100},{"t": "Yankee Doodle", "e": "🐴", "k": 1, "x": 0, "a": [], "n": "C4:.5 C4:.5 D4:.5 E4:.5 C4:.5 E4:.5 D4:.5 G3:.5 C4:.5 C4:.5 D4:.5 E4:.5 C4:1 B3:1 C4:.5 C4:.5 D4:.5 E4:.5 F4:.5 E4:.5 D4:.5 C4:.5 B3:.5 G3:.5 A3:.5 B3:.5 C4:1 C4:1", "bpm": 140},{"t": "Oh My Darling, Clementine", "e": "⛏️", "k": 0, "x": 0, "a": ["clementine", "oh my darling"], "n": "C4:.75 C4:.25 C4:1 G3:1 E4:.75 E4:.25 E4:1 C4:1 C4:.75 E4:.25 G4:1.5 G4:.5 F4:.5 E4:.5 D4:2 D4:.75 E4:.25 F4:1 F4:.75 E4:.25 D4:.75 E4:.25 C4:1.5 C4:.75 E4:.25 D4:1 G3:.75 B3:.25 D4:.5 C4:2", "bpm": 120},{"t": "Camptown Races", "e": "🏇", "k": 0, "x": 0, "a": ["camptown", "doo dah", "doo dah doo dah"], "n": "G4:.5 G4:.5 E4:.5 G4:.5 A4:.5 G4:.5 E4:1 E4:.5 D4:1.5 E4:.5 D4:1.5 G4:.5 G4:.5 E4:.5 G4:.5 A4:.5 G4:.5 E4:1 D4:.5 D4:.5 E4:.5 D4:.5 C4:2", "bpm": 150},{"t": "If You're Happy and You Know It", "e": "👏", "k": 1, "x": 0, "a": ["if youre happy", "happy and you know it", "clap your hands"], "n": "G3:.5 G3:.5 C4:.5 C4:.5 C4:.5 C4:.5 C4:.5 C4:.5 B3:.5 C4:.5 D4:1.5 R:.5 G3:.5 G3:.5 D4:.5 D4:.5 D4:.5 D4:.5 D4:.5 D4:.5 C4:.5 D4:.5 E4:1.5", "bpm": 140},{"t": "Scarborough Fair", "e": "🌿", "k": 0, "x": 0, "a": ["scarborough", "parsley sage rosemary and thyme"], "n": "D4:2 D4:1 A4:2 A4:1 E4:1.5 F4:.5 E4:1 D4:3 A4:1 C5:2 D5:1 C5:2 A4:1 B4:1 G4:1 A4:3", "bpm": 120},{"t": "Morning Mood (Grieg)", "e": "🌅", "k": 0, "x": 0, "a": ["morning", "morning mood", "peer gynt"], "n": "G4:.5 E4:.5 D4:.5 C4:.5 D4:.5 E4:.5 G4:.5 E4:.5 D4:.5 C4:.5 D4:.25 E4:.25 D4:.25 E4:.25 G4:.5 E4:.5 G4:.5 A4:.5 E4:.5 A4:.5 G4:.5 E4:.5 D4:.5 C4:2", "bpm": 120},{"t": "The Blue Danube", "e": "🌊", "k": 0, "x": 0, "a": ["blue danube"], "n": "D4:1 D4:1 F#4:1 A4:1 A4:2 A5:1 A5:1 R:1 F#5:1 F#5:1 R:1 D4:1 D4:1 F#4:1 A4:1 A4:2 A5:1 A5:1 R:1 G5:1 G5:1", "bpm": 170},{"t": "Minuet in G (Bach)", "e": "🎀", "k": 0, "x": 0, "a": ["minuet in g", "bach minuet", "minuet"], "n": "D5:1 G4:.5 A4:.5 B4:.5 C5:.5 D5:1 G4:1 G4:1 E5:1 C5:.5 D5:.5 E5:.5 F#5:.5 G5:1 G4:1 G4:1", "bpm": 120},{"t": "Pachelbel's Canon", "e": "💒", "k": 0, "x": 0, "a": ["canon in d", "pachelbel", "pachelbels canon"], "n": "F#5:2 E5:2 D5:2 C#5:2 B4:2 A4:2 B4:2 C#5:2", "bpm": 70},{"t": "Turkish March (Mozart)", "e": "🥁", "k": 0, "x": 0, "a": ["turkish march", "rondo alla turca", "alla turca"], "n": "B4:.25 A4:.25 G#4:.25 A4:.25 C5:1 D5:.25 C5:.25 B4:.25 C5:.25 E5:1 F5:.25 E5:.25 D#5:.25 E5:.25 B5:.25 A5:.25 G#5:.25 A5:.25 B5:.25 A5:.25 G#5:.25 A5:.25 C6:1", "bpm": 120},{"t": "Spring (Vivaldi)", "e": "🌸", "k": 0, "x": 0, "a": ["spring", "four seasons", "vivaldi spring"], "n": "E4:.5 G#4:.5 G#4:.5 G#4:.5 F#4:.25 E4:.25 B4:1.5 B4:.25 A4:.25 G#4:.5 G#4:.5 G#4:.5 F#4:.25 E4:.25 B4:1.5", "bpm": 110},{"t": "Toccata and Fugue (Bach)", "e": "🧛", "k": 0, "x": 0, "a": ["toccata", "toccata and fugue", "toccata in d minor"], "n": "A4:.25 G4:.25 A4:2 G4:.25 F4:.25 E4:.25 D4:.25 C#4:1 D4:2", "bpm": 60},{"t": "Funeral March (Chopin)", "e": "⚰️", "k": 0, "x": 0, "a": ["funeral march", "death march"], "n": "Bb3:1 Bb3:.75 Bb3:.25 Bb3:1 Db4:.75 C4:.25 C4:.75 Bb3:.25 Bb3:.75 A3:.25 Bb3:2", "bpm": 60},{"t": "The First Noel", "e": "✨", "k": 0, "x": 1, "a": ["first noel", "first nowell"], "n": "E4:.5 D4:.5 C4:1.5 D4:.5 E4:.5 F4:.5 G4:2 A4:.5 B4:.5 C5:1 B4:1 A4:1 G4:2", "bpm": 110},{"t": "We Three Kings", "e": "🐪", "k": 0, "x": 1, "a": ["we three kings", "three kings"], "n": "B4:1 A4:.5 G4:1 E4:.5 F#4:.5 G4:.5 F#4:.5 E4:1.5 B4:1 A4:.5 G4:1 E4:.5 F#4:.5 G4:.5 F#4:.5 E4:1.5", "bpm": 110},{"t": "Hot Cross Buns", "e": "🥯", "k": 1, "x": 0, "a": [], "n": "E4:1 D4:1 C4:2 E4:1 D4:1 C4:2 C4:.5 C4:.5 C4:.5 C4:.5 D4:.5 D4:.5 D4:.5 D4:.5 E4:1 D4:1 C4:2", "bpm": 120}];
 const MEMORY = [{"t": "Mr Brightside", "e": "🌟", "x": 0, "a": [], "mem": 1}, {"t": "Bohemian Rhapsody", "e": "👑", "x": 0, "a": [], "mem": 1}, {"t": "Let It Go", "e": "❄️", "x": 0, "a": [], "mem": 1}, {"t": "Happy (Pharrell Williams)", "e": "😊", "x": 0, "a": [], "mem": 1}, {"t": "Sweet Caroline", "e": "🎤", "x": 0, "a": [], "mem": 1}, {"t": "Don't Stop Me Now", "e": "🚀", "x": 0, "a": ["dont stop me now"], "mem": 1}, {"t": "Hey Jude", "e": "🎸", "x": 0, "a": [], "mem": 1}, {"t": "Yellow Submarine", "e": "🚢", "x": 0, "a": [], "mem": 1}, {"t": "Dancing Queen", "e": "👸", "x": 0, "a": [], "mem": 1}, {"t": "Mamma Mia", "e": "💃", "x": 0, "a": [], "mem": 1}, {"t": "YMCA", "e": "🙌", "x": 0, "a": ["y m c a"], "mem": 1}, {"t": "Baby Shark", "e": "🦈", "x": 0, "a": [], "mem": 1}, {"t": "Wonderwall", "e": "🧱", "x": 0, "a": [], "mem": 1}, {"t": "Billie Jean", "e": "🕺", "x": 0, "a": [], "mem": 1}, {"t": "Uptown Funk", "e": "🎺", "x": 0, "a": [], "mem": 1}, {"t": "Someone Like You", "e": "💔", "x": 0, "a": [], "mem": 1}, {"t": "Shake It Off", "e": "💃", "x": 0, "a": [], "mem": 1}, {"t": "Thriller", "e": "🧟", "x": 0, "a": [], "mem": 1}, {"t": "Livin' on a Prayer", "e": "🙏", "x": 0, "a": ["living on a prayer", "livin on a prayer"], "mem": 1}, {"t": "Sweet Child o' Mine", "e": "🌹", "x": 0, "a": ["sweet child of mine", "sweet child o mine"], "mem": 1}, {"t": "Seven Nation Army", "e": "🥁", "x": 0, "a": [], "mem": 1}, {"t": "Eye of the Tiger", "e": "🐯", "x": 0, "a": [], "mem": 1}, {"t": "We Will Rock You", "e": "👏", "x": 0, "a": [], "mem": 1}, {"t": "Take On Me", "e": "📝", "x": 0, "a": [], "mem": 1}, {"t": "Never Gonna Give You Up", "e": "🕺", "x": 0, "a": ["never gonna give you up", "rickroll"], "mem": 1}, {"t": "I Will Always Love You", "e": "❤️", "x": 0, "a": [], "mem": 1}, {"t": "Africa", "e": "🌍", "x": 0, "a": [], "mem": 1}, {"t": "Shape of You", "e": "💪", "x": 0, "a": [], "mem": 1}, {"t": "Star Wars theme", "e": "⭐", "x": 0, "a": ["star wars"], "mem": 1}, {"t": "Harry Potter theme", "e": "⚡", "x": 0, "a": ["harry potter", "hedwigs theme"], "mem": 1}, {"t": "Jaws theme", "e": "🦈", "x": 0, "a": ["jaws"], "mem": 1}, {"t": "The Pink Panther", "e": "🐆", "x": 0, "a": ["pink panther"], "mem": 1}, {"t": "Ghostbusters", "e": "👻", "x": 0, "a": [], "mem": 1}, {"t": "EastEnders theme", "e": "📺", "x": 0, "a": ["eastenders", "east enders"], "mem": 1}, {"t": "Match of the Day theme", "e": "⚽", "x": 0, "a": ["match of the day", "motd"], "mem": 1}, {"t": "Doctor Who theme", "e": "🛸", "x": 0, "a": ["doctor who", "dr who"], "mem": 1}, {"t": "The Simpsons theme", "e": "🍩", "x": 0, "a": ["simpsons"], "mem": 1}, {"t": "Mission: Impossible theme", "e": "🕶️", "x": 0, "a": ["mission impossible"], "mem": 1}, {"t": "James Bond theme", "e": "🍸", "x": 0, "a": ["james bond", "bond theme", "007"], "mem": 1}, {"t": "The Lion Sleeps Tonight", "e": "🦁", "x": 0, "a": ["lion sleeps tonight", "wimoweh"], "mem": 1}, {"t": "Last Christmas", "e": "🎁", "x": 1, "a": [], "mem": 1}, {"t": "All I Want for Christmas Is You", "e": "🎄", "x": 1, "a": ["all i want for christmas"], "mem": 1}, {"t": "Jingle Bell Rock", "e": "🎸", "x": 1, "a": [], "mem": 1}, {"t": "Rockin' Around the Christmas Tree", "e": "🎄", "x": 1, "a": ["rocking around the christmas tree", "rockin around the christmas tree"], "mem": 1}, {"t": "Fairytale of New York", "e": "🗽", "x": 1, "a": ["fairy tale of new york"], "mem": 1}, {"t": "Merry Xmas Everybody", "e": "🎅", "x": 1, "a": ["merry christmas everybody"], "mem": 1}, {"t": "Do They Know It's Christmas?", "e": "🌍", "x": 1, "a": ["do they know its christmas"], "mem": 1}, {"t": "Let It Snow", "e": "⛄", "x": 1, "a": [], "mem": 1}, {"t": "Rudolph the Red-Nosed Reindeer", "e": "🦌", "x": 1, "a": ["rudolph"], "mem": 1}, {"t": "Frosty the Snowman", "e": "⛄", "x": 1, "a": ["frosty"], "mem": 1}, {"t": "Santa Claus Is Comin' to Town", "e": "🎅", "x": 1, "a": ["santa claus is coming to town", "santa claus is comin to town"], "mem": 1}, {"t": "Walking in the Air", "e": "🌨️", "x": 1, "a": [], "mem": 1}, {"t": "White Christmas", "e": "❄️", "x": 1, "a": [], "mem": 1}, {"t": "Driving Home for Christmas", "e": "🚗", "x": 1, "a": [], "mem": 1}, {"t": "Step into Christmas", "e": "🎹", "x": 1, "a": [], "mem": 1}, {"t": "I Wish It Could Be Christmas Everyday", "e": "🎶", "x": 1, "a": ["wish it could be christmas every day", "i wish it could be christmas every day"], "mem": 1}, {"t": "Wonderful Christmastime", "e": "✨", "x": 1, "a": ["wonderful christmas time"], "mem": 1}, {"t": "Feliz Navidad", "e": "🇪🇸", "x": 1, "a": [], "mem": 1}, {"t": "Mistletoe and Wine", "e": "🍷", "x": 1, "a": [], "mem": 1}];
 
 // ===== Notes and the keyboard (two octaves, C4 to C6) =====
@@ -221,6 +221,14 @@ const NB = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 const NAMES = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"];
 const isBlack = m => [1, 3, 6, 8, 10].includes(m % 12);
 const WHITES = []; for (let m = KB_LO; m <= KB_HI; m++) if (!isBlack(m)) WHITES.push(m);
+const ASCII = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const noteName = m => ASCII[m % 12] + (Math.floor(m / 12) - 1);
+const NOTE_RE = /^(?:(?:[A-G][#b]?\d|R):\d+(?:\.\d+)?(?:\s+|$)){2,240}$/;
+// keyboard markup shared by the game piano and the song maker
+function kbHTML() {
+  return WHITES.map(m => `<div class="wk" data-m="${m}"><span class="lbl" style="color:${octCol(m)}">${NAMES[m % 12]}</span></div>`).join("")
+    + Array.from({ length: KB_HI - KB_LO + 1 }, (_, i) => KB_LO + i).filter(isBlack).map(m => `<div class="bk" data-m="${m}" style="left:calc(.3em + (100% - .6em) / 15 * ${WHITES.indexOf(m - 1) + 1} - (100% - .6em) / 15 * .31)"><span class="lbl">${NAMES[m % 12]}</span></div>`).join("");
+}
 const octCol = m => m >= 84 ? "#b06cff" : m >= 72 ? "#e8742c" : "#2f6fd6"; // letter colour per octave so the two Cs look different
 function parseNotes(str) {
   const out = str.trim().split(/\s+/).map(tok => {
@@ -238,16 +246,16 @@ function parseNotes(str) {
 // ===== Settings =====
 const SETS = [
   ["edition", "Edition", [["std", "Standard"], ["xmas", "🎄 Christmas"]]],
-  ["songs", "Songs", [["lib", "🎼 Built-in tunes"], ["mem", "🧠 From memory"], ["mix", "Both"]]],
+  ["songs", "Songs", [["lib", "🎼 Built-in tunes"], ["mem", "🧠 From memory"], ["own", "⭐ Our songs"], ["mix", "🎲 Mix of all"]]],
   ["guide", "Note guide", [["lights", "💡 Glowing keys"], ["letters", "🔤 Note letters"]]],
   ["guess", "Guessing", [["type", "⌨️ Type answers"], ["buzz", "🔔 Buzz in"]]],
   ["who", "Who's playing", [["all", "Everyone"], ["kids", "🧒 Kids only"]]],
   ["laps", "Turns each", [[1, "1 each"], [2, "2 each"], [3, "3 each"]]],
   ["time", "Playing time", [[60, "60 sec"], [90, "90 sec"], [120, "120 sec"]]],
 ];
-function setsHTML(st) {
+function setsHTML(st, own) {
   return SETS.map(([k, label, vals]) => `<div class="setrow"><b>${label}</b>${vals.map(([v, t]) => `<button class="chip ${st[k] === v ? "on" : ""}" data-set="${k}" data-val="${v}">${t}</button>`).join("")}</div>`).join("")
-    + `<div class="lobbynote">${st.edition === "xmas" ? "🎄 Christmas edition: carols and Christmas songs. " : ""}${st.songs === "mem" ? "From memory: the pianist gets just the song title and works it out by ear. " : st.songs === "mix" ? "Both: a mix of built-in tunes (with a note guide) and songs to play from memory. " : "Built-in tunes come with a note guide to follow. "}${st.guide === "lights" ? "Glowing keys: the next key lights up, just tap it." : "Note letters: the tune is shown as letters to find on the keys."} Kids (ticked “a child is playing”) always get built-in tunes and start on glowing keys, and can switch to letters on their phone. ${st.guess === "buzz" ? "Buzz in: first to buzz says the song out loud and the pianist decides." : "Type answers: everyone types guesses and it marks them automatically."}${st.who === "kids" ? " Kids only: grown-ups can join to watch." : ""}</div>`;
+    + `<div class="lobbynote">${st.edition === "xmas" ? "🎄 Christmas edition: carols and Christmas songs. " : ""}${st.songs === "mem" ? "From memory: the pianist gets just the song title and works it out by ear. " : st.songs === "own" ? `Our songs: tunes people have made in 🎼 My songs on their phones (${own || 0} so far${own ? "" : ", so built-in tunes fill in"}). ` : st.songs === "mix" ? `Mix: built-in tunes, songs from memory and our songs (${own || 0}). ` : "Built-in tunes come with a note guide to follow. "}${st.guide === "lights" ? "Glowing keys: the next key lights up, just tap it." : "Note letters: the tune is shown as letters to find on the keys."} Kids (ticked “a child is playing”) always get built-in tunes and start on glowing keys, and can switch to letters on their phone. ${st.guess === "buzz" ? "Buzz in: first to buzz says the song out loud and the pianist decides." : "Type answers: everyone types guesses and it marks them automatically."}${st.who === "kids" ? " Kids only: grown-ups can join to watch." : ""}</div>`;
 }
 const setFromBtn = b => ({ k: b.dataset.set, v: isNaN(b.dataset.val) ? b.dataset.val : Number(b.dataset.val) });
 
@@ -366,8 +374,14 @@ async function tvMain() {
   const joinUrl = location.origin + location.pathname + "?join=" + room + (LOCAL ? "&local=1" : "");
   const S = {
     phase: "lobby", players: {}, order: [], settings: Object.assign({ songs: "lib", guide: "lights", guess: "type", who: "all", laps: 1, time: 90, edition: new Date().getMonth() === 11 ? "xmas" : "std" }, ls.get("piano_settings", {})),
-    queue: [], turnNo: 0, totalTurns: 0, turn: null, concert: [], feed: [], revealUntil: 0,
+    queue: [], turnNo: 0, totalTurns: 0, turn: null, concert: [], feed: [], revealUntil: 0, custom: {},
   };
+  // songs players made in "My songs" on their phones (kept on their phones, sent here when they join)
+  function customSongs() {
+    const out = [], seen = new Set(SONGS.map(s => s.t));
+    for (const id of S.order) { const p = S.players[id]; for (const c of (S.custom[id] || [])) { if (seen.has(c.t)) continue; seen.add(c.t); out.push(Object.assign({ own: 1, by: p ? p.name : "" }, c)); } }
+    return out;
+  }
   let conn = "Connecting…", link = null, colorI = 0, lastKey = "";
   // sound + key lights: notes are scheduled a moment after they arrive so the rhythm survives the internet
   const BUF = 170; let clockOff = null; const vis = []; const held = new Map(); let replaying = null;
@@ -383,7 +397,7 @@ async function tvMain() {
     const t = S.turn;
     const left = t ? (t.paused != null ? t.paused : Math.max(0, t.endsAt - now())) : 0;
     return {
-      phase: S.phase, settings: S.settings, host: hostId(), turnNo: S.turnNo, total: S.totalTurns,
+      phase: S.phase, settings: S.settings, host: hostId(), turnNo: S.turnNo, total: S.totalTurns, own: customSongs().length,
       players: S.order.map(id => S.players[id]).filter(Boolean).map(p => ({ id: p.id, name: p.name, kid: p.kid, color: p.color, score: p.score })),
       drawer: t && t.drawer, left, paused: !!(t && t.paused != null), dur: t ? t.dur : 0,
       hint: t && t.song && S.settings.guess === "type" ? hint(t) : null,
@@ -397,7 +411,7 @@ async function tvMain() {
   function push() { clearTimeout(pushT); pushT = setTimeout(() => { send({ t: "state", st: pub() }); needSecret.forEach(id => secret(S.players[id])); needSecret.clear(); render(); }, 40); }
   function secret(p) {
     const t = S.turn; if (!t || !p || t.drawer !== p.id) return;
-    if (S.phase === "choose") send({ t: "secret", to: p.id, opts: t.opts.map(s => ({ t: s.t, e: s.e, mem: !!s.mem })) });
+    if (S.phase === "choose") send({ t: "secret", to: p.id, opts: t.opts.map(s => ({ t: s.t, e: s.e, mem: !!s.mem, by: s.own ? s.by : null })) });
     if (S.phase === "play" || S.phase === "reveal") send({ t: "secret", to: p.id, song: { t: t.song.t, e: t.song.e, mem: !!t.song.mem, n: t.song.n || null, bpm: t.song.bpm || 0 } });
   }
   function hint(t) {
@@ -425,20 +439,22 @@ async function tvMain() {
     const xm = S.settings.edition === "xmas";
     let lib = SONGS.filter(s => xm ? s.x : true), mem = MEMORY.filter(s => xm ? s.x : !s.x);
     if (kid) lib = lib.filter(s => s.k);
-    return { lib, mem };
+    return { lib, mem, own: customSongs() };
   }
   function nextTurn() {
     let id; while ((id = S.queue.shift())) { const p = S.players[id]; if (p && alive(p) && plays(p)) break; }
     if (!id) { S.phase = "end"; S.turn = null; push(); return; }
     const p = S.players[id];
     S.turnNo++;
-    const used = new Set(S.concert.map(g => g.t)), { lib, mem } = pools(p.kid);
+    const used = new Set(S.concert.map(g => g.t)), { lib, mem, own } = pools(p.kid);
     const fresh = a => { const f = a.filter(s => !used.has(s.t)); return f.length >= 3 ? f : a; };
-    const mode = p.kid ? "lib" : S.settings.songs;
+    const freshOwn = own.filter(s => !used.has(s.t));
+    const st = S.settings.songs, mode = p.kid ? (st === "own" || st === "mix" ? "own" : "lib") : st;
     let opts;
     if (mode === "lib") opts = shuffle(fresh(lib)).slice(0, 3);
     else if (mode === "mem") opts = shuffle(fresh(mem)).slice(0, 3);
-    else { const a = shuffle(fresh(lib)), b = shuffle(fresh(mem)); opts = shuffle(Math.random() < .5 ? [a[0], a[1], b[0]] : [a[0], b[0], b[1]]); }
+    else if (mode === "own") opts = shuffle(freshOwn).slice(0, 3).concat(shuffle(fresh(lib))).slice(0, 3);
+    else { const a = shuffle(fresh(lib)), b = shuffle(fresh(mem)), c = shuffle(freshOwn); opts = shuffle(c.length ? [a[0], b[0], c[0]] : Math.random() < .5 ? [a[0], a[1], b[0]] : [a[0], b[0], b[1]]); }
     S.turn = { drawer: id, opts, song: null, got: {}, wrong: {}, kidWrong: {}, buzz: null, paused: null, dpts: 0, chooseEnds: now() + 20000, rec: [], recStart: 0 };
     clockOff = null; held.clear();
     S.phase = "choose"; S.feed = [];
@@ -451,7 +467,7 @@ async function tvMain() {
     t.dur = (S.settings.time + (p && p.kid ? 20 : 0)) * 1000; t.endsAt = now() + t.dur;
     t.hintOrder = shuffle([...t.song.t].map((c, j) => /[a-z0-9]/i.test(c) ? j : -1).filter(j => j >= 0));
     // four picture choices for kids guessing: the song plus three others (kid songs where possible)
-    const pool = (t.song.k ? SONGS.filter(s => s.k) : t.song.mem ? MEMORY : SONGS).filter(s => s.t !== t.song.t && s.e !== t.song.e);
+    const pool = (t.song.own ? customSongs().concat(SONGS.filter(s => s.k)) : t.song.k ? SONGS.filter(s => s.k) : t.song.mem ? MEMORY : SONGS).filter(s => s.t !== t.song.t);
     t.kc = shuffle([t.song].concat(shuffle(pool).slice(0, 3)));
     S.phase = "play";
     needSecret.add(t.drawer); push();
@@ -558,6 +574,11 @@ async function tvMain() {
     const isHost = m.id === hostId(), t = S.turn, isPianist = t && t.drawer === m.id;
     switch (m.t) {
       case "hi": break;
+      case "mysongs": {
+        const list = Array.isArray(m.songs) ? m.songs.slice(0, 40) : [];
+        S.custom[m.id] = list.filter(c => c && typeof c.t === "string" && typeof c.n === "string" && NOTE_RE.test(c.n.trim())).map(c => ({ t: c.t.trim().slice(0, 40) || "My song", e: String(c.e || "🎵").slice(0, 8), n: c.n.trim(), bpm: 60 }));
+        push(); break;
+      }
       case "set": if (isHost && (S.phase === "lobby" || S.phase === "end") && SETS.some(x => x[0] === m.k && x[2].some(v => v[0] === m.v))) { S.settings[m.k] = m.v; push(); } break;
       case "start": if (isHost && S.phase === "lobby") start(); break;
       case "again": if (isHost && S.phase === "end") playAgain(); break;
@@ -633,7 +654,7 @@ async function tvMain() {
     const sov = $("#sov");
     if (sov) { const need = !Synth.ok(); if (need && !sov.innerHTML) { sov.innerHTML = `<div class="soundov"><button class="btn gold">🔊 Click to switch the sound on</button></div>`; sov.onclick = () => { Synth.init(); setTimeout(() => { sov.innerHTML = Synth.ok() ? "" : sov.innerHTML; }, 150); }; } else if (!need) sov.innerHTML = ""; }
     if (S.phase === "lobby") {
-      $("#sets").innerHTML = setsHTML(S.settings);
+      $("#sets").innerHTML = setsHTML(S.settings, customSongs().length);
       const n = eligible().length;
       $("#start").disabled = n < 2;
       $("#snote").textContent = n < 2 ? (S.settings.who === "kids" ? "Needs at least 2 kids (tick “a child is playing” when joining)." : "Needs at least 2 players.") : `${n} pianists ready. The first player to join can also start from their phone.`;
@@ -643,7 +664,7 @@ async function tvMain() {
     if (S.phase === "end") {
       $("#exh").textContent = S.settings.edition === "xmas" ? "The Christmas Concert" : "The Concert";
       $("#gal").innerHTML = S.concert.length ? S.concert.map((g, i) => `<div class="ticket ${replaying && replaying.i === i ? "playing" : ""}" style="animation-delay:${i * .1}s"><span class="e">${g.e}</span><div><b>${esc(g.t)}</b><span class="by" style="color:${g.color}">played by ${esc(g.by)}</span></div><button class="pl" data-r="${i}">${replaying && replaying.i === i ? "♪" : "▶"}</button></div>`).join("") : `<div class="muted">No performances this time.</div>`;
-      $("#sets").innerHTML = setsHTML(S.settings);
+      $("#sets").innerHTML = setsHTML(S.settings, customSongs().length);
       $("#sets").onclick = e => { const b = e.target.closest("[data-set]"); if (b) { const { k, v } = setFromBtn(b); S.settings[k] = v; push(); } };
       const n = eligible().length;
       $("#snote").textContent = n < 2 ? (S.settings.who === "kids" ? "Kids only needs at least 2 kids. Play again will open the lobby so more can join." : "Needs at least 2 players.") : "";
@@ -654,8 +675,8 @@ async function tvMain() {
     const d = S.players[t.drawer], dn = d ? esc(d.name) : "";
     const pq = $("#plaque");
     if (S.phase === "choose") pq.innerHTML = `<small>Next pianist</small><b>${dn}</b><div style="font-weight:700">is choosing a song…</div>`;
-    else if (S.phase === "play") pq.innerHTML = `<small>${t.song.mem ? "Playing from memory" : "At the piano"}</small><b>${dn}</b>${S.settings.who === "kids" ? `<div style="font-weight:700">Kids, tap the song on your phone!</div>` : S.settings.guess === "type" ? `<div class="hint">${esc(hint(t))}</div>` : `<div style="font-weight:700">Know the song? Buzz in!</div>`}`;
-    else if (S.phase === "reveal") pq.innerHTML = t.skipped ? `<small>Skipped</small><b>${dn}'s song</b>` : `<small>It was</small><b>“${esc(t.song.t)}” ${t.song.e}</b><div style="font-weight:700">played by ${dn}${t.dpts ? ` · +${t.dpts} for the pianist` : ""}${t.song.n ? " · 🎶 here's how it goes" : ""}</div>`;
+    else if (S.phase === "play") pq.innerHTML = `<small>${t.song.mem ? "Playing from memory" : t.song.own ? "Playing one of our songs" : "At the piano"}</small><b>${dn}</b>${S.settings.who === "kids" ? `<div style="font-weight:700">Kids, tap the song on your phone!</div>` : S.settings.guess === "type" ? `<div class="hint">${esc(hint(t))}</div>` : `<div style="font-weight:700">Know the song? Buzz in!</div>`}`;
+    else if (S.phase === "reveal") pq.innerHTML = t.skipped ? `<small>Skipped</small><b>${dn}'s song</b>` : `<small>It was</small><b>“${esc(t.song.t)}” ${t.song.e}</b><div style="font-weight:700">${t.song.own && t.song.by ? `written by ${esc(t.song.by)} · ` : ""}played by ${dn}${t.dpts ? ` · +${t.dpts} for the pianist` : ""}${t.song.n ? " · 🎶 here's how it goes" : ""}</div>`;
     $("#feed").innerHTML = S.feed.map(f => `<div class="${f.ok ? "ok" : ""}">${f.html}</div>`).join("");
     $("#skip").onclick = () => endTurn(true);
     $("#skip").classList.toggle("hidden", S.phase === "reveal");
@@ -728,6 +749,10 @@ async function phoneMain(codeRaw) {
   let myGuesses = [], kidNo = new Set(), judgeShown = false;
   // piano state
   let guide = null, seq = [], idx = 0, loops = 0, phoneSound = ls.get("piano_phonesound", false), pressN = 0;
+  // song maker ("My songs"): songs live on this phone and are sent to the TV
+  let mySongs = ls.get("piano_mysongs", []), making = null, rec = [], recPlay = [];
+  const syncSongs = () => send({ t: "mysongs", songs: mySongs.map(s => ({ t: s.t, e: s.e, n: s.n })) });
+  const sendJoin = () => { send({ t: "join", name: me.name, kid: me.kid }); syncSongs(); };
 
   const send = m => link && link.send(Object.assign({ id }, m));
   function joinForm() {
@@ -736,7 +761,7 @@ async function phoneMain(codeRaw) {
       <input id="nm" maxlength="16" placeholder="Your name" value="${esc(me ? me.name : "")}">
       <label class="check"><input type="checkbox" id="kid" ${me && me.kid ? "checked" : ""}> 🧒 A child is playing<br><span class="muted" style="font-weight:500;font-size:.9em">They get easy songs with glowing keys to follow, and guess by tapping a picture.</span></label>
       <button class="btn big gold" id="go">Join</button></div>`;
-    const go = () => { const v = $("#nm").value.trim(); if (!v) return $("#nm").focus(); me = { name: v, kid: $("#kid").checked }; ls.set("piano_me", me); lastKey = ""; send({ t: "join", name: me.name, kid: me.kid }); render(); };
+    const go = () => { const v = $("#nm").value.trim(); if (!v) return $("#nm").focus(); me = { name: v, kid: $("#kid").checked }; ls.set("piano_me", me); lastKey = ""; sendJoin(); render(); };
     $("#go").onclick = go; $("#nm").onkeydown = e => { if (e.key === "Enter") go(); };
   }
 
@@ -745,7 +770,7 @@ async function phoneMain(codeRaw) {
     if (m.t === "state") {
       const was = ST; ST = m.st; lastState = Date.now();
       localEnd = Date.now() + (ST.left || 0);
-      if (!ST.players.some(p => p.id === id) && me) send({ t: "join", name: me.name, kid: me.kid });
+      if (!ST.players.some(p => p.id === id) && me) sendJoin();
       if (was && was.turnNo !== ST.turnNo) { myGuesses = []; kidNo = new Set(); secretOpts = null; secretSong = null; guide = null; if (ST.drawer === id) buzzPhone([60, 60, 60]); }
       if (ST.buzz && ST.drawer === id && !judgeShown) buzzPhone(120);
       if (was && ST.got[id] != null && was.got[id] == null) buzzPhone([40, 40, 120]);
@@ -759,7 +784,7 @@ async function phoneMain(codeRaw) {
     }
     if (m.t === "close") toast("So close!");
     if (m.t === "nope") { kidNo.add(m.i); buzzPhone(80); const el = document.querySelector(`[data-k="${m.i}"]`); if (el) { el.classList.add("no", "shake"); } }
-    if (m.t === "rejoin" && me) send({ t: "join", name: me.name, kid: me.kid });
+    if (m.t === "rejoin" && me) sendJoin();
   }
   function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.textContent = t; ($("#pv") || document.body).appendChild(d); buzzPhone(30); setTimeout(() => d.remove(), 1500); }
 
@@ -785,6 +810,7 @@ async function phoneMain(codeRaw) {
   }
   function render() {
     const r = role();
+    if (making) { if (r === "lobby" || r === "end" || r === "wait") return; making = null; lastKey = ""; setTimeout(() => toast("The game's starting!"), 300); }
     const key = r + "|" + (ST ? ST.turnNo + "|" + ST.phase : "") + "|" + (secretOpts ? 1 : 0) + (secretSong ? 1 : 0);
     if (r === "join") { if (lastKey !== "join") joinForm(); return; }
     if (key !== lastKey) { lastKey = key; build(r); }
@@ -798,12 +824,12 @@ async function phoneMain(codeRaw) {
     if (r === "wait") body = `<div class="center"><div class="bigemoji">🎹</div><h2>Finding the TV…</h2><p class="muted">Make sure the TV screen is on game ${esc(room)}.</p></div>`;
     else if (r === "lobby") body = `<div class="center" style="flex:none;padding-top:1em"><div class="bigemoji" style="font-size:5rem">🎹</div><h2>You're in!</h2>
         <p class="muted">${me.kid ? "🧒 Child player" : "Grown-up player"} · <button id="edit" style="text-decoration:underline;color:var(--muted)">change</button></p>
-        <p class="muted" style="font-size:.9rem">When it's your turn your phone becomes a piano. Turn it sideways.</p></div>
+        <p class="muted" style="font-size:.9rem">When it's your turn your phone becomes a piano. Turn it sideways.</p></div><button class="btn big" id="mys">🎼 My songs (${mySongs.length})</button><p class="muted" style="font-size:.85rem;text-align:center;margin:-.4em 0 0">Make up your own tunes or play in songs you know. Choose ⭐ Our songs to play them in the game.</p>
         ${isHost ? `<div id="sets"></div><button class="btn gold big" id="start">Start the game</button><div class="muted" id="snote" style="text-align:center"></div>` : `<p class="muted" style="text-align:center">Waiting for ${esc((ST.players.find(x => x.id === ST.host) || {}).name || "the host")} to start the game.</p>`}`;
     else if (r === "choose") {
       const o = secretOpts || [];
       body = p.kid ? `<div class="center" style="flex:none"><h2>Pick a song to play!</h2></div><div class="kopts" style="grid-template-columns:1fr">${o.map((x, i) => `<button class="ktile" data-c="${i}"><span>${x.e}</span>${esc(x.t)}</button>`).join("")}</div>`
-        : `<div class="center" style="flex:none"><h2>Your turn at the piano!</h2><p class="muted">Pick a song. Nobody else can see this.</p></div><div class="opts">${o.map((x, i) => `<button class="btn" data-c="${i}">${x.e} ${esc(x.t)}<small>${x.mem ? "🧠 play it from memory" : "🎼 with a note guide"}</small></button>`).join("")}</div>`;
+        : `<div class="center" style="flex:none"><h2>Your turn at the piano!</h2><p class="muted">Pick a song. Nobody else can see this.</p></div><div class="opts">${o.map((x, i) => `<button class="btn" data-c="${i}">${x.e} ${esc(x.t)}<small>${x.mem ? "🧠 play it from memory" : x.by ? `⭐ by ${esc(x.by)}, with a note guide` : "🎼 with a note guide"}</small></button>`).join("")}</div>`;
     }
     else if (r === "play") { buildPiano(); return; }
     else if (r === "waitplay") { const d = ST.players.find(x => x.id === ST.drawer); body = `<div class="center"><div class="bigemoji">🎹</div><h2>${esc(d ? d.name : "Someone")} is choosing a song…</h2><p class="muted">Listen to the TV!</p></div>`; }
@@ -824,12 +850,14 @@ async function phoneMain(codeRaw) {
       const sorted = ST.players.slice().sort((a, b) => b.score - a.score), pos = sorted.findIndex(x => x.id === id) + 1;
       body = `<div class="center"><div class="bigemoji">${pos === 1 ? "🏆" : "🎹"}</div><h2>${pos === 1 ? "You won!" : `You came ${ord(pos)}`}</h2><p style="font-size:1.4rem;font-weight:800;color:var(--gold)">${mine().score} points</p>
         <p class="muted">Every performance is on the TV to play back.</p><p class="muted">${me.kid ? "🧒 Child player" : "Grown-up player"} · <button id="edit" style="text-decoration:underline;color:var(--muted)">change</button></p></div>
+        <button class="btn big" id="mys">🎼 My songs (${mySongs.length})</button><p class="muted" style="font-size:.85rem;text-align:center;margin:-.4em 0 0">Make up your own tunes or play in songs you know. Choose ⭐ Our songs to play them in the game.</p>
         ${isHost ? `<div style="font-weight:800">Next game</div><button class="btn gold big" id="again">▶ Play again</button><div class="muted" id="snote" style="text-align:center"></div><div id="sets"></div><button class="btn" id="tolobby">Back to the lobby</button>` : `<p class="muted" style="text-align:center">Waiting for ${esc((ST.players.find(x => x.id === ST.host) || {}).name || "the host")} to start the next game.</p>`}`;
     }
     app.innerHTML = `<div class="pw">${top(skipBtn)}<div class="pbody">${body}</div></div>`;
     const on = (sel, fn) => { const el = $(sel); if (el) el.onclick = fn; };
     on("#skp", () => send({ t: "skip" }));
     on("#edit", () => joinForm());
+    on("#mys", () => songList());
     on("#start", () => send({ t: "start" }));
     on("#again", () => send({ t: "again" }));
     on("#tolobby", () => send({ t: "lobby" }));
@@ -851,8 +879,7 @@ async function phoneMain(codeRaw) {
   function buildPiano() {
     const p = mine(), s = secretSong || { t: "…", e: "" };
     if (!guide) guide = p.kid ? "lights" : ST.settings.guide;
-    const keys = WHITES.map(m => `<div class="wk" data-m="${m}"><span class="lbl" style="color:${octCol(m)}">${NAMES[m % 12]}</span></div>`).join("")
-      + Array.from({ length: KB_HI - KB_LO + 1 }, (_, i) => KB_LO + i).filter(isBlack).map(m => `<div class="bk" data-m="${m}" style="left:calc(.3em + (100% - .6em) / 15 * ${WHITES.indexOf(m - 1) + 1} - (100% - .6em) / 15 * .31)"><span class="lbl">${NAMES[m % 12]}</span></div>`).join("");
+    const keys = kbHTML();
     app.innerHTML = `<div class="pv" id="pv" data-pc="${p.color}">
       <div class="pvtop"><span class="dot" style="width:.9em;height:.9em;border-radius:50%;background:${p.color};flex:none"></span>
         <span class="song">${s.e} Play <b>${esc(s.t)}</b>${s.mem ? " · from memory" : ""}</span>
@@ -910,12 +937,79 @@ async function phoneMain(codeRaw) {
     }).join("");
   }
 
+
+  // ---- song maker ----
+  function playOnPhone(n) {
+    if (!Synth.init()) return; const notes = parseNotes(n); let t = Synth.ctx.currentTime + .15;
+    recPlay.forEach(v => v && v.stop()); recPlay = [];
+    for (const o of notes) { const d = o.b; if (o.m) { const v = Synth.note(o.m, t, .45); v && v.stop(t + Math.max(.12, d * .9)); recPlay.push(v); } t += d; }
+  }
+  function songList(msg) {
+    making = { view: "list" };
+    removeEventListener("resize", orient);
+    app.innerHTML = `<div class="pw"><div class="ptop"><span class="nm">🎼 My songs</span><button class="btn" id="mdone" style="padding:.35em .8em">Done</button></div><div class="pbody">
+      <p class="muted" style="margin:0">Make up your own tune, or play in a song you know. Songs are saved on this phone and go into the game when the host picks <b>⭐ Our songs</b> or <b>🎲 Mix of all</b>. Whoever plays it gets glowing keys to follow.</p>
+      ${msg ? `<p style="margin:0;color:var(--good);font-weight:800">${esc(msg)}</p>` : ""}
+      <button class="btn gold big" id="mnew">＋ Make a new song</button>
+      <div class="plist">${mySongs.map((x, i) => `<div class="prow"><span style="font-size:1.7rem">${x.e}</span><span class="nm">${esc(x.t)}<br><small class="muted">${x.n.split(/\s+/).filter(z => !z.startsWith("R")).length} notes</small></span><button class="btn" data-mp="${i}" style="padding:.5em .8em">▶</button><button class="btn" data-md="${i}" style="padding:.5em .8em">🗑</button></div>`).join("") || `<p class="muted" style="text-align:center">No songs yet.</p>`}</div></div></div>`;
+    $("#mdone").onclick = () => { making = null; lastKey = ""; render(); };
+    $("#mnew").onclick = () => { rec = []; recorder(); };
+    document.querySelectorAll("[data-mp]").forEach(b => b.onclick = () => playOnPhone(mySongs[+b.dataset.mp].n));
+    document.querySelectorAll("[data-md]").forEach(b => b.onclick = () => { const x = mySongs[+b.dataset.md]; if (confirm(`Delete “${x.t}”?`)) { mySongs.splice(+b.dataset.md, 1); ls.set("piano_mysongs", mySongs); syncSongs(); songList(); } });
+  }
+  const recString = () => rec.map((r, i) => { const nx = rec[i + 1]; const gap = nx ? (nx.t - r.t) / 1000 : 1; return noteName(r.m) + ":" + (Math.round(Math.min(2.5, Math.max(.15, gap > 3 ? 1 : gap)) * 100) / 100); }).join(" ");
+  function recorder() {
+    making = { view: "rec" };
+    const p = mine() || { color: "#f2c94c" };
+    app.innerHTML = `<div class="pv" id="pv" data-pc="${p.color}">
+      <div class="pvtop"><span class="song">🎼 <b>Play your tune</b> · it's recorded as you play</span>
+        <button class="btn" id="rplay">▶ Play</button><button class="btn" id="rundo">↶ Undo</button><button class="btn" id="rclear">Clear</button><button class="btn gold" id="rsave">Save</button><button class="btn" id="rback">✕</button></div>
+      <div class="lane" id="lane"></div>
+      <div class="kb" id="kb">${kbHTML()}</div></div>`;
+    orient(); addEventListener("resize", orient);
+    Synth.init();
+    const kb = $("#kb"), down = new Map();
+    const lane = () => { const ln = $("#lane"); if (ln) ln.innerHTML = rec.length ? rec.slice(-16).map((r, i, a) => `<span class="n ${i === a.length - 1 ? "now" : ""}" style="background:${octCol(r.m)}">${NAMES[r.m % 12]}</span>`).join("") + `<span class="msg">${rec.length} notes</span>` : `<span class="msg">Tap the keys to play your tune. Play at the speed you want it played. Pauses over 3 seconds don't count.</span>`; };
+    kb.querySelectorAll("[data-m]").forEach(el => {
+      el.onpointerdown = e => { e.preventDefault(); if (down.has(e.pointerId)) return; const m = +el.dataset.m; try { el.setPointerCapture(e.pointerId); } catch (_) { } down.set(e.pointerId, { el, v: Synth.ok() ? Synth.note(m, 0, .45) : null }); el.classList.add("down"); if (rec.length < 200) rec.push({ m, t: Date.now() }); buzzPhone(8); lane(); };
+      el.onpointerup = el.onpointercancel = el.onlostpointercapture = e => { const d = down.get(e.pointerId); if (!d) return; down.delete(e.pointerId); d.el.classList.remove("down"); d.v && d.v.stop(); };
+    });
+    kb.oncontextmenu = e => e.preventDefault();
+    $("#rplay").onclick = () => { if (rec.length) playOnPhone(recString()); };
+    $("#rundo").onclick = () => { rec.pop(); lane(); };
+    $("#rclear").onclick = () => { if (!rec.length || confirm("Clear all the notes?")) { rec = []; lane(); } };
+    $("#rback").onclick = () => { if (!rec.length || confirm("Leave without saving?")) songList(); };
+    $("#rsave").onclick = () => { if (rec.length < 3) return toast("Play at least 3 notes first"); nameSong(); };
+    lane();
+  }
+  const PICS = ["🎵", "⭐", "❤️", "🦖", "🐱", "🐶", "🦄", "🚀", "🌈", "🎄", "🎅", "⚽", "🏰", "🐉", "🍕", "🎂", "🌙", "👑", "🎸", "🤖"];
+  function nameSong() {
+    making = { view: "name" };
+    removeEventListener("resize", orient);
+    let pic = "🎵";
+    app.innerHTML = `<div class="pw"><div class="ptop"><span class="nm">🎼 Save your song</span></div><div class="pbody">
+      <label style="font-weight:700">What's it called?<input id="sname" maxlength="40" placeholder="e.g. Harry's Dinosaur Song, or Mr Brightside" style="margin-top:.4em"></label>
+      <div><div style="font-weight:700;margin-bottom:.4em">Pick a picture</div><div class="mine" id="pics">${PICS.map(e => `<button class="chip ${e === pic ? "on" : ""}" data-pic="${e}" style="font-size:1.4rem">${e}</button>`).join("")}</div></div>
+      <p class="muted" style="margin:0">If it's a song people know, use its real name so they can guess it.</p>
+      <button class="btn gold big" id="sok">💾 Save song</button><button class="btn" id="sback">← Back to the piano</button></div></div>`;
+    $("#pics").onclick = e => { const b = e.target.closest("[data-pic]"); if (!b) return; pic = b.dataset.pic; document.querySelectorAll("[data-pic]").forEach(z => z.classList.toggle("on", z === b)); };
+    $("#sback").onclick = () => recorder();
+    $("#sok").onclick = () => {
+      const t = $("#sname").value.trim(); if (!t) return $("#sname").focus();
+      const n = recString(); if (!NOTE_RE.test(n)) return toast("That song is too long");
+      mySongs = mySongs.filter(x => x.t.toLowerCase() !== t.toLowerCase()); mySongs.unshift({ t, e: pic, n });
+      mySongs = mySongs.slice(0, 40); ls.set("piano_mysongs", mySongs); syncSongs(); rec = [];
+      songList(`Saved “${t}”`);
+    };
+    setTimeout(() => $("#sname") && $("#sname").focus(), 100);
+  }
+
   function upd(r) {
     festive(!!(ST && ST.settings.edition === "xmas") && r !== "play", 22);
     const tm = $("#ptm");
     if (tm) { const s = ST && ST.phase === "play" ? Math.ceil(Math.max(0, ST.paused ? ST.left : localEnd - Date.now()) / 1000) : null; tm.textContent = s == null ? "" : (ST.paused ? "⏸" : "") + s; }
     if ((r === "lobby" || r === "end") && $("#sets")) {
-      $("#sets").innerHTML = setsHTML(ST.settings);
+      $("#sets").innerHTML = setsHTML(ST.settings, ST.own);
       const n = ST.players.filter(p => ST.settings.who === "kids" ? p.kid : true).length;
       if ($("#start")) $("#start").disabled = n < 2;
       $("#snote").textContent = n < 2 ? (r === "end" ? "Not enough players for these settings yet. Play again will open the lobby." : "Waiting for more players…") : `${n} pianists ready`;
@@ -939,15 +1033,15 @@ async function phoneMain(codeRaw) {
       } else if (judgeShown) { judgeShown = false; j.innerHTML = ""; }
     }
   }
-  setInterval(() => { if (ST && ST.phase === "play") { const t = $("#ptm"); if (t) upd(role()); } }, 250);
+  setInterval(() => { if (!making && ST && ST.phase === "play") { const t = $("#ptm"); if (t) upd(role()); } }, 250);
 
   // ---- start ----
   if (!me) joinForm(); else render();
   try { link = await connect(room, onMsg); } catch (e) { app.innerHTML = `<div class="home"><h2>Couldn't connect</h2><p class="muted">Check your internet and try again.</p><button class="btn gold" onclick="location.reload()">Try again</button></div>`; return; }
-  if (me) send({ t: "join", name: me.name, kid: me.kid });
+  if (me) sendJoin();
   setInterval(() => {
     if (!me) return;
-    if (Date.now() - lastState > 8000) send({ t: "join", name: me.name, kid: me.kid });
+    if (Date.now() - lastState > 8000) sendJoin();
     else send({ t: "hi" });
   }, 3000);
   try { if (navigator.wakeLock) { let wl = await navigator.wakeLock.request("screen"); document.addEventListener("visibilitychange", async () => { if (document.visibilityState === "visible") try { wl = await navigator.wakeLock.request("screen"); } catch (e) { } }); } } catch (e) { }

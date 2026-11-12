@@ -224,6 +224,25 @@ const WHITES = []; for (let m = KB_LO; m <= KB_HI; m++) if (!isBlack(m)) WHITES.
 const ASCII = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 const noteName = m => ASCII[m % 12] + (Math.floor(m / 12) - 1);
 const NOTE_RE = /^(?:(?:[A-G][#b]?\d|R):\d+(?:\.\d+)?(?:\s+|$)){2,240}$/;
+// Read notes typed or pasted as letters: "C C G G A A G:2", sharps/flats (F#, Bb), optional octave (C5),
+// :2 / :0.5 for longer/shorter, R for a rest. Bar lines, commas and dashes are ignored.
+// With no octave number, notes go in the middle octave (C4 to B4); C5 is the C above, C3 the one below.
+function parsePasted(txt, bpm) {
+  const toks = String(txt || "").replace(/♯/g, "#").replace(/♭/g, "b").split(/[\s,|/\-–;]+/).filter(Boolean);
+  const secs = l => Math.round(Math.min(8, Math.max(.1, l ? +l : 1)) * 60 / bpm * 100) / 100;
+  const out = [], bad = [];
+  for (const tk of toks) {
+    let m = tk.match(/^[Rr_](?::(\d*\.?\d+))?$/);
+    if (m) { out.push("R:" + secs(m[1])); continue; }
+    m = tk.match(/^([A-Ga-g])([#b]?)(\d)?(?::(\d*\.?\d+))?$/);
+    if (!m) { bad.push(tk); continue; }
+    const acc = m[2] === "#" ? 1 : m[2] === "b" ? -1 : 0, pc = NB[m[1].toUpperCase()] + acc;
+    const midi = m[3] ? 12 * (+m[3] + 1) + pc : 60 + pc; // no number = the middle octave (C4 to B4)
+    out.push(noteName(midi) + ":" + secs(m[4]));
+  }
+  while (out.length && out[0].startsWith("R")) out.shift();
+  return { n: out.slice(0, 240).join(" "), count: out.filter(x => !x.startsWith("R")).length, bad, long: out.length > 240 };
+}
 // keyboard markup shared by the game piano and the song maker
 function kbHTML() {
   return WHITES.map(m => `<div class="wk" data-m="${m}"><span class="lbl" style="color:${octCol(m)}">${NAMES[m % 12]}</span></div>`).join("")
@@ -238,9 +257,11 @@ function parseNotes(str) {
     return { m: 12 * (+x[3] + 1) + NB[x[1]] + (x[2] === "#" ? 1 : x[2] === "b" ? -1 : 0), b: +b };
   });
   const ms = out.filter(o => o.m).map(o => o.m); let sh = 0;
+  if (!ms.length) return out;
   while (Math.min(...ms) + sh < KB_LO) sh += 12;
-  while (Math.max(...ms) + sh > KB_HI) sh -= 12;
-  return out.map(o => o.m ? { m: o.m + sh, b: o.b } : o);
+  while (Math.max(...ms) + sh > KB_HI && Math.min(...ms) + sh - 12 >= KB_LO) sh -= 12;
+  const fold = m => { while (m > KB_HI) m -= 12; while (m < KB_LO) m += 12; return m; }; // anything still off the keyboard moves an octave
+  return out.map(o => o.m ? { m: fold(o.m + sh), b: o.b } : o);
 }
 
 // ===== Settings =====
@@ -953,10 +974,12 @@ async function phoneMain(codeRaw) {
     app.innerHTML = `<div class="pw"><div class="ptop"><span class="nm">🎼 My songs</span><button class="btn" id="mdone" style="padding:.35em .8em">Done</button></div><div class="pbody">
       <p class="muted" style="margin:0">Make up your own tune, or play in a song you know. Songs are saved on this phone and go into the game when the host picks <b>⭐ Our songs</b> or <b>🎲 Mix of all</b>. Whoever plays it gets glowing keys to follow.</p>
       ${msg ? `<p style="margin:0;color:var(--good);font-weight:800">${esc(msg)}</p>` : ""}
-      <button class="btn gold big" id="mnew">＋ Make a new song</button>
+      <button class="btn gold big" id="mnew">🎹 Play a new song in</button>
+      <button class="btn big" id="mpaste">📝 Type or paste notes</button>
       <div class="plist">${mySongs.map((x, i) => `<div class="prow"><span style="font-size:1.7rem">${x.e}</span><span class="nm">${esc(x.t)}<br><small class="muted">${x.n.split(/\s+/).filter(z => !z.startsWith("R")).length} notes</small></span><button class="btn" data-mp="${i}" style="padding:.5em .8em">▶</button><button class="btn" data-md="${i}" style="padding:.5em .8em">🗑</button></div>`).join("") || `<p class="muted" style="text-align:center">No songs yet.</p>`}</div></div></div>`;
     $("#mdone").onclick = () => { making = null; lastKey = ""; render(); };
     $("#mnew").onclick = () => { rec = []; recorder(); };
+    $("#mpaste").onclick = () => pasteNotes();
     document.querySelectorAll("[data-mp]").forEach(b => b.onclick = () => playOnPhone(mySongs[+b.dataset.mp].n));
     document.querySelectorAll("[data-md]").forEach(b => b.onclick = () => { const x = mySongs[+b.dataset.md]; if (confirm(`Delete “${x.t}”?`)) { mySongs.splice(+b.dataset.md, 1); ls.set("piano_mysongs", mySongs); syncSongs(); songList(); } });
   }
@@ -982,26 +1005,48 @@ async function phoneMain(codeRaw) {
     $("#rundo").onclick = () => { rec.pop(); lane(); };
     $("#rclear").onclick = () => { if (!rec.length || confirm("Clear all the notes?")) { rec = []; lane(); } };
     $("#rback").onclick = () => { if (!rec.length || confirm("Leave without saving?")) songList(); };
-    $("#rsave").onclick = () => { if (rec.length < 3) return toast("Play at least 3 notes first"); nameSong(); };
+    $("#rsave").onclick = () => { if (rec.length < 3) return toast("Play at least 3 notes first"); nameSong(recString(), recorder); };
     lane();
   }
+  let pasted = { txt: "", bpm: 110, title: "" };
+  function pasteNotes() {
+    making = { view: "paste" };
+    removeEventListener("resize", orient);
+    app.innerHTML = `<div class="pw"><div class="ptop"><span class="nm">📝 Type or paste notes</span><button class="btn" id="pback" style="padding:.35em .8em">✕</button></div><div class="pbody">
+      <textarea id="ptxt" rows="6" placeholder="E D C D E E E:2  D D D:2  E G G:2" style="font:inherit;font-family:var(--display);font-size:1.3rem;letter-spacing:.05em;color:var(--fg);background:var(--bg2);border:2px solid var(--line);border-radius:12px;padding:.7em;width:100%;resize:vertical">${esc(pasted.txt)}</textarea>
+      <div class="muted" style="font-size:.9rem;line-height:1.45">Letters with spaces: <b>C D E F G A B</b>. Sharps and flats: <b>F#</b>, <b>Bb</b>. Longer or shorter: <b>C:2</b>, <b>C:0.5</b> (normal is 1). A rest: <b>R</b>. Notes play in the middle octave; for the octave above or below add a number: <b>C5</b> is the higher C, <b>B3</b> the lower B. Bar lines <b>|</b>, commas and dashes are ignored.</div>
+      <div class="setrow"><b>Speed</b>${[[80, "🐢 Slow"], [110, "Medium"], [140, "🐇 Fast"]].map(([v, t]) => `<button class="chip ${pasted.bpm === v ? "on" : ""}" data-bpm="${v}">${t}</button>`).join("")}</div>
+      <div id="pres" class="muted" style="font-weight:700"></div>
+      <div style="display:flex;gap:.6em"><button class="btn" id="pprev" style="flex:1">▶ Listen</button><button class="btn gold" id="pnext" style="flex:1">Next: name it →</button></div></div></div>`;
+    const ta = $("#ptxt"), res = $("#pres");
+    const check = () => {
+      pasted.txt = ta.value; const r = parsePasted(ta.value, pasted.bpm);
+      res.innerHTML = !ta.value.trim() ? "" : `${r.count} notes${r.bad.length ? ` · <span style="color:var(--bad)">couldn't read: ${r.bad.slice(0, 6).map(esc).join(", ")}${r.bad.length > 6 ? "…" : ""}</span>` : " ✓"}${r.long ? ` · <span style="color:var(--bad)">only the first 240 are kept</span>` : ""}`;
+      return r;
+    };
+    ta.oninput = check; check();
+    document.querySelectorAll("[data-bpm]").forEach(b => b.onclick = () => { pasted.bpm = +b.dataset.bpm; document.querySelectorAll("[data-bpm]").forEach(z => z.classList.toggle("on", z === b)); check(); });
+    $("#pprev").onclick = () => { const r = check(); if (r.count) playOnPhone(r.n); else toast("Type some notes first"); };
+    $("#pnext").onclick = () => { const r = check(); if (r.count < 3) return toast("Add at least 3 notes"); nameSong(r.n, pasteNotes); };
+    $("#pback").onclick = () => songList();
+  }
   const PICS = ["🎵", "⭐", "❤️", "🦖", "🐱", "🐶", "🦄", "🚀", "🌈", "🎄", "🎅", "⚽", "🏰", "🐉", "🍕", "🎂", "🌙", "👑", "🎸", "🤖"];
-  function nameSong() {
+  function nameSong(n, back, title) {
     making = { view: "name" };
     removeEventListener("resize", orient);
     let pic = "🎵";
     app.innerHTML = `<div class="pw"><div class="ptop"><span class="nm">🎼 Save your song</span></div><div class="pbody">
-      <label style="font-weight:700">What's it called?<input id="sname" maxlength="40" placeholder="e.g. Harry's Dinosaur Song, or Mr Brightside" style="margin-top:.4em"></label>
+      <label style="font-weight:700">What's it called?<input id="sname" maxlength="40" placeholder="e.g. Harry's Dinosaur Song, or Mr Brightside" style="margin-top:.4em" value="${esc(title || "")}"></label>
       <div><div style="font-weight:700;margin-bottom:.4em">Pick a picture</div><div class="mine" id="pics">${PICS.map(e => `<button class="chip ${e === pic ? "on" : ""}" data-pic="${e}" style="font-size:1.4rem">${e}</button>`).join("")}</div></div>
       <p class="muted" style="margin:0">If it's a song people know, use its real name so they can guess it.</p>
-      <button class="btn gold big" id="sok">💾 Save song</button><button class="btn" id="sback">← Back to the piano</button></div></div>`;
+      <button class="btn gold big" id="sok">💾 Save song</button><button class="btn" id="sback">← Back</button></div></div>`;
     $("#pics").onclick = e => { const b = e.target.closest("[data-pic]"); if (!b) return; pic = b.dataset.pic; document.querySelectorAll("[data-pic]").forEach(z => z.classList.toggle("on", z === b)); };
-    $("#sback").onclick = () => recorder();
+    $("#sback").onclick = () => back();
     $("#sok").onclick = () => {
       const t = $("#sname").value.trim(); if (!t) return $("#sname").focus();
-      const n = recString(); if (!NOTE_RE.test(n)) return toast("That song is too long");
+      if (!NOTE_RE.test(n)) return toast("That song is too long");
       mySongs = mySongs.filter(x => x.t.toLowerCase() !== t.toLowerCase()); mySongs.unshift({ t, e: pic, n });
-      mySongs = mySongs.slice(0, 40); ls.set("piano_mysongs", mySongs); syncSongs(); rec = [];
+      mySongs = mySongs.slice(0, 40); ls.set("piano_mysongs", mySongs); syncSongs(); rec = []; pasted = { txt: "", bpm: 110, title: "" };
       songList(`Saved “${t}”`);
     };
     setTimeout(() => $("#sname") && $("#sname").focus(), 100);

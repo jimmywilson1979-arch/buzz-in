@@ -83,6 +83,9 @@ and turned round for you if the phone is upright). The notes play through the TV
 - **🎼 My songs (song maker):** in the lobby on any phone. Play a tune on the sideways piano (the timing is recorded),
   undo, clear or play it back, then name it and pick a picture. Songs are saved on that phone and sent to the TV when it
   joins, so they come up in ⭐ Our songs and Mix, with glowing keys for whoever plays them. Made-up tunes, or songs you know.
+  Or **📝 Type or paste notes**: letters with spaces (`E D C D E E E:2`), sharps/flats (`F#`, `Bb`), `:2`/`:0.5` for
+  longer/shorter, `R` for a rest, a number for the octave (`C5`; plain letters are the middle octave), with a speed
+  choice and a Listen button before saving. Bar lines, commas and dashes are ignored.
 - **Guessing:** Type answers (marked automatically, close guesses get "So close!", letter hints as time runs down) or Buzz in.
   Kids guess by tapping one of four song pictures. Kids only mode works as in Doodle Gallery.
 - Sound comes from the TV (click once to switch it on). Notes are scheduled a fraction of a second after they arrive so the

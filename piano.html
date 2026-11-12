@@ -1,0 +1,957 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#151229">
+<title>Tap That Tune</title>
+<meta name="description" content="Family piano game. Your phone becomes a piano, the tune plays on the TV, everyone else guesses the song.">
+<link rel="icon" type="image/png" sizes="48x48" href="piano-favicon-48.png">
+<link rel="apple-touch-icon" href="piano-apple-touch-icon.png">
+<link rel="manifest" href="manifest-piano.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tap That Tune">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Tap That Tune – Family Piano Game">
+<meta property="og:description" content="Your phone becomes a piano. Play the tune, everyone else guesses the song. Kids can play too.">
+<meta property="og:url" content="https://jimmywilson1979-arch.github.io/buzz-in/piano.html">
+<meta property="og:image" content="https://jimmywilson1979-arch.github.io/buzz-in/piano-og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@500;600;700;800&family=Playfair+Display:ital,wght@0,700;0,800;1,700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+:root{
+  --wall:#151229; --bg2:#100d20; --panel:#1f1a3a; --line:#3a3263; --fg:#f6f2ff; --muted:#b3a9d6;
+  --gold:#f2c94c; --gold-ink:#231a00; --good:#33d17a; --bad:#ff5d5d; --paper:#fffdf8;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --serif:"Playfair Display",Georgia,serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--wall);color:var(--fg);font-family:var(--body);-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+input{font:inherit;color:var(--fg);background:var(--bg2);border:2px solid var(--line);border-radius:12px;padding:.8em .9em;width:100%;min-width:0}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4em;border-radius:14px;padding:.75em 1.1em;font-weight:700;font-size:1rem;background:var(--panel);border:2px solid var(--line)}
+.btn.gold{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
+.btn.good{background:var(--good);color:#04210f;border-color:var(--good)}
+.btn.bad{background:var(--bad);color:#2a0000;border-color:var(--bad)}
+.btn.big{font-size:1.2rem;padding:.95em 1.2em;width:100%}
+.btn:disabled{opacity:.45;cursor:default}
+.chip{display:inline-flex;align-items:center;gap:.4em;padding:.45em .8em;border-radius:99px;border:2px solid var(--line);background:var(--bg2);font-weight:700;font-size:.9rem}
+.chip.on{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
+.setrow{display:flex;flex-wrap:wrap;gap:.4em;align-items:center;margin:.35em 0}
+.setrow b{width:100%;font-size:.85em;color:var(--muted);font-weight:700}
+.plaque{margin:0 auto;width:max-content;max-width:94%;padding:1vh 3vh 1.2vh;text-align:center;border-radius:6px;color:#2a1d02;
+  background:linear-gradient(180deg,#fbe6a2,#d6ae4e 55%,#b38a2f);box-shadow:inset 0 1px 0 #fff4cc,0 1vh 2vh rgba(0,0,0,.45)}
+.plaque small{display:block;font-weight:700;letter-spacing:.2em;text-transform:uppercase;font-size:.7em;opacity:.75}
+.plaque b{font-family:var(--serif);font-size:1.6em;font-weight:800}
+.plaque .hint{font-family:var(--display);font-weight:800;font-size:1.7em;letter-spacing:.18em;margin-top:.15em;white-space:pre-wrap}
+
+/* TV */
+body.tv{overflow:hidden;font-size:clamp(13px,1.15vw,24px);background:
+  radial-gradient(40vw 60vh at 50% -10%,rgba(255,220,150,.22),transparent 70%),
+  radial-gradient(60vw 40vh at 50% 110%,rgba(120,80,255,.18),transparent 70%),var(--wall)}
+.tvwrap{position:fixed;inset:0;display:flex;flex-direction:column;padding:2.2vh 2.6vw;gap:1.6vh}
+.tvtop{display:flex;align-items:center;justify-content:space-between;gap:1em}
+.logo{font-family:var(--serif);font-weight:800;font-size:2.2em;color:var(--gold);font-style:italic}
+.logo span{color:var(--fg)}
+.tinfo{font-family:var(--display);font-weight:800;font-size:1.3em;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.codesm{font-weight:700;color:var(--muted)} .codesm b{color:var(--fg);font-family:var(--display);font-size:1.5em;letter-spacing:.1em}
+.tvmain{flex:1;min-height:0;display:flex;gap:2.6vw}
+.stagecol{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2vh;min-width:0}
+#stage{width:100%;max-height:64vh;aspect-ratio:16/9;border-radius:1em;background:#0d0b1c;box-shadow:0 2vh 5vh rgba(0,0,0,.5),0 0 0 3px #2c2550}
+.panel{width:min(24em,30vw);display:flex;flex-direction:column;gap:1em;min-height:0;overflow:auto;padding:1.2em;background:rgba(0,0,0,.25);border:2px solid var(--line);border-radius:1em}
+.panel h3{margin:0;font-family:var(--serif);font-size:1.5em;color:var(--gold)}
+.qrcard{background:var(--paper);padding:3vh;border-radius:1em;box-shadow:0 2vh 5vh rgba(0,0,0,.5);display:flex;flex-direction:column;align-items:center;gap:1.4vh}
+.qrcard img,.qrcard canvas{width:36vh!important;height:36vh!important}
+.qrcard .k{display:flex;gap:2px}
+.qrcard .k i{width:2.2vh;height:5vh;background:#fff;border:1px solid #333;border-radius:0 0 3px 3px}
+.qrcard .k i.b{background:#222;width:1.4vh;height:3.2vh;margin:0 -.7vh;z-index:1;border:0}
+.plist{display:flex;flex-direction:column;gap:.45em}
+.prow{display:flex;align-items:center;gap:.6em;padding:.45em .7em;border-radius:.7em;background:var(--panel);border:2px solid var(--line)}
+.prow .dot{width:1em;height:1em;border-radius:50%;flex:none}
+.prow .nm{flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prow .sc{font-family:var(--display);font-weight:800;font-size:1.5em;color:var(--gold)}
+.prow.got{border-color:var(--good)} .prow.drawer{border-color:var(--gold)}
+.prow.off{opacity:.45}
+.tag{font-size:.75em;font-weight:700;padding:.1em .5em;border-radius:99px;background:var(--bg2);border:1px solid var(--line);color:var(--muted)}
+.timer{font-family:var(--display);font-weight:800;font-size:3.4em;text-align:center;color:var(--gold);line-height:1}
+.timer.low{color:var(--bad)}
+.feed{display:flex;flex-direction:column;gap:.3em;font-size:.95em}
+.feed div{padding:.3em .6em;border-radius:.5em;background:rgba(255,255,255,.05)}
+.feed .ok{background:rgba(51,209,122,.18);color:#9ff0c2;font-weight:700}
+.buzzov{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(8,6,20,.6);z-index:5}
+.buzzcard{background:var(--panel);border:4px solid var(--gold);border-radius:1.4em;padding:2em 3em;text-align:center;box-shadow:0 2em 4em rgba(0,0,0,.6);animation:pop .25s}
+.buzzcard h2{margin:0 0 .3em;font-family:var(--serif);font-size:3em}
+.buzzcard .row{display:flex;gap:1em;justify-content:center;margin-top:1.2em}
+@keyframes pop{from{transform:scale(.8);opacity:0}}
+.lobbynote{font-size:.9em;color:var(--muted);line-height:1.4}
+.end{flex:1;display:flex;gap:2.6vw;min-height:0}
+.concert{flex:1;display:flex;flex-wrap:wrap;gap:2vh 1.6vw;align-content:center;justify-content:center;overflow:auto;padding:1vh}
+.ticket{width:min(22em,40%);display:flex;align-items:center;gap:1em;padding:1em 1.2em;border-radius:1em;background:var(--panel);border:2px solid var(--line);animation:pop .4s backwards;text-align:left}
+.ticket .e{font-size:3em;line-height:1}
+.ticket b{display:block;font-family:var(--serif);font-size:1.3em}
+.ticket .by{color:var(--muted);font-weight:700}
+.ticket .pl{margin-left:auto;font-size:1.4em;width:2.4em;height:2.4em;border-radius:50%;background:var(--gold);color:var(--gold-ink);flex:none}
+.ticket.playing{border-color:var(--gold)}
+.podium .prow:first-child{border-color:var(--gold);background:rgba(242,201,76,.12)}
+.soundov{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(8,6,20,.82)}
+.soundov button{font-size:2em;padding:1em 1.6em}
+
+/* Phone */
+body.ph{overflow:hidden;overscroll-behavior:none}
+.pw{position:fixed;inset:0;display:flex;flex-direction:column;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.ptop{display:flex;align-items:center;gap:.6em;padding:.65em 1em;background:var(--bg2);border-bottom:2px solid var(--line);flex:none}
+.ptop .dot{width:1.1em;height:1.1em;border-radius:50%;flex:none}
+.ptop .nm{flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ptm{font-family:var(--display);font-weight:800;font-size:1.5rem;color:var(--gold);min-width:2ch;text-align:right}
+.pbody{flex:1;display:flex;flex-direction:column;gap:1em;padding:1em;overflow:auto;min-height:0}
+.center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:.8em}
+.center h2{margin:0;font-family:var(--serif);font-size:2rem}
+.bigemoji{font-size:7rem;line-height:1}
+.opts{display:grid;gap:.7em}
+.opts .btn{font-size:1.3rem;padding:1em;flex-direction:column;gap:.1em}
+.opts .btn small{font-size:.8rem;color:var(--muted);font-weight:600}
+.kopts{display:grid;grid-template-columns:1fr 1fr;gap:.8em;flex:1}
+.ktile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2em;border-radius:1.2em;background:var(--paper);color:#2a1d02;font-weight:800;font-size:1rem;border:4px solid transparent;min-height:8rem;padding:.4em;text-align:center}
+.ktile span{font-size:4.2rem;line-height:1.1}
+.ktile.no{opacity:.25;filter:grayscale(1)}
+.ktile.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-8px)}50%{transform:translateX(8px)}75%{transform:translateX(-4px)}}
+.judge{position:absolute;left:0;right:0;bottom:0;background:var(--panel);border-top:4px solid var(--gold);padding:1em 1em calc(1em + env(safe-area-inset-bottom));text-align:center;z-index:5;animation:up .2s}
+.judge h3{margin:0 0 .2em;font-size:1.4rem}
+.judge .row{display:flex;gap:.8em;margin-top:.6em}
+.judge .row .btn{flex:1;font-size:1.3rem;padding:.7em}
+@keyframes up{from{transform:translateY(100%)}}
+.buzz{width:min(70vw,18rem);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff8a8a,#e5484d 55%,#a91d22);color:#fff;font-family:var(--display);font-weight:800;font-size:3.4rem;box-shadow:0 1.1rem 0 #7a1216,0 1.4rem 2rem rgba(0,0,0,.5)}
+.buzz:active{transform:translateY(.8rem);box-shadow:0 .3rem 0 #7a1216}
+.buzz:disabled{filter:grayscale(1);opacity:.4}
+.hintbox{font-family:var(--display);font-weight:800;font-size:1.6rem;letter-spacing:.15em;text-align:center;white-space:pre-wrap}
+.mine{display:flex;flex-wrap:wrap;gap:.4em;justify-content:center}
+.toast{position:fixed;left:50%;top:22%;transform:translateX(-50%);background:var(--gold);color:var(--gold-ink);font-weight:800;font-size:1.3rem;padding:.6em 1.2em;border-radius:99px;z-index:30;animation:pop .2s;max-width:90vw;text-align:center}
+.check{display:flex;gap:.7em;align-items:center;padding:.9em 1em;border-radius:12px;background:var(--bg2);border:2px solid var(--line);font-weight:700;text-align:left}
+.check input{width:1.6em;height:1.6em;flex:none}
+.home{min-height:100%;display:flex;flex-direction:column;justify-content:center;gap:1rem;padding:1.5rem;max-width:30rem;margin:0 auto}
+.home h1{font-family:var(--serif);font-style:italic;font-size:3rem;margin:0;color:var(--gold)}
+.home h1 span{color:var(--fg)}
+.home p{margin:0;line-height:1.4}
+
+/* the phone piano (always shown sideways; rotated for the player if the phone is upright) */
+.pv{position:fixed;inset:0;display:flex;flex-direction:column;background:#0d0b1c;z-index:2}
+.pvtop{display:flex;align-items:center;gap:.45em;padding:.35em .6em;flex:none;background:var(--bg2);border-bottom:2px solid var(--line);font-size:.95rem}
+.pvtop .song{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
+.pvtop .song b{color:var(--gold);font-family:var(--serif);font-size:1.15em}
+.pvtop .btn{padding:.35em .6em;font-size:.85rem;border-radius:10px}
+.lane{flex:none;height:3.1rem;display:flex;align-items:center;gap:4px;padding:0 .6em;overflow:hidden;position:relative;background:#16122b}
+.lane .n{flex:none;height:2.3rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:1.3rem;color:#fff;opacity:.55;min-width:1.4rem}
+.lane .n.now{opacity:1;outline:3px solid #fff;transform:scale(1.06)}
+.lane .msg{color:var(--muted);font-weight:700;padding:0 .3em}
+.lane .done{color:var(--good);font-weight:800}
+.kb{flex:1;position:relative;display:flex;padding:0 .3em .3em;min-height:0;touch-action:none;user-select:none;-webkit-user-select:none}
+.wk{flex:1;position:relative;margin:0 1px;background:linear-gradient(180deg,#f4f1ea,#fff 30%);border-radius:0 0 .5rem .5rem;box-shadow:inset 0 -.4rem 0 #d8d3c6;display:flex;align-items:flex-end;justify-content:center;padding-bottom:.6rem;font-family:var(--display);font-weight:800;font-size:1.25rem;touch-action:none}
+.bk{position:absolute;top:0;height:58%;width:calc(100% / 15 * .62);background:linear-gradient(180deg,#2c2c34,#111 85%);border-radius:0 0 .35rem .35rem;z-index:2;box-shadow:inset 0 -.3rem 0 #000,0 .2rem .3rem rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;padding-bottom:.35rem;font-family:var(--display);font-weight:800;font-size:.8rem;color:#ddd;touch-action:none}
+.wk.down{background:#d9d3c4;box-shadow:inset 0 -.15rem 0 #bdb6a6}
+.bk.down{background:#444}
+.wk.next,.bk.next{box-shadow:inset 0 0 0 .3rem var(--pc),inset 0 -2.6rem 1.4rem -1rem var(--pc)}
+.bk.next{background:linear-gradient(180deg,#2c2c34,var(--pc))}
+.wk.next2{box-shadow:inset 0 0 0 .2rem color-mix(in srgb,var(--pc) 45%,transparent)}
+.wk.oops,.bk.oops{background:#ffb3b3}
+.kb .lbl{pointer-events:none}
+.kb.nolabels .lbl{display:none}
+.pvov{position:absolute;inset:0;z-index:4;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.4em;background:rgba(13,11,28,.88);text-align:center;padding:1em}
+.pvov h2{margin:0;font-family:var(--serif);font-size:2rem}
+
+/* Christmas look */
+.snow{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.snow i{position:absolute;top:-2vh;border-radius:50%;background:#fff;opacity:.75;animation:fall linear infinite}
+@keyframes fall{to{transform:translate(var(--dx),105vh)}}
+.tvwrap,.pw,.home{z-index:1}
+.home{position:relative}
+body.tv.xmas{background:radial-gradient(40vw 60vh at 50% -10%,rgba(255,220,150,.2),transparent 70%),
+  radial-gradient(30vw 30vh at 100% 100%,rgba(30,110,60,.35),transparent 70%),radial-gradient(30vw 30vh at 0 100%,rgba(180,20,40,.3),transparent 70%),var(--wall)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ===================================================================
+// Tap That Tune — your phone becomes a piano, the tune plays on the TV,
+// everyone else guesses the song. Same set-up as Buzz In and Doodle Gallery:
+// the TV runs the game, phones scan to join, live sync over Supabase Realtime.
+// Add &local=1 to test with several tabs on one computer.
+//
+// Songs: the built-in tunes are all out of copyright (traditional, nursery
+// rhymes, carols, classical). "From memory" songs store only the title;
+// the pianist works the tune out by ear, so no melody is kept in the app.
+// ===================================================================
+const SUPA_URL = "https://uqwlmegbelyqtbegxqlz.supabase.co";
+const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxd2xtZWdiZWx5cXRiZWd4cWx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3NTYzNzAsImV4cCI6MjEwNzMzMjM3MH0.bSeF8_kwKqSrEj3n8Ku2OeSU8E5nMqJj0hcfgXb8cW0";
+
+const P = new URLSearchParams(location.search);
+const LOCAL = P.has("local");
+const $ = s => document.querySelector(s);
+const app = $("#app");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const COLORS = ["#ff6b6b", "#4dabff", "#ffd43b", "#51e08a", "#c792ff", "#ff9f43", "#3ee6d6", "#ff7ac0", "#b5e853", "#a5b4cc", "#ffb4a2", "#8ce99a"];
+const now = () => Date.now();
+const uid = () => Math.random().toString(36).slice(2, 10);
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const ls = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } } };
+const code4 = () => Array.from({ length: 4 }, () => "BCDFGHJKLMNPQRSTVWXZ"[Math.random() * 20 | 0]).join("");
+const buzzPhone = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) { } };
+const ord = n => n + (["th", "st", "nd", "rd"][(n % 100 - 20) % 10] || ["th", "st", "nd", "rd"][n % 100] || "th");
+
+// ===== Songs =====
+// t title, e picture, k kid-friendly, x Christmas, a other accepted answers, n notes ("E4:1 R:.5 …", beats), bpm
+const SONGS = [{"t": "Jingle Bells", "e": "🔔", "k": 1, "x": 1, "a": [], "n": "E4:1 E4:1 E4:2 E4:1 E4:1 E4:2 E4:1 G4:1 C4:1.5 D4:.5 E4:4 F4:1 F4:1 F4:1.5 F4:.5 F4:1 E4:1 E4:1 E4:.5 E4:.5 E4:1 D4:1 D4:1 E4:1 D4:2 G4:2", "bpm": 150}, {"t": "Twinkle Twinkle Little Star", "e": "⭐", "k": 1, "x": 0, "a": ["twinkle twinkle"], "n": "C4:1 C4:1 G4:1 G4:1 A4:1 A4:1 G4:2 F4:1 F4:1 E4:1 E4:1 D4:1 D4:1 C4:2", "bpm": 120}, {"t": "Silent Night", "e": "🌙", "k": 1, "x": 1, "a": [], "n": "G4:1.5 A4:.5 G4:1 E4:3 G4:1.5 A4:.5 G4:1 E4:3 D5:2 D5:1 B4:3 C5:2 C5:1 G4:3", "bpm": 110}, {"t": "Ode to Joy", "e": "🎻", "k": 0, "x": 0, "a": ["ode to joy"], "n": "E4:1 E4:1 F4:1 G4:1 G4:1 F4:1 E4:1 D4:1 C4:1 C4:1 D4:1 E4:1 E4:1.5 D4:.5 D4:2", "bpm": 130}, {"t": "Für Elise", "e": "🎹", "k": 0, "x": 0, "a": ["fur elise", "for elise"], "n": "E5:.5 D#5:.5 E5:.5 D#5:.5 E5:.5 B4:.5 D5:.5 C5:.5 A4:1.5 R:.5 C4:.5 E4:.5 A4:.5 B4:1.5 R:.5 E4:.5 G#4:.5 B4:.5 C5:1.5", "bpm": 130}, {"t": "Beethoven's 5th Symphony", "e": "🎼", "k": 0, "x": 0, "a": ["beethovens 5th", "beethoven 5", "beethovens fifth", "fifth symphony", "5th symphony"], "n": "G4:.4 G4:.4 G4:.4 Eb4:2.5 R:.6 F4:.4 F4:.4 F4:.4 D4:3", "bpm": 110}, {"t": "In the Hall of the Mountain King", "e": "⛰️", "k": 0, "x": 0, "a": ["mountain king"], "n": "A3:.5 B3:.5 C4:.5 D4:.5 E4:.5 C4:.5 E4:1 D#4:.5 B3:.5 D#4:1 D4:.5 Bb3:.5 D4:1 A3:.5 B3:.5 C4:.5 D4:.5 E4:.5 C4:.5 E4:.5 A4:.5 G4:.5 E4:.5 C4:.5 E4:.5 G4:2", "bpm": 140}, {"t": "William Tell Overture", "e": "🏹", "k": 0, "x": 0, "a": ["william tell", "lone ranger"], "n": "B4:.25 B4:.25 B4:.5 B4:.25 B4:.25 B4:.5 B4:.25 B4:.25 E5:.5 F#5:.5 G5:1 R:.5 B4:.25 B4:.25 B4:.5 B4:.25 B4:.25 B4:.5 B4:.25 B4:.25 E5:.5 F#5:.5 G5:1", "bpm": 120}, {"t": "Happy Birthday", "e": "🎂", "k": 1, "x": 0, "a": [], "n": "G4:.75 G4:.25 A4:1 G4:1 C5:1 B4:2 G4:.75 G4:.25 A4:1 G4:1 D5:1 C5:2 G4:.75 G4:.25 G5:1 E5:1 C5:1 B4:1 A4:2 F5:.75 F5:.25 E5:1 C5:1 D5:1 C5:2", "bpm": 120}, {"t": "We Wish You a Merry Christmas", "e": "🎅", "k": 1, "x": 1, "a": ["we wish you"], "n": "D4:1 G4:1 G4:.5 A4:.5 G4:.5 F#4:.5 E4:1 E4:1 E4:1 A4:1 A4:.5 B4:.5 A4:.5 G4:.5 F#4:1 D4:1 D4:1 B4:1 B4:.5 C5:.5 B4:.5 A4:.5 G4:1 E4:1 D4:.5 D4:.5 E4:1 A4:1 F#4:1 G4:2", "bpm": 150}, {"t": "Deck the Halls", "e": "🎄", "k": 1, "x": 1, "a": ["deck the hall"], "n": "G4:1.5 F4:.5 E4:1 D4:1 C4:1 D4:1 E4:1 C4:1 D4:.5 E4:.5 F4:.5 D4:.5 E4:1.5 D4:.5 C4:1 B3:1 C4:2", "bpm": 140}, {"t": "Mary Had a Little Lamb", "e": "🐑", "k": 1, "x": 0, "a": ["little lamb"], "n": "E4:1 D4:1 C4:1 D4:1 E4:1 E4:1 E4:2 D4:1 D4:1 D4:2 E4:1 G4:1 G4:2 E4:1 D4:1 C4:1 D4:1 E4:1 E4:1 E4:1 E4:1 D4:1 D4:1 E4:1 D4:1 C4:2", "bpm": 140}, {"t": "Here Comes the Bride", "e": "👰", "k": 0, "x": 0, "a": ["wedding march", "bridal chorus"], "n": "G4:1 C5:.75 C5:.25 C5:2 G4:1 D5:.75 B4:.25 C5:2", "bpm": 90}, {"t": "Greensleeves", "e": "🍃", "k": 0, "x": 0, "a": ["green sleeves"], "n": "A4:1 C5:2 D5:1 E5:1.5 F5:.5 E5:1 D5:2 B4:1 G4:1.5 A4:.5 B4:1 C5:2 A4:1 A4:1.5 G#4:.5 A4:1 B4:2 G#4:1 E4:2", "bpm": 170}, {"t": "Auld Lang Syne", "e": "🥂", "k": 0, "x": 1, "a": ["old lang syne", "auld lang sine"], "n": "C4:1 F4:1.5 F4:.5 F4:1 A4:1 G4:1.5 F4:.5 G4:1 A4:1 F4:1.5 F4:.5 A4:1 C5:1 D5:3", "bpm": 110}, {"t": "The Entertainer", "e": "🎩", "k": 0, "x": 0, "a": ["entertainer"], "n": "D4:.25 D#4:.25 E4:.25 C5:.5 E4:.25 C5:.5 E4:.25 C5:1.25 C5:.25 D5:.25 D#5:.25 E5:.25 C5:.25 D5:.25 E5:.5 B4:.25 D5:.5 C5:1.5", "bpm": 100}, {"t": "Old MacDonald Had a Farm", "e": "🚜", "k": 1, "x": 0, "a": ["old macdonald", "old mcdonald"], "n": "G4:1 G4:1 G4:1 D4:1 E4:1 E4:1 D4:2 B4:1 B4:1 A4:1 A4:1 G4:2", "bpm": 150}, {"t": "Row, Row, Row Your Boat", "e": "🚣", "k": 1, "x": 0, "a": ["row your boat", "row row row"], "n": "C4:1.5 C4:1.5 C4:1 D4:.5 E4:1.5 E4:1 D4:.5 E4:1 F4:.5 G4:3", "bpm": 200}, {"t": "Eine kleine Nachtmusik", "e": "🎻", "k": 0, "x": 0, "a": ["nachtmusik", "eine kleine", "little night music"], "n": "G4:1 D4:.5 G4:1 D4:.5 G4:.5 D4:.5 G4:.5 B4:.5 D5:2 C5:1 A4:.5 C5:1 A4:.5 C5:.5 A4:.5 F#4:.5 A4:.5 D4:2", "bpm": 130}, {"t": "Frère Jacques", "e": "😴", "k": 1, "x": 0, "a": ["frere jacques", "are you sleeping", "brother john"], "n": "C4:1 D4:1 E4:1 C4:1 C4:1 D4:1 E4:1 C4:1 E4:1 F4:1 G4:2 E4:1 F4:1 G4:2", "bpm": 130}, {"t": "London Bridge Is Falling Down", "e": "🌉", "k": 1, "x": 0, "a": ["london bridge"], "n": "G4:1.5 A4:.5 G4:1 F4:1 E4:1 F4:1 G4:2 D4:1 E4:1 F4:2 E4:1 F4:1 G4:2 G4:1.5 A4:.5 G4:1 F4:1 E4:1 F4:1 G4:2 D4:2 G4:2 E4:1 C4:3", "bpm": 150}, {"t": "Incy Wincy Spider", "e": "🕷️", "k": 1, "x": 0, "a": ["incy wincy", "itsy bitsy"], "n": "G3:.5 C4:1 C4:.5 C4:1 D4:.5 E4:1.5 E4:1 E4:.5 D4:1 C4:.5 D4:1 E4:.5 C4:1.5", "bpm": 170}, {"t": "Pop Goes the Weasel", "e": "🐿️", "k": 1, "x": 0, "a": ["pop goes"], "n": "C4:1 C4:.5 D4:1 D4:.5 E4:.5 G4:.5 E4:.5 C4:1 G3:.5 C4:1 C4:.5 D4:1 D4:.5 E4:1.5 C4:1", "bpm": 170}, {"t": "O Come All Ye Faithful", "e": "⛪", "k": 0, "x": 1, "a": ["come all ye faithful", "adeste fideles"], "n": "G4:1 G4:2 D4:1 G4:1 A4:2 D4:2 B4:1 A4:1 B4:1 C5:1 B4:2 A4:1", "bpm": 110}, {"t": "Good King Wenceslas", "e": "👑", "k": 0, "x": 1, "a": ["good king"], "n": "G4:1 G4:1 G4:1 A4:1 G4:1 G4:1 D4:2 E4:1 D4:1 E4:1 F#4:1 G4:2 G4:2", "bpm": 120}, {"t": "Hark! The Herald Angels Sing", "e": "👼", "k": 0, "x": 1, "a": ["hark the herald", "herald angels"], "n": "D4:1 G4:1 G4:1.5 F#4:.5 G4:1 B4:1 B4:1 A4:1 D5:1 D5:1 D5:1.5 C5:.5 B4:1 A4:1 B4:2", "bpm": 120}, {"t": "Joy to the World", "e": "🌍", "k": 0, "x": 1, "a": [], "n": "D5:2 C#5:.75 B4:.25 A4:1.5 G4:.5 F#4:1 E4:1 D4:2 A4:.5 B4:1.5 B4:.5 C#5:1.5 C#5:.5 D5:3", "bpm": 110}, {"t": "O Christmas Tree", "e": "🌲", "k": 1, "x": 1, "a": ["o tannenbaum", "oh christmas tree"], "n": "D4:1 G4:.75 G4:.25 G4:1.5 A4:.5 B4:.75 B4:.25 B4:1.5 B4:.5 A4:.5 B4:.5 C5:1 F#4:1 A4:1 G4:2", "bpm": 100}, {"t": "God Rest Ye Merry Gentlemen", "e": "🕯️", "k": 0, "x": 1, "a": ["god rest ye", "merry gentlemen"], "n": "E4:1 E4:1 B4:1 B4:1 A4:1 G4:1 F#4:1 E4:1 D4:1 E4:1 F#4:1 G4:1 A4:1 B4:3", "bpm": 140}, {"t": "Away in a Manger", "e": "👶", "k": 1, "x": 1, "a": [], "n": "C5:1 C5:1.5 Bb4:.5 A4:1 A4:1.5 G4:.5 F4:1 F4:1 E4:1 D4:1 C4:2", "bpm": 110}];
+const MEMORY = [{"t": "Mr Brightside", "e": "🌟", "x": 0, "a": [], "mem": 1}, {"t": "Bohemian Rhapsody", "e": "👑", "x": 0, "a": [], "mem": 1}, {"t": "Let It Go", "e": "❄️", "x": 0, "a": [], "mem": 1}, {"t": "Happy (Pharrell Williams)", "e": "😊", "x": 0, "a": [], "mem": 1}, {"t": "Sweet Caroline", "e": "🎤", "x": 0, "a": [], "mem": 1}, {"t": "Don't Stop Me Now", "e": "🚀", "x": 0, "a": ["dont stop me now"], "mem": 1}, {"t": "Hey Jude", "e": "🎸", "x": 0, "a": [], "mem": 1}, {"t": "Yellow Submarine", "e": "🚢", "x": 0, "a": [], "mem": 1}, {"t": "Dancing Queen", "e": "👸", "x": 0, "a": [], "mem": 1}, {"t": "Mamma Mia", "e": "💃", "x": 0, "a": [], "mem": 1}, {"t": "YMCA", "e": "🙌", "x": 0, "a": ["y m c a"], "mem": 1}, {"t": "Baby Shark", "e": "🦈", "x": 0, "a": [], "mem": 1}, {"t": "Wonderwall", "e": "🧱", "x": 0, "a": [], "mem": 1}, {"t": "Billie Jean", "e": "🕺", "x": 0, "a": [], "mem": 1}, {"t": "Uptown Funk", "e": "🎺", "x": 0, "a": [], "mem": 1}, {"t": "Someone Like You", "e": "💔", "x": 0, "a": [], "mem": 1}, {"t": "Shake It Off", "e": "💃", "x": 0, "a": [], "mem": 1}, {"t": "Thriller", "e": "🧟", "x": 0, "a": [], "mem": 1}, {"t": "Livin' on a Prayer", "e": "🙏", "x": 0, "a": ["living on a prayer", "livin on a prayer"], "mem": 1}, {"t": "Sweet Child o' Mine", "e": "🌹", "x": 0, "a": ["sweet child of mine", "sweet child o mine"], "mem": 1}, {"t": "Seven Nation Army", "e": "🥁", "x": 0, "a": [], "mem": 1}, {"t": "Eye of the Tiger", "e": "🐯", "x": 0, "a": [], "mem": 1}, {"t": "We Will Rock You", "e": "👏", "x": 0, "a": [], "mem": 1}, {"t": "Take On Me", "e": "📝", "x": 0, "a": [], "mem": 1}, {"t": "Never Gonna Give You Up", "e": "🕺", "x": 0, "a": ["never gonna give you up", "rickroll"], "mem": 1}, {"t": "I Will Always Love You", "e": "❤️", "x": 0, "a": [], "mem": 1}, {"t": "Africa", "e": "🌍", "x": 0, "a": [], "mem": 1}, {"t": "Shape of You", "e": "💪", "x": 0, "a": [], "mem": 1}, {"t": "Star Wars theme", "e": "⭐", "x": 0, "a": ["star wars"], "mem": 1}, {"t": "Harry Potter theme", "e": "⚡", "x": 0, "a": ["harry potter", "hedwigs theme"], "mem": 1}, {"t": "Jaws theme", "e": "🦈", "x": 0, "a": ["jaws"], "mem": 1}, {"t": "The Pink Panther", "e": "🐆", "x": 0, "a": ["pink panther"], "mem": 1}, {"t": "Ghostbusters", "e": "👻", "x": 0, "a": [], "mem": 1}, {"t": "EastEnders theme", "e": "📺", "x": 0, "a": ["eastenders", "east enders"], "mem": 1}, {"t": "Match of the Day theme", "e": "⚽", "x": 0, "a": ["match of the day", "motd"], "mem": 1}, {"t": "Doctor Who theme", "e": "🛸", "x": 0, "a": ["doctor who", "dr who"], "mem": 1}, {"t": "The Simpsons theme", "e": "🍩", "x": 0, "a": ["simpsons"], "mem": 1}, {"t": "Mission: Impossible theme", "e": "🕶️", "x": 0, "a": ["mission impossible"], "mem": 1}, {"t": "James Bond theme", "e": "🍸", "x": 0, "a": ["james bond", "bond theme", "007"], "mem": 1}, {"t": "The Lion Sleeps Tonight", "e": "🦁", "x": 0, "a": ["lion sleeps tonight", "wimoweh"], "mem": 1}, {"t": "Last Christmas", "e": "🎁", "x": 1, "a": [], "mem": 1}, {"t": "All I Want for Christmas Is You", "e": "🎄", "x": 1, "a": ["all i want for christmas"], "mem": 1}, {"t": "Jingle Bell Rock", "e": "🎸", "x": 1, "a": [], "mem": 1}, {"t": "Rockin' Around the Christmas Tree", "e": "🎄", "x": 1, "a": ["rocking around the christmas tree", "rockin around the christmas tree"], "mem": 1}, {"t": "Fairytale of New York", "e": "🗽", "x": 1, "a": ["fairy tale of new york"], "mem": 1}, {"t": "Merry Xmas Everybody", "e": "🎅", "x": 1, "a": ["merry christmas everybody"], "mem": 1}, {"t": "Do They Know It's Christmas?", "e": "🌍", "x": 1, "a": ["do they know its christmas"], "mem": 1}, {"t": "Let It Snow", "e": "⛄", "x": 1, "a": [], "mem": 1}, {"t": "Rudolph the Red-Nosed Reindeer", "e": "🦌", "x": 1, "a": ["rudolph"], "mem": 1}, {"t": "Frosty the Snowman", "e": "⛄", "x": 1, "a": ["frosty"], "mem": 1}, {"t": "Santa Claus Is Comin' to Town", "e": "🎅", "x": 1, "a": ["santa claus is coming to town", "santa claus is comin to town"], "mem": 1}, {"t": "Walking in the Air", "e": "🌨️", "x": 1, "a": [], "mem": 1}, {"t": "White Christmas", "e": "❄️", "x": 1, "a": [], "mem": 1}, {"t": "Driving Home for Christmas", "e": "🚗", "x": 1, "a": [], "mem": 1}, {"t": "Step into Christmas", "e": "🎹", "x": 1, "a": [], "mem": 1}, {"t": "I Wish It Could Be Christmas Everyday", "e": "🎶", "x": 1, "a": ["wish it could be christmas every day", "i wish it could be christmas every day"], "mem": 1}, {"t": "Wonderful Christmastime", "e": "✨", "x": 1, "a": ["wonderful christmas time"], "mem": 1}, {"t": "Feliz Navidad", "e": "🇪🇸", "x": 1, "a": [], "mem": 1}, {"t": "Mistletoe and Wine", "e": "🍷", "x": 1, "a": [], "mem": 1}];
+
+// ===== Notes and the keyboard (two octaves, C4 to C6) =====
+const KB_LO = 60, KB_HI = 84;
+const NB = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+const NAMES = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"];
+const isBlack = m => [1, 3, 6, 8, 10].includes(m % 12);
+const WHITES = []; for (let m = KB_LO; m <= KB_HI; m++) if (!isBlack(m)) WHITES.push(m);
+const octCol = m => m >= 84 ? "#b06cff" : m >= 72 ? "#e8742c" : "#2f6fd6"; // letter colour per octave so the two Cs look different
+function parseNotes(str) {
+  const out = str.trim().split(/\s+/).map(tok => {
+    const [n, b] = tok.split(":");
+    if (n === "R") return { m: 0, b: +b };
+    const x = n.match(/^([A-G])(#|b)?(\d)$/);
+    return { m: 12 * (+x[3] + 1) + NB[x[1]] + (x[2] === "#" ? 1 : x[2] === "b" ? -1 : 0), b: +b };
+  });
+  const ms = out.filter(o => o.m).map(o => o.m); let sh = 0;
+  while (Math.min(...ms) + sh < KB_LO) sh += 12;
+  while (Math.max(...ms) + sh > KB_HI) sh -= 12;
+  return out.map(o => o.m ? { m: o.m + sh, b: o.b } : o);
+}
+
+// ===== Settings =====
+const SETS = [
+  ["edition", "Edition", [["std", "Standard"], ["xmas", "🎄 Christmas"]]],
+  ["songs", "Songs", [["lib", "🎼 Built-in tunes"], ["mem", "🧠 From memory"], ["mix", "Both"]]],
+  ["guide", "Note guide", [["lights", "💡 Glowing keys"], ["letters", "🔤 Note letters"]]],
+  ["guess", "Guessing", [["type", "⌨️ Type answers"], ["buzz", "🔔 Buzz in"]]],
+  ["who", "Who's playing", [["all", "Everyone"], ["kids", "🧒 Kids only"]]],
+  ["laps", "Turns each", [[1, "1 each"], [2, "2 each"], [3, "3 each"]]],
+  ["time", "Playing time", [[60, "60 sec"], [90, "90 sec"], [120, "120 sec"]]],
+];
+function setsHTML(st) {
+  return SETS.map(([k, label, vals]) => `<div class="setrow"><b>${label}</b>${vals.map(([v, t]) => `<button class="chip ${st[k] === v ? "on" : ""}" data-set="${k}" data-val="${v}">${t}</button>`).join("")}</div>`).join("")
+    + `<div class="lobbynote">${st.edition === "xmas" ? "🎄 Christmas edition: carols and Christmas songs. " : ""}${st.songs === "mem" ? "From memory: the pianist gets just the song title and works it out by ear. " : st.songs === "mix" ? "Both: a mix of built-in tunes (with a note guide) and songs to play from memory. " : "Built-in tunes come with a note guide to follow. "}${st.guide === "lights" ? "Glowing keys: the next key lights up, just tap it." : "Note letters: the tune is shown as letters to find on the keys."} Kids (ticked “a child is playing”) always get built-in tunes and start on glowing keys, and can switch to letters on their phone. ${st.guess === "buzz" ? "Buzz in: first to buzz says the song out loud and the pianist decides." : "Type answers: everyone types guesses and it marks them automatically."}${st.who === "kids" ? " Kids only: grown-ups can join to watch." : ""}</div>`;
+}
+const setFromBtn = b => ({ k: b.dataset.set, v: isNaN(b.dataset.val) ? b.dataset.val : Number(b.dataset.val) });
+
+// ===== Answer checking =====
+const words = s => " " + String(s || "").toLowerCase().normalize("NFD").replace(/\p{M}/gu, "").replace(/'/g, "").replace(/[^a-z0-9 ]/g, " ").replace(/\b(a|an|the|oh|o|its|it|theme|song|tune)\b/g, " ").replace(/\s+/g, " ").trim() + " ";
+const norm = s => words(s).replace(/ /g, "");
+function lev(a, b) {
+  const m = a.length, n = b.length; if (!m) return n; if (!n) return m;
+  let prev = Array.from({ length: n + 1 }, (_, i) => i);
+  for (let i = 1; i <= m; i++) { const cur = [i]; for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); prev = cur; }
+  return prev[n];
+}
+function check1(guess, ans) {
+  const a = norm(guess), b = norm(ans);
+  if (!a || !b) return "no";
+  if (a === b) return "yes";
+  const wa = words(guess), wb = words(ans).trim();
+  if ((wb.includes(" ") || wb.length >= 8) && wa.includes(" " + wb + " ") && a.length <= b.length + 14) return "yes";
+  const d = lev(a, b);
+  if (b.length >= 5 && d <= 1) return "yes";
+  if (b.length >= 9 && d <= 2) return "yes";
+  if (b.length >= 15 && d <= 3) return "yes";
+  if (d <= 2 || (b.length >= 6 && d <= 4)) return "close";
+  return "no";
+}
+function checkSong(guess, s) {
+  const all = [s.t, s.t.replace(/\s*\(.*\)\s*/g, " ").trim()].concat(s.a || []);
+  let close = false;
+  for (const x of all) { const r = check1(guess, x); if (r === "yes") return "yes"; if (r === "close") close = true; }
+  return close ? "close" : "no";
+}
+
+// ===== Sound: a simple piano voice made in the browser =====
+const Synth = {
+  ctx: null, out: null,
+  init() {
+    if (!this.ctx) { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); const c = this.ctx.createDynamicsCompressor(); c.connect(this.ctx.destination); this.out = this.ctx.createGain(); this.out.gain.value = .9; this.out.connect(c); } catch (e) { return false; } }
+    if (this.ctx.state !== "running") this.ctx.resume().catch(() => { });
+    return true;
+  },
+  ok() { return this.ctx && this.ctx.state === "running"; },
+  // play note m at audio time `when`; returns a handle you can stop()
+  note(m, when, vol) {
+    const c = this.ctx; if (!c) return null;
+    const f = 440 * Math.pow(2, (m - 69) / 12), t = Math.max(c.currentTime, when || 0), v = vol == null ? .5 : vol;
+    const g = c.createGain(), lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = Math.min(9000, f * 7); lp.connect(this.out); g.connect(lp);
+    const oscs = [["triangle", 1, .55], ["sine", 2, .22], ["sine", 3, .07], ["square", 1, .025]].map(([type, mul, lvl]) => { const o = c.createOscillator(), og = c.createGain(); o.type = type; o.frequency.value = f * mul; og.gain.value = lvl; o.connect(og); og.connect(g); o.start(t); o.stop(t + 3); return o; });
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .008); g.gain.exponentialRampToValueAtTime(v * .35, t + .35); g.gain.exponentialRampToValueAtTime(.0008, t + 2.6);
+    return { stop(at) { const s = Math.max(c.currentTime, at || 0); try { g.gain.cancelScheduledValues(s); g.gain.setValueAtTime(g.gain.value || v * .3, s); g.gain.exponentialRampToValueAtTime(.0008, s + .22); oscs.forEach(o => o.stop(s + .25)); } catch (e) { } } };
+  },
+};
+
+// ===== Transport (same as Buzz In) =====
+async function connect(room, onMsg, onStatus) {
+  if (LOCAL) {
+    const bc = new BroadcastChannel("piano-" + room);
+    bc.onmessage = e => onMsg(e.data);
+    onStatus && onStatus("ok");
+    return { send: m => bc.postMessage(m) };
+  }
+  const sb = window.supabase.createClient(SUPA_URL, SUPA_KEY, { realtime: { params: { eventsPerSecond: 40 } } });
+  const ch = sb.channel("piano-" + room, { config: { broadcast: { self: false } } });
+  ch.on("broadcast", { event: "m" }, ({ payload }) => onMsg(payload));
+  await new Promise((res, rej) => {
+    let done = false;
+    ch.subscribe(st => {
+      if (st === "SUBSCRIBED") { onStatus && onStatus("ok"); if (!done) { done = true; res(); } }
+      else if (st === "CHANNEL_ERROR" || st === "TIMED_OUT" || st === "CLOSED") { onStatus && onStatus("lost"); if (!done) { done = true; rej(new Error(st)); } }
+    });
+  });
+  return { send: m => ch.send({ type: "broadcast", event: "m", payload: m }) };
+}
+
+// ===== Christmas look: falling snow =====
+function festive(on, n) {
+  document.body.classList.toggle("xmas", on);
+  let sn = document.querySelector(".snow");
+  if (!on) { if (sn) sn.remove(); return; }
+  if (sn) return;
+  sn = document.createElement("div"); sn.className = "snow";
+  for (let i = 0; i < n; i++) {
+    const z = 3 + Math.random() * 7, el = document.createElement("i");
+    el.style.cssText = `left:${Math.random() * 100}vw;width:${z}px;height:${z}px;--dx:${(Math.random() - .5) * 12}vw;animation-duration:${8 + Math.random() * 10}s;animation-delay:-${Math.random() * 18}s;opacity:${.35 + Math.random() * .5}`;
+    sn.appendChild(el);
+  }
+  document.body.prepend(sn);
+}
+
+// ===== Router =====
+if (P.has("tv")) tvMain();
+else if (P.has("join")) phoneMain(P.get("join"));
+else home();
+
+function home() {
+  const phone = matchMedia("(pointer:coarse)").matches && Math.min(innerWidth, innerHeight) < 700;
+  app.innerHTML = `<div class="home">
+    <h1>Tap That <span>Tune</span></h1>
+    <p class="muted">Your phone becomes a piano. Play the tune, it comes out of the TV, and everyone else guesses the song.</p>
+    <button class="btn big ${phone ? "" : "gold"}" id="tvb">📺 This is the TV screen</button>
+    <p class="muted" style="font-size:.9rem">Open on the laptop you cast from or plug into the TV, the same as Buzz In. Sound comes from the TV.</p>
+    <div style="display:flex;gap:.6em"><input id="code" maxlength="4" placeholder="Code" autocapitalize="characters" style="text-transform:uppercase;font-size:1.3rem;letter-spacing:.15em">
+    <button class="btn ${phone ? "gold" : ""}" id="jb" style="flex:none">Join</button></div>
+  </div>`;
+  $("#tvb").onclick = () => { location.search = "?tv" + (LOCAL ? "&local=1" : ""); };
+  const go = () => { const c = $("#code").value.trim().toUpperCase(); if (c.length === 4) location.search = "?join=" + c + (LOCAL ? "&local=1" : ""); };
+  $("#jb").onclick = go; $("#code").onkeydown = e => { if (e.key === "Enter") go(); };
+}
+
+// ======================================================================
+// TV — runs the game and plays the sound
+// ======================================================================
+async function tvMain() {
+  document.body.className = "tv";
+  const room = (P.get("tv") || "").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 4) || code4();
+  history.replaceState(null, "", "?tv=" + room + (LOCAL ? "&local=1" : ""));
+  const joinUrl = location.origin + location.pathname + "?join=" + room + (LOCAL ? "&local=1" : "");
+  const S = {
+    phase: "lobby", players: {}, order: [], settings: Object.assign({ songs: "lib", guide: "lights", guess: "type", who: "all", laps: 1, time: 90, edition: new Date().getMonth() === 11 ? "xmas" : "std" }, ls.get("piano_settings", {})),
+    queue: [], turnNo: 0, totalTurns: 0, turn: null, concert: [], feed: [], revealUntil: 0,
+  };
+  let conn = "Connecting…", link = null, colorI = 0, lastKey = "";
+  // sound + key lights: notes are scheduled a moment after they arrive so the rhythm survives the internet
+  const BUF = 170; let clockOff = null; const vis = []; const held = new Map(); let replaying = null;
+  if (LOCAL) window.__S = S;
+
+  const send = m => link && link.send(m);
+  const alive = p => now() - p.seen < 20000;
+  const plays = p => S.settings.who === "kids" ? p.kid : true;
+  const eligible = () => S.order.map(id => S.players[id]).filter(p => p && plays(p));
+  const hostId = () => (S.order.map(id => S.players[id]).find(p => p && alive(p)) || {}).id || null;
+
+  function pub() {
+    const t = S.turn;
+    const left = t ? (t.paused != null ? t.paused : Math.max(0, t.endsAt - now())) : 0;
+    return {
+      phase: S.phase, settings: S.settings, host: hostId(), turnNo: S.turnNo, total: S.totalTurns,
+      players: S.order.map(id => S.players[id]).filter(Boolean).map(p => ({ id: p.id, name: p.name, kid: p.kid, color: p.color, score: p.score })),
+      drawer: t && t.drawer, left, paused: !!(t && t.paused != null), dur: t ? t.dur : 0,
+      hint: t && t.song && S.settings.guess === "type" ? hint(t) : null,
+      got: t ? t.got : {}, buzz: t && t.buzz, wrong: t ? Object.keys(t.wrong) : [],
+      kc: t && t.kc ? t.kc.map(s => ({ t: s.t, e: s.e })) : null,
+      reveal: S.phase === "reveal" && t ? { t: t.song && t.song.t, e: t.song && t.song.e, skipped: !!t.skipped, dpts: t.dpts } : null,
+    };
+  }
+  let pushT = null;
+  const needSecret = new Set();
+  function push() { clearTimeout(pushT); pushT = setTimeout(() => { send({ t: "state", st: pub() }); needSecret.forEach(id => secret(S.players[id])); needSecret.clear(); render(); }, 40); }
+  function secret(p) {
+    const t = S.turn; if (!t || !p || t.drawer !== p.id) return;
+    if (S.phase === "choose") send({ t: "secret", to: p.id, opts: t.opts.map(s => ({ t: s.t, e: s.e, mem: !!s.mem })) });
+    if (S.phase === "play" || S.phase === "reveal") send({ t: "secret", to: p.id, song: { t: t.song.t, e: t.song.e, mem: !!t.song.mem, n: t.song.n || null, bpm: t.song.bpm || 0 } });
+  }
+  function hint(t) {
+    const w = t.song.t, frac = 1 - Math.max(0, (t.paused != null ? t.paused : t.endsAt - now())) / t.dur;
+    const letters = [...w].map((c, i) => /[a-z0-9]/i.test(c) ? i : -1).filter(i => i >= 0);
+    const show = Math.round(letters.length * (frac > .75 ? .3 : frac > .5 ? .15 : 0));
+    const keep = new Set(t.hintOrder.slice(0, show));
+    return [...w].map((c, i) => c === " " ? "   " : !/[a-z0-9]/i.test(c) ? c : keep.has(i) ? c.toUpperCase() : "_").join(" ").replace(/ {4,}/g, "   ");
+  }
+
+  // ---- game flow ----
+  function start() {
+    const el = eligible();
+    if (el.length < 2) return;
+    ls.set("piano_settings", S.settings);
+    S.order.forEach(id => S.players[id] && (S.players[id].score = 0));
+    S.concert = []; S.feed = []; S.turnNo = 0;
+    S.queue = []; for (let i = 0; i < S.settings.laps; i++) S.queue.push(...el.map(p => p.id));
+    S.totalTurns = S.queue.length;
+    nextTurn();
+  }
+  function playAgain() { if (eligible().length >= 2) start(); else toLobby(); }
+  function toLobby() { S.phase = "lobby"; S.turn = null; push(); }
+  function pools(kid) {
+    const xm = S.settings.edition === "xmas";
+    let lib = SONGS.filter(s => xm ? s.x : true), mem = MEMORY.filter(s => xm ? s.x : !s.x);
+    if (kid) lib = lib.filter(s => s.k);
+    return { lib, mem };
+  }
+  function nextTurn() {
+    let id; while ((id = S.queue.shift())) { const p = S.players[id]; if (p && alive(p) && plays(p)) break; }
+    if (!id) { S.phase = "end"; S.turn = null; push(); return; }
+    const p = S.players[id];
+    S.turnNo++;
+    const used = new Set(S.concert.map(g => g.t)), { lib, mem } = pools(p.kid);
+    const fresh = a => { const f = a.filter(s => !used.has(s.t)); return f.length >= 3 ? f : a; };
+    const mode = p.kid ? "lib" : S.settings.songs;
+    let opts;
+    if (mode === "lib") opts = shuffle(fresh(lib)).slice(0, 3);
+    else if (mode === "mem") opts = shuffle(fresh(mem)).slice(0, 3);
+    else { const a = shuffle(fresh(lib)), b = shuffle(fresh(mem)); opts = shuffle(Math.random() < .5 ? [a[0], a[1], b[0]] : [a[0], b[0], b[1]]); }
+    S.turn = { drawer: id, opts, song: null, got: {}, wrong: {}, kidWrong: {}, buzz: null, paused: null, dpts: 0, chooseEnds: now() + 20000, rec: [], recStart: 0 };
+    clockOff = null; held.clear();
+    S.phase = "choose"; S.feed = [];
+    needSecret.add(id); push();
+  }
+  function choose(i) {
+    const t = S.turn; if (S.phase !== "choose" || !t.opts[i]) return;
+    t.song = t.opts[i];
+    const p = S.players[t.drawer];
+    t.dur = (S.settings.time + (p && p.kid ? 20 : 0)) * 1000; t.endsAt = now() + t.dur;
+    t.hintOrder = shuffle([...t.song.t].map((c, j) => /[a-z0-9]/i.test(c) ? j : -1).filter(j => j >= 0));
+    // four picture choices for kids guessing: the song plus three others (kid songs where possible)
+    const pool = (t.song.k ? SONGS.filter(s => s.k) : t.song.mem ? MEMORY : SONGS).filter(s => s.t !== t.song.t && s.e !== t.song.e);
+    t.kc = shuffle([t.song].concat(shuffle(pool).slice(0, 3)));
+    S.phase = "play";
+    needSecret.add(t.drawer); push();
+  }
+  const frac = t => Math.max(0, (t.paused != null ? t.paused : t.endsAt - now())) / t.dur;
+  const pts = t => 50 + Math.round(50 * frac(t));
+  function award(p, n) { const t = S.turn; t.got[p.id] = n; p.score += n; }
+  function drawerBonus(n) { const t = S.turn, d = S.players[t.drawer]; if (d) { d.score += n; t.dpts += n; } }
+  function guessers() { const t = S.turn; return eligible().filter(p => p.id !== t.drawer && alive(p)); }
+  function maybeAllGot() { const g = guessers(); if (g.length && g.every(p => S.turn.got[p.id] != null)) endTurn(); }
+
+  function endTurn(skipped) {
+    const t = S.turn; if (!t || S.phase === "reveal") return;
+    t.skipped = !!skipped; t.paused = null;
+    held.forEach(h => h.v && h.v.stop()); held.clear();
+    const d = S.players[t.drawer];
+    // squash long pauses so playbacks at the end don't sit in silence
+    let shift = 0; for (let i = 1; i < t.rec.length; i++) { const gap = t.rec[i][1] - shift - t.rec[i - 1][1]; if (gap > 2000) shift += gap - 1200; t.rec[i][1] -= shift; }
+    if (t.song && !skipped && t.rec.length) S.concert.push({ t: t.song.t, e: t.song.e, by: d ? d.name : "", color: d ? d.color : "#fff", rec: t.rec.slice(0, 600) });
+    if (t.song && !skipped) { const n = Object.keys(t.got).length; if (!n) feedAdd("Nobody got it this time"); }
+    S.phase = "reveal";
+    let len = 0;
+    // play the real tune at the reveal (built-in songs only; "from memory" songs aren't stored)
+    if (t.song && t.song.n && !skipped) len = playSeq(parseNotes(t.song.n), t.song.bpm, "#f2c94c", 600);
+    S.revealUntil = now() + (skipped ? 3500 : Math.min(14000, Math.max(7000, len + 2200)));
+    push();
+  }
+  function feedAdd(html, ok) { if (!html) return; S.feed.push({ html, ok }); if (S.feed.length > 7) S.feed.shift(); }
+
+  function onGuess(p, text) {
+    const t = S.turn; if (S.phase !== "play" || !t || t.drawer === p.id || !plays(p) || t.got[p.id] != null || p.kid) return;
+    if (S.settings.guess !== "type") return;
+    const r = checkSong(text, t.song);
+    if (r === "yes") { const n = pts(t); award(p, n); drawerBonus(20); feedAdd(`${esc(p.name)} got it! +${n}`, true); push(); maybeAllGot(); }
+    else if (r === "close") { send({ t: "close", to: p.id }); }
+    else { feedAdd(`<b>${esc(p.name)}:</b> ${esc(String(text).slice(0, 30))}`); render(); }
+  }
+  function onKidPick(p, i) {
+    const t = S.turn; if (S.phase !== "play" || !t || !t.kc || t.drawer === p.id || !plays(p) || t.got[p.id] != null || t.buzz) return;
+    const c = t.kc[i]; if (!c) return;
+    if (c.t === t.song.t) {
+      const n = Math.max(20, pts(t) - 15 * (t.kidWrong[p.id] || 0));
+      award(p, n); drawerBonus(S.settings.guess === "buzz" ? 40 : 20);
+      feedAdd(`${esc(p.name)} got it! +${n}`, true); push();
+      if (S.settings.guess === "buzz") endTurn(); else maybeAllGot();
+    } else { t.kidWrong[p.id] = (t.kidWrong[p.id] || 0) + 1; send({ t: "nope", to: p.id, i }); }
+  }
+  function onBuzz(p) {
+    const t = S.turn; if (S.phase !== "play" || !t || t.buzz || t.drawer === p.id || !plays(p) || p.kid || t.wrong[p.id] || S.settings.guess !== "buzz") return;
+    t.buzz = p.id; t.paused = Math.max(0, t.endsAt - now()); t.buzzAt = now();
+    push();
+  }
+  function judge(ok) {
+    const t = S.turn; if (S.phase !== "play" || !t || !t.buzz) return;
+    const p = S.players[t.buzz];
+    if (ok && p) { const n = pts(t); award(p, n); drawerBonus(40); feedAdd(`${esc(p.name)} got it! +${n}`, true); t.buzz = null; endTurn(); return; }
+    if (p) { t.wrong[p.id] = 1; feedAdd(`${esc(p.name)} buzzed… not quite!`); }
+    t.buzz = null; t.endsAt = now() + (t.paused || 0); t.paused = null;
+    push();
+  }
+
+  // ---- sound on the TV ----
+  const audioAt = tvMs => Synth.ctx ? Synth.ctx.currentTime + Math.max(0, tvMs - now()) / 1000 : 0;
+  function keyDown(m) { // a key pressed on the pianist's phone
+    const t = S.turn, d = t && S.players[t.drawer]; if (!d) return;
+    const arrive = now(), at = +m.at || arrive, n = Math.round(+m.n);
+    if (!(n >= KB_LO && n <= KB_HI)) return;
+    const off = arrive - at; if (clockOff == null || off < clockOff) clockOff = off;
+    const play = Math.max(arrive, at + clockOff + BUF);
+    const v = Synth.ok() ? Synth.note(n, audioAt(play), .5) : null;
+    const e = { n, s: play, e: Infinity, c: d.color }; vis.push(e);
+    held.set(m.k, { v, e });
+    if (!t.recStart) t.recStart = play;
+    if (t.rec.length < 600) { const r = [n, play - t.recStart, 400]; t.rec.push(r); held.get(m.k).r = r; }
+  }
+  function keyUp(m) {
+    const h = held.get(m.k); if (!h) return; held.delete(m.k);
+    const at = +m.at || now(), end = Math.max(h.e.s + 60, at + (clockOff || 0) + BUF);
+    h.e.e = end; if (h.v) h.v.stop(audioAt(end)); if (h.r) h.r[2] = Math.max(80, end - h.e.s);
+  }
+  function playSeq(notes, bpm, col, lead) { // play a tune (the real one at the reveal)
+    const spb = 60000 / (bpm || 120); let t0 = now() + (lead || 300), t = t0;
+    for (const o of notes) { const d = o.b * spb; if (o.m) { const dur = Math.max(140, d * .92); if (Synth.ok()) { const v = Synth.note(o.m, audioAt(t), .45); v && v.stop(audioAt(t + dur)); } vis.push({ n: o.m, s: t, e: t + dur, c: col }); } t += d; }
+    return t - now();
+  }
+  function replay(i) { // play back a performance from the concert
+    const g = S.concert[i]; if (!g) return;
+    const t0 = now() + 300; replaying = { i, until: t0 + (g.rec.length ? g.rec[g.rec.length - 1][1] + g.rec[g.rec.length - 1][2] : 0) + 200 };
+    for (const [n, s, d] of g.rec) { const st = t0 + s; if (Synth.ok()) { const v = Synth.note(n, audioAt(st), .5); v && v.stop(audioAt(st + d)); } vis.push({ n, s: st, e: st + d, c: g.color }); }
+    render();
+  }
+
+  function onMsg(m) {
+    if (!m || !m.t || m.t === "state" || m.t === "secret" || m.t === "close" || m.t === "nope") return;
+    const p = m.id && S.players[m.id];
+    if (m.t === "join" && m.id) {
+      let q = S.players[m.id];
+      if (!q) { q = S.players[m.id] = { id: m.id, color: COLORS[colorI++ % COLORS.length], score: 0 }; S.order.push(m.id); }
+      q.name = String(m.name || "Player").slice(0, 16); q.kid = !!m.kid; q.seen = now();
+      needSecret.add(q.id); push(); return;
+    }
+    if (!p) { if (m.id) send({ t: "rejoin", to: m.id }); return; }
+    p.seen = now();
+    const isHost = m.id === hostId(), t = S.turn, isPianist = t && t.drawer === m.id;
+    switch (m.t) {
+      case "hi": break;
+      case "set": if (isHost && (S.phase === "lobby" || S.phase === "end") && SETS.some(x => x[0] === m.k && x[2].some(v => v[0] === m.v))) { S.settings[m.k] = m.v; push(); } break;
+      case "start": if (isHost && S.phase === "lobby") start(); break;
+      case "again": if (isHost && S.phase === "end") playAgain(); break;
+      case "lobby": if (isHost && S.phase === "end") toLobby(); break;
+      case "skip": if ((isHost || isPianist) && (S.phase === "play" || S.phase === "choose")) endTurn(true); break;
+      case "choose": if (isPianist) choose(m.i); break;
+      case "key": if (S.phase === "play" && isPianist) keyDown(m); break;
+      case "off": if (isPianist) keyUp(m); break;
+      case "guess": onGuess(p, m.text); break;
+      case "kpick": onKidPick(p, m.i); break;
+      case "buzz": onBuzz(p); break;
+      case "judge": if (isPianist) judge(!!m.ok); break;
+    }
+  }
+
+  // ---- timers ----
+  setInterval(() => {
+    const t = S.turn;
+    if (S.phase === "choose" && t && now() > t.chooseEnds) choose(Math.random() * t.opts.length | 0);
+    if (S.phase === "play" && t) {
+      if (t.paused == null && now() >= t.endsAt) endTurn();
+      else if (t.buzz && now() - t.buzzAt > 25000) judge(false);
+      const d = S.players[t.drawer]; if (d && now() - d.seen > 15000) { feedAdd(`${esc(d.name)} lost connection`); endTurn(true); }
+      else updTimer();
+    }
+    if (S.phase === "reveal" && now() > S.revealUntil) nextTurn();
+    if (replaying && now() > replaying.until) { replaying = null; render(); }
+    held.forEach((h, k) => { if (now() - h.e.s > 8000) { h.v && h.v.stop(); h.e.e = now(); held.delete(k); } }); // stuck key safety
+  }, 250);
+  setInterval(() => send({ t: "state", st: pub() }), 3000);
+
+  // ---- rendering ----
+  function render() {
+    const key = S.phase + "|" + S.turnNo;
+    if (key !== lastKey) { lastKey = key; build(); }
+    upd();
+  }
+  function header() {
+    return `<header class="tvtop"><div class="logo" id="logo"></div><div class="tinfo" id="tinfo"></div><div class="codesm">Join code <b>${room}</b></div></header>`;
+  }
+  function build() {
+    const main = S.phase === "lobby" ? `<main class="tvmain">
+        <div class="stagecol"><div class="qrcard"><div id="qr"></div><div class="k">${Array.from({ length: 15 }, (_, i) => `<i></i>${[0, 1, 3, 4, 5, 7, 8, 10, 11, 12].includes(i) && i < 14 ? `<i class="b"></i>` : ""}`).join("")}</div></div>
+          <div class="plaque"><small>Tonight's concert</small><b>Scan to join</b><div style="font-weight:700">or go to the link and enter <b style="font-family:var(--display);font-size:1.3em;letter-spacing:.1em">${room}</b></div></div></div>
+        <div class="panel"><h3>Pianists</h3><div class="plist" id="plist"></div>
+          <button class="btn gold big" id="start">Start the game</button><div class="lobbynote" id="snote"></div><div id="sets"></div><div class="lobbynote">${esc(conn)}</div></div></main>`
+      : S.phase === "end" ? `<main class="end"><div class="concert" id="gal"></div>
+        <div class="panel"><h3 id="exh"></h3><div class="lobbynote">Press ▶ to hear any performance again.</div><div class="plist podium" id="plist"></div>
+          <div class="lobbynote" style="margin-top:.4em"><b style="color:var(--fg)">Next game</b> · change anything below, then play again. Same players, no need to rejoin.</div>
+          <button class="btn gold big" id="again">▶ Play again</button><div class="lobbynote" id="snote"></div><div id="sets"></div>
+          <button class="btn" id="tolobby">Back to the lobby (to add players)</button></div></main>`
+      : `<main class="tvmain">
+        <div class="stagecol"><div class="plaque" id="plaque"></div><canvas id="stage" width="1600" height="900"></canvas></div>
+        <div class="panel"><div class="timer" id="timer"></div><div class="plist" id="plist"></div><div class="feed" id="feed"></div><button class="btn" id="skip" style="margin-top:auto">Skip this one</button></div></main>`;
+    app.innerHTML = `<div class="tvwrap">${header()}${main}</div><div id="bov"></div><div id="sov"></div>`;
+    if (S.phase === "lobby") { try { new QRCode($("#qr"), { text: joinUrl, width: 400, height: 400, correctLevel: QRCode.CorrectLevel.M }); } catch (e) { $("#qr").textContent = joinUrl; } }
+    if (S.phase === "end") $("#gal").onclick = e => { const b = e.target.closest("[data-r]"); if (b) { Synth.init(); replay(+b.dataset.r); } };
+  }
+  function upd() {
+    festive(S.settings.edition === "xmas", 60);
+    const lg = $("#logo"); if (lg) lg.innerHTML = `Tap That <span>Tune</span>${S.settings.edition === "xmas" ? " 🎄" : " 🎹"}`;
+    const list = S.order.map(id => S.players[id]).filter(Boolean), t = S.turn;
+    const sorted = S.phase === "lobby" ? list : list.slice().sort((a, b) => b.score - a.score);
+    const pl = $("#plist");
+    if (pl) pl.innerHTML = sorted.map((p, i) => {
+      const watching = !plays(p), got = t && t.got[p.id] != null, drawer = t && t.drawer === p.id;
+      return `<div class="prow ${got ? "got" : ""} ${drawer && S.phase !== "end" ? "drawer" : ""} ${!alive(p) || watching ? "off" : ""}"><span class="dot" style="background:${p.color}"></span>
+        <span class="nm">${S.phase === "end" && i === 0 ? "🏆 " : ""}${esc(p.name)}</span>${p.kid ? `<span class="tag">🧒</span>` : ""}${watching ? `<span class="tag">watching</span>` : ""}
+        ${drawer && S.phase !== "end" ? "🎹" : got ? "✅" : ""}${S.phase === "lobby" ? "" : `<span class="sc">${p.score}</span>`}</div>`;
+    }).join("") || `<div class="lobbynote">Nobody yet. Scan the code with a phone.</div>`;
+    const ti = $("#tinfo"); if (ti) ti.textContent = S.phase === "lobby" || S.phase === "end" ? "" : `Song ${S.turnNo} of ${S.totalTurns}`;
+    // sound needs one click on the TV before browsers allow it
+    const sov = $("#sov");
+    if (sov) { const need = !Synth.ok(); if (need && !sov.innerHTML) { sov.innerHTML = `<div class="soundov"><button class="btn gold">🔊 Click to switch the sound on</button></div>`; sov.onclick = () => { Synth.init(); setTimeout(() => { sov.innerHTML = Synth.ok() ? "" : sov.innerHTML; }, 150); }; } else if (!need) sov.innerHTML = ""; }
+    if (S.phase === "lobby") {
+      $("#sets").innerHTML = setsHTML(S.settings);
+      const n = eligible().length;
+      $("#start").disabled = n < 2;
+      $("#snote").textContent = n < 2 ? (S.settings.who === "kids" ? "Needs at least 2 kids (tick “a child is playing” when joining)." : "Needs at least 2 players.") : `${n} pianists ready. The first player to join can also start from their phone.`;
+      $("#sets").onclick = e => { const b = e.target.closest("[data-set]"); if (b) { const { k, v } = setFromBtn(b); S.settings[k] = v; push(); } };
+      $("#start").onclick = () => { Synth.init(); start(); };
+    }
+    if (S.phase === "end") {
+      $("#exh").textContent = S.settings.edition === "xmas" ? "The Christmas Concert" : "The Concert";
+      $("#gal").innerHTML = S.concert.length ? S.concert.map((g, i) => `<div class="ticket ${replaying && replaying.i === i ? "playing" : ""}" style="animation-delay:${i * .1}s"><span class="e">${g.e}</span><div><b>${esc(g.t)}</b><span class="by" style="color:${g.color}">played by ${esc(g.by)}</span></div><button class="pl" data-r="${i}">${replaying && replaying.i === i ? "♪" : "▶"}</button></div>`).join("") : `<div class="muted">No performances this time.</div>`;
+      $("#sets").innerHTML = setsHTML(S.settings);
+      $("#sets").onclick = e => { const b = e.target.closest("[data-set]"); if (b) { const { k, v } = setFromBtn(b); S.settings[k] = v; push(); } };
+      const n = eligible().length;
+      $("#snote").textContent = n < 2 ? (S.settings.who === "kids" ? "Kids only needs at least 2 kids. Play again will open the lobby so more can join." : "Needs at least 2 players.") : "";
+      $("#again").onclick = playAgain; $("#tolobby").onclick = toLobby;
+      return;
+    }
+    if (!t) return;
+    const d = S.players[t.drawer], dn = d ? esc(d.name) : "";
+    const pq = $("#plaque");
+    if (S.phase === "choose") pq.innerHTML = `<small>Next pianist</small><b>${dn}</b><div style="font-weight:700">is choosing a song…</div>`;
+    else if (S.phase === "play") pq.innerHTML = `<small>${t.song.mem ? "Playing from memory" : "At the piano"}</small><b>${dn}</b>${S.settings.who === "kids" ? `<div style="font-weight:700">Kids, tap the song on your phone!</div>` : S.settings.guess === "type" ? `<div class="hint">${esc(hint(t))}</div>` : `<div style="font-weight:700">Know the song? Buzz in!</div>`}`;
+    else if (S.phase === "reveal") pq.innerHTML = t.skipped ? `<small>Skipped</small><b>${dn}'s song</b>` : `<small>It was</small><b>“${esc(t.song.t)}” ${t.song.e}</b><div style="font-weight:700">played by ${dn}${t.dpts ? ` · +${t.dpts} for the pianist` : ""}${t.song.n ? " · 🎶 here's how it goes" : ""}</div>`;
+    $("#feed").innerHTML = S.feed.map(f => `<div class="${f.ok ? "ok" : ""}">${f.html}</div>`).join("");
+    $("#skip").onclick = () => endTurn(true);
+    $("#skip").classList.toggle("hidden", S.phase === "reveal");
+    updTimer();
+    const bov = $("#bov");
+    if (S.phase === "play" && t.buzz && S.players[t.buzz]) {
+      const b = S.players[t.buzz];
+      if (!bov.dataset.on || bov.dataset.on !== t.buzz) {
+        bov.dataset.on = t.buzz;
+        bov.innerHTML = `<div class="buzzov"><div class="buzzcard"><div style="font-size:4em">🔔</div><h2 style="color:${b.color}">${esc(b.name)} buzzed!</h2><div class="muted" style="font-size:1.3em">Say the song out loud. ${dn} decides.</div>
+          <div class="row"><button class="btn good big" data-j="1" style="width:auto">✓ Right</button><button class="btn bad big" data-j="0" style="width:auto">✗ Wrong</button></div></div></div>`;
+        bov.onclick = e => { const j = e.target.closest("[data-j]"); if (j) judge(j.dataset.j === "1"); };
+      }
+    } else { bov.innerHTML = ""; bov.dataset.on = ""; }
+  }
+  function updTimer() {
+    const el = $("#timer"), t = S.turn; if (!el || !t) return;
+    if (S.phase === "play") { const s = Math.ceil(Math.max(0, t.paused != null ? t.paused : t.endsAt - now()) / 1000); el.textContent = (t.paused != null ? "⏸ " : "") + s; el.classList.toggle("low", s <= 10); }
+    else if (S.phase === "choose") { el.textContent = "🎹"; el.classList.remove("low"); }
+    else el.textContent = "";
+    if (S.phase === "play" && S.settings.guess === "type") { const h = document.querySelector("#plaque .hint"); if (h) h.textContent = hint(t); }
+  }
+  // the stage: notes float up from a big keyboard that lights up as the tune plays
+  function paint() {
+    const cv = $("#stage");
+    if (cv) {
+      const x = cv.getContext("2d"), W = cv.width, H = cv.height, tn = now();
+      const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#1b1640"); g.addColorStop(1, "#0b0918"); x.fillStyle = g; x.fillRect(0, 0, W, H);
+      const sp = x.createRadialGradient(W / 2, -H * .2, 10, W / 2, -H * .2, H * 1.1); sp.addColorStop(0, "rgba(255,225,160,.22)"); sp.addColorStop(1, "rgba(255,225,160,0)"); x.fillStyle = sp; x.fillRect(0, 0, W, H);
+      if (vis.length > 150) { const keep = vis.filter(v => v.e > tn - 4000); vis.length = 0; vis.push(...keep); }
+      const kx = W * .04, kw = W * .92, ky = H * .6, kh = H * .36, ww = kw / WHITES.length;
+      const lit = new Map(); for (const v of vis) if (v.s <= tn && tn < v.e) lit.set(v.n, v.c);
+      const xOf = m => { if (!isBlack(m)) return kx + WHITES.indexOf(m) * ww + ww / 2; return kx + (WHITES.indexOf(m - 1) + 1) * ww; };
+      // floating notes
+      x.textAlign = "center"; x.textBaseline = "middle";
+      for (const v of vis) { const age = tn - v.s; if (age < 0 || age > 2600) continue; const u = age / 2600; x.globalAlpha = 1 - u; x.fillStyle = v.c; x.font = `800 ${H * .09}px Georgia`; x.fillText(v.n % 2 ? "♪" : "♫", xOf(v.n) + Math.sin(age / 260 + v.n) * W * .012, ky - H * .05 - u * H * .5); }
+      x.globalAlpha = 1;
+      // keys
+      WHITES.forEach((m, i) => { const c = lit.get(m); x.fillStyle = c || "#f6f2ea"; x.fillRect(kx + i * ww + 2, ky, ww - 4, kh); if (c) { x.fillStyle = "rgba(255,255,255,.35)"; x.fillRect(kx + i * ww + 2, ky, ww - 4, kh * .3); } });
+      for (let m = KB_LO; m <= KB_HI; m++) if (isBlack(m)) { const c = lit.get(m), cx = xOf(m), bw = ww * .6; x.fillStyle = c || "#16161c"; x.fillRect(cx - bw / 2, ky, bw, kh * .6); }
+      x.fillStyle = "#2c2550"; x.fillRect(kx - 6, ky - 10, kw + 12, 12);
+      // messages on the stage
+      const t = S.turn, d = t && S.players[t.drawer];
+      x.fillStyle = "rgba(246,242,255,.75)"; x.font = `700 ${H * .055}px Barlow, sans-serif`;
+      if (S.phase === "choose" && d) x.fillText(`🎹 ${d.name} is choosing a song…`, W / 2, H * .3);
+      else if (S.phase === "play" && t && !t.rec.length && d) x.fillText(`${d.name} is warming up… listen carefully!`, W / 2, H * .3);
+      else if (S.phase === "play" && t && t.paused != null) x.fillText("⏸ Paused for a buzz", W / 2, H * .15);
+    }
+    requestAnimationFrame(paint);
+  }
+  requestAnimationFrame(paint);
+
+  render();
+  try {
+    link = await connect(room, onMsg, st => { conn = st === "ok" ? (LOCAL ? "Local test mode" : "") : "Connection lost. Reload if phones stop working."; });
+  } catch (e) { conn = "Couldn't connect. Check the internet and reload."; }
+  lastKey = ""; render();
+}
+
+// ======================================================================
+// Phone
+// ======================================================================
+async function phoneMain(codeRaw) {
+  document.body.className = "ph";
+  const room = String(codeRaw || "").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 4);
+  if (room.length !== 4) return home();
+  const id = ls.get("piano_id", null) || uid(); ls.set("piano_id", id);
+  let me = ls.get("piano_me", null); // {name, kid}
+  let ST = null, link = null, lastState = 0, secretOpts = null, secretSong = null, lastKey = "", localEnd = 0;
+  let myGuesses = [], kidNo = new Set(), judgeShown = false;
+  // piano state
+  let guide = null, seq = [], idx = 0, loops = 0, phoneSound = ls.get("piano_phonesound", false), pressN = 0;
+
+  const send = m => link && link.send(Object.assign({ id }, m));
+  function joinForm() {
+    lastKey = "join";
+    app.innerHTML = `<div class="home"><h1>Tap That <span>Tune</span></h1><p class="muted">Game ${esc(room)}</p>
+      <input id="nm" maxlength="16" placeholder="Your name" value="${esc(me ? me.name : "")}">
+      <label class="check"><input type="checkbox" id="kid" ${me && me.kid ? "checked" : ""}> 🧒 A child is playing<br><span class="muted" style="font-weight:500;font-size:.9em">They get easy songs with glowing keys to follow, and guess by tapping a picture.</span></label>
+      <button class="btn big gold" id="go">Join</button></div>`;
+    const go = () => { const v = $("#nm").value.trim(); if (!v) return $("#nm").focus(); me = { name: v, kid: $("#kid").checked }; ls.set("piano_me", me); lastKey = ""; send({ t: "join", name: me.name, kid: me.kid }); render(); };
+    $("#go").onclick = go; $("#nm").onkeydown = e => { if (e.key === "Enter") go(); };
+  }
+
+  function onMsg(m) {
+    if (!m) return;
+    if (m.t === "state") {
+      const was = ST; ST = m.st; lastState = Date.now();
+      localEnd = Date.now() + (ST.left || 0);
+      if (!ST.players.some(p => p.id === id) && me) send({ t: "join", name: me.name, kid: me.kid });
+      if (was && was.turnNo !== ST.turnNo) { myGuesses = []; kidNo = new Set(); secretOpts = null; secretSong = null; guide = null; if (ST.drawer === id) buzzPhone([60, 60, 60]); }
+      if (ST.buzz && ST.drawer === id && !judgeShown) buzzPhone(120);
+      if (was && ST.got[id] != null && was.got[id] == null) buzzPhone([40, 40, 120]);
+      render(); return;
+    }
+    if (m.to !== id) return;
+    if (m.t === "secret") {
+      if (m.opts) secretOpts = m.opts;
+      if (m.song && (!secretSong || secretSong.t !== m.song.t)) { secretSong = m.song; seq = m.song.n ? parseNotes(m.song.n) : []; idx = 0; loops = 0; }
+      lastKey = ""; render();
+    }
+    if (m.t === "close") toast("So close!");
+    if (m.t === "nope") { kidNo.add(m.i); buzzPhone(80); const el = document.querySelector(`[data-k="${m.i}"]`); if (el) { el.classList.add("no", "shake"); } }
+    if (m.t === "rejoin" && me) send({ t: "join", name: me.name, kid: me.kid });
+  }
+  function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.textContent = t; ($("#pv") || document.body).appendChild(d); buzzPhone(30); setTimeout(() => d.remove(), 1500); }
+
+  const mine = () => ST && ST.players.find(p => p.id === id);
+  const playsMe = () => { const p = mine(); return p && (ST.settings.who === "kids" ? p.kid : true); };
+  function role() {
+    if (!me) return "join";
+    if (!ST || !mine()) return "wait";
+    const ph = ST.phase;
+    if (ph === "lobby") return "lobby";
+    if (ph === "end") return "end";
+    if (ph === "reveal") return "reveal";
+    if (!playsMe()) return "watch";
+    if (ST.drawer === id) return ph === "choose" ? "choose" : "play";
+    if (ph === "choose") return "waitplay";
+    if (mine().kid) return ST.got[id] != null ? "got" : "kid";
+    if (ST.got[id] != null) return "got";
+    return ST.settings.guess === "buzz" ? "buzz" : "type";
+  }
+  function top(extra) {
+    const p = mine();
+    return `<div class="ptop"><span class="dot" style="background:${p ? p.color : "#666"}"></span><span class="nm">${esc(me.name)}${p ? ` · ${p.score}` : ""}</span>${extra || ""}<span class="ptm" id="ptm"></span></div>`;
+  }
+  function render() {
+    const r = role();
+    const key = r + "|" + (ST ? ST.turnNo + "|" + ST.phase : "") + "|" + (secretOpts ? 1 : 0) + (secretSong ? 1 : 0);
+    if (r === "join") { if (lastKey !== "join") joinForm(); return; }
+    if (key !== lastKey) { lastKey = key; build(r); }
+    upd(r);
+  }
+  function build(r) {
+    const p = mine(), isHost = ST && ST.host === id;
+    removeEventListener("resize", orient);
+    const skipBtn = isHost && ST && (ST.phase === "play" || ST.phase === "choose") && ST.drawer !== id ? `<button class="btn" id="skp" style="padding:.35em .7em;font-size:.85rem">Skip</button>` : "";
+    let body = "";
+    if (r === "wait") body = `<div class="center"><div class="bigemoji">🎹</div><h2>Finding the TV…</h2><p class="muted">Make sure the TV screen is on game ${esc(room)}.</p></div>`;
+    else if (r === "lobby") body = `<div class="center" style="flex:none;padding-top:1em"><div class="bigemoji" style="font-size:5rem">🎹</div><h2>You're in!</h2>
+        <p class="muted">${me.kid ? "🧒 Child player" : "Grown-up player"} · <button id="edit" style="text-decoration:underline;color:var(--muted)">change</button></p>
+        <p class="muted" style="font-size:.9rem">When it's your turn your phone becomes a piano. Turn it sideways.</p></div>
+        ${isHost ? `<div id="sets"></div><button class="btn gold big" id="start">Start the game</button><div class="muted" id="snote" style="text-align:center"></div>` : `<p class="muted" style="text-align:center">Waiting for ${esc((ST.players.find(x => x.id === ST.host) || {}).name || "the host")} to start the game.</p>`}`;
+    else if (r === "choose") {
+      const o = secretOpts || [];
+      body = p.kid ? `<div class="center" style="flex:none"><h2>Pick a song to play!</h2></div><div class="kopts" style="grid-template-columns:1fr">${o.map((x, i) => `<button class="ktile" data-c="${i}"><span>${x.e}</span>${esc(x.t)}</button>`).join("")}</div>`
+        : `<div class="center" style="flex:none"><h2>Your turn at the piano!</h2><p class="muted">Pick a song. Nobody else can see this.</p></div><div class="opts">${o.map((x, i) => `<button class="btn" data-c="${i}">${x.e} ${esc(x.t)}<small>${x.mem ? "🧠 play it from memory" : "🎼 with a note guide"}</small></button>`).join("")}</div>`;
+    }
+    else if (r === "play") { buildPiano(); return; }
+    else if (r === "waitplay") { const d = ST.players.find(x => x.id === ST.drawer); body = `<div class="center"><div class="bigemoji">🎹</div><h2>${esc(d ? d.name : "Someone")} is choosing a song…</h2><p class="muted">Listen to the TV!</p></div>`; }
+    else if (r === "type") body = `<div class="hintbox" id="hint"></div>
+        <form id="gf" style="display:flex;gap:.5em"><input id="gi" placeholder="Name that song" autocomplete="off" autocapitalize="off" enterkeyhint="send"><button class="btn gold" style="flex:none">Guess</button></form>
+        <div class="mine" id="mine"></div><p class="muted" style="text-align:center;margin:0">Listen to the TV and guess as many times as you like.</p>`;
+    else if (r === "buzz") body = `<div class="center"><button class="buzz" id="bz">BUZZ</button><p class="muted" id="bzs">Know the song? Buzz, then say it out loud.</p></div>`;
+    else if (r === "kid") body = `<div class="center" style="flex:none"><h2>Which song is it?</h2></div><div class="kopts">${(ST.kc || []).map((x, i) => `<button class="ktile ${kidNo.has(i) ? "no" : ""}" data-k="${i}"><span>${x.e}</span>${esc(x.t)}</button>`).join("")}</div>`;
+    else if (r === "got") body = `<div class="center"><div class="bigemoji">🎉</div><h2>You got it!</h2><p style="font-size:1.5rem;font-weight:800;color:var(--gold)">+${ST.got[id]}</p><p class="muted">Wait for the others…</p></div>`;
+    else if (r === "watch") body = `<div class="center"><div class="bigemoji">👀</div><h2>Listening</h2><p class="muted">The kids are playing this one. Cheer them on!</p></div>`;
+    else if (r === "reveal") {
+      const rv = ST.reveal || {}, g = ST.got[id];
+      body = rv.skipped ? `<div class="center"><div class="bigemoji">⏭️</div><h2>Skipped</h2></div>`
+        : `<div class="center"><div class="muted">It was</div><div class="bigemoji">${rv.e || ""}</div><h2>${esc(rv.t || "")}</h2>
+          ${ST.drawer === id ? `<p style="font-size:1.4rem;font-weight:800;color:var(--gold)">${rv.dpts ? `+${rv.dpts} for your playing` : "Nobody got it. Tricky one!"}</p>` : g != null ? `<p style="font-size:1.4rem;font-weight:800;color:var(--gold)">You got it! +${g}</p>` : playsMe() ? `<p class="muted">Not this time</p>` : ""}</div>`;
+    }
+    else if (r === "end") {
+      const sorted = ST.players.slice().sort((a, b) => b.score - a.score), pos = sorted.findIndex(x => x.id === id) + 1;
+      body = `<div class="center"><div class="bigemoji">${pos === 1 ? "🏆" : "🎹"}</div><h2>${pos === 1 ? "You won!" : `You came ${ord(pos)}`}</h2><p style="font-size:1.4rem;font-weight:800;color:var(--gold)">${mine().score} points</p>
+        <p class="muted">Every performance is on the TV to play back.</p><p class="muted">${me.kid ? "🧒 Child player" : "Grown-up player"} · <button id="edit" style="text-decoration:underline;color:var(--muted)">change</button></p></div>
+        ${isHost ? `<div style="font-weight:800">Next game</div><button class="btn gold big" id="again">▶ Play again</button><div class="muted" id="snote" style="text-align:center"></div><div id="sets"></div><button class="btn" id="tolobby">Back to the lobby</button>` : `<p class="muted" style="text-align:center">Waiting for ${esc((ST.players.find(x => x.id === ST.host) || {}).name || "the host")} to start the next game.</p>`}`;
+    }
+    app.innerHTML = `<div class="pw">${top(skipBtn)}<div class="pbody">${body}</div></div>`;
+    const on = (sel, fn) => { const el = $(sel); if (el) el.onclick = fn; };
+    on("#skp", () => send({ t: "skip" }));
+    on("#edit", () => joinForm());
+    on("#start", () => send({ t: "start" }));
+    on("#again", () => send({ t: "again" }));
+    on("#tolobby", () => send({ t: "lobby" }));
+    document.querySelectorAll("[data-c]").forEach(b => b.onclick = () => { send({ t: "choose", i: +b.dataset.c }); buzzPhone(20); });
+    document.querySelectorAll("[data-k]").forEach(b => b.onclick = () => { if (!b.classList.contains("no")) { send({ t: "kpick", i: +b.dataset.k }); buzzPhone(15); } });
+    on("#bz", () => { send({ t: "buzz" }); buzzPhone(60); });
+    const gf = $("#gf");
+    if (gf) gf.onsubmit = e => { e.preventDefault(); const v = $("#gi").value.trim(); if (!v) return; send({ t: "guess", text: v }); myGuesses.push(v); $("#gi").value = ""; upd(r); };
+    const sets = $("#sets");
+    if (sets) sets.onclick = e => { const b = e.target.closest("[data-set]"); if (b) { const { k, v } = setFromBtn(b); send({ t: "set", k, v }); } };
+  }
+
+  // ---- the piano ----
+  function orient() {
+    const pv = $("#pv"); if (!pv) return;
+    const W = innerWidth, H = innerHeight;
+    pv.style.cssText = H > W ? `inset:auto;top:0;left:${W}px;width:${H}px;height:${W}px;transform-origin:0 0;transform:rotate(90deg);--pc:${pv.dataset.pc}` : `--pc:${pv.dataset.pc}`;
+  }
+  function buildPiano() {
+    const p = mine(), s = secretSong || { t: "…", e: "" };
+    if (!guide) guide = p.kid ? "lights" : ST.settings.guide;
+    const keys = WHITES.map(m => `<div class="wk" data-m="${m}"><span class="lbl" style="color:${octCol(m)}">${NAMES[m % 12]}</span></div>`).join("")
+      + Array.from({ length: KB_HI - KB_LO + 1 }, (_, i) => KB_LO + i).filter(isBlack).map(m => `<div class="bk" data-m="${m}" style="left:calc(.3em + (100% - .6em) / 15 * ${WHITES.indexOf(m - 1) + 1} - (100% - .6em) / 15 * .31)"><span class="lbl">${NAMES[m % 12]}</span></div>`).join("");
+    app.innerHTML = `<div class="pv" id="pv" data-pc="${p.color}">
+      <div class="pvtop"><span class="dot" style="width:.9em;height:.9em;border-radius:50%;background:${p.color};flex:none"></span>
+        <span class="song">${s.e} Play <b>${esc(s.t)}</b>${s.mem ? " · from memory" : ""}</span>
+        ${s.mem ? "" : `<button class="btn" id="gd">${guide === "lights" ? "🔤 Letters" : "💡 Lights"}</button><button class="btn" id="fromtop">🔁 From the top</button>`}
+        <button class="btn" id="snd">${phoneSound ? "🔊" : "🔈"}</button><button class="btn" id="dskip">Skip</button><span class="ptm" id="ptm"></span></div>
+      <div class="lane" id="lane"></div>
+      <div class="kb ${!s.mem && guide === "lights" ? "nolabels" : ""}" id="kb">${keys}</div>
+      <div id="judge"></div></div>`;
+    orient(); addEventListener("resize", orient);
+    const kb = $("#kb"), down = new Map();
+    const press = (el, e) => {
+      e.preventDefault(); if (down.has(e.pointerId)) return;
+      const m = +el.dataset.m, k = id.slice(0, 3) + (++pressN);
+      try { el.setPointerCapture(e.pointerId); } catch (_) { }
+      down.set(e.pointerId, { el, k, v: phoneSound && Synth.ok() ? Synth.note(m, 0, .35) : null });
+      el.classList.add("down"); send({ t: "key", k, n: m, at: Date.now() }); buzzPhone(8);
+      advance(m, el);
+    };
+    const release = e => { const d = down.get(e.pointerId); if (!d) return; down.delete(e.pointerId); d.el.classList.remove("down"); d.v && d.v.stop(); send({ t: "off", k: d.k, at: Date.now() }); };
+    kb.querySelectorAll("[data-m]").forEach(el => { el.onpointerdown = e => press(el, e); el.onpointerup = el.onpointercancel = el.onlostpointercapture = release; });
+    kb.oncontextmenu = e => e.preventDefault();
+    const on = (sel, fn) => { const el = $(sel); if (el) el.onclick = fn; };
+    on("#gd", () => { guide = guide === "lights" ? "letters" : "lights"; $("#gd").textContent = guide === "lights" ? "🔤 Letters" : "💡 Lights"; kb.classList.toggle("nolabels", guide === "lights"); paintGuide(); });
+    on("#fromtop", () => { idx = 0; paintGuide(); });
+    on("#snd", () => { phoneSound = !phoneSound; ls.set("piano_phonesound", phoneSound); if (phoneSound) Synth.init(); $("#snd").textContent = phoneSound ? "🔊" : "🔈"; toast(phoneSound ? "Sound on this phone too" : "Sound from the TV only"); });
+    on("#dskip", () => { if (confirm("Skip this song? Nobody scores for it.")) send({ t: "skip" }); });
+    judgeShown = false; paintGuide();
+  }
+  function advance(m, el) {
+    if (!seq.length) return;
+    const target = nextNote(); if (!target) return;
+    if (m === target.m) {
+      idx = seq.indexOf(target) + 1;
+      if (!nextNote()) { loops++; idx = 0; const ln = $("#lane"); if (ln) { ln.innerHTML = `<span class="done">🎉 That's the whole tune! Play it again, it starts from the top.</span>`; } setTimeout(paintGuide, 1600); buzzPhone([30, 30, 30]); return; }
+    } else if (guide === "lights") { el.classList.add("oops"); setTimeout(() => el.classList.remove("oops"), 220); }
+    paintGuide();
+  }
+  const nextNote = () => { for (let i = idx; i < seq.length; i++) if (seq[i].m) return seq[i]; return null; };
+  function paintGuide() {
+    const kb = $("#kb"), ln = $("#lane"); if (!kb || !ln) return;
+    kb.querySelectorAll(".next,.next2").forEach(e => e.classList.remove("next", "next2"));
+    if (!seq.length) { ln.innerHTML = `<span class="msg">🧠 Play it from memory. The note names are on the keys to help. Hum it to yourself first!</span>`; return; }
+    const ahead = []; for (let i = idx; i < seq.length && ahead.length < 14; i++) ahead.push(seq[i]);
+    const notes = ahead.filter(o => o.m);
+    if (guide === "lights") {
+      if (notes[0]) { const a = kb.querySelector(`[data-m="${notes[0].m}"]`); a && a.classList.add("next"); }
+      if (notes[1] && notes[1].m !== notes[0].m) { const b = kb.querySelector(`[data-m="${notes[1].m}"]`); b && b.classList.add("next2"); }
+    }
+    const unit = 1.9; let first = true;
+    ln.innerHTML = ahead.map(o => {
+      if (!o.m) return `<span style="flex:none;width:${o.b * unit * .6}rem"></span>`;
+      const col = guide === "lights" ? (first ? "var(--pc)" : "#4a4170") : octCol(o.m);
+      const html = `<span class="n ${first ? "now" : ""}" style="width:${Math.max(1.5, o.b * unit)}rem;background:${col}">${guide === "letters" ? NAMES[o.m % 12] : ""}</span>`;
+      first = false; return html;
+    }).join("");
+  }
+
+  function upd(r) {
+    festive(!!(ST && ST.settings.edition === "xmas") && r !== "play", 22);
+    const tm = $("#ptm");
+    if (tm) { const s = ST && ST.phase === "play" ? Math.ceil(Math.max(0, ST.paused ? ST.left : localEnd - Date.now()) / 1000) : null; tm.textContent = s == null ? "" : (ST.paused ? "⏸" : "") + s; }
+    if ((r === "lobby" || r === "end") && $("#sets")) {
+      $("#sets").innerHTML = setsHTML(ST.settings);
+      const n = ST.players.filter(p => ST.settings.who === "kids" ? p.kid : true).length;
+      if ($("#start")) $("#start").disabled = n < 2;
+      $("#snote").textContent = n < 2 ? (r === "end" ? "Not enough players for these settings yet. Play again will open the lobby." : "Waiting for more players…") : `${n} pianists ready`;
+    }
+    if (r === "type") { const h = $("#hint"); if (h) h.textContent = ST.hint || ""; const m = $("#mine"); if (m) m.innerHTML = myGuesses.slice(-6).map(g => `<span class="chip">${esc(g)}</span>`).join(""); }
+    if (r === "buzz") {
+      const b = $("#bz"), s = $("#bzs"); if (!b) return;
+      const wrong = ST.wrong.includes(id), other = ST.buzz && ST.buzz !== id, minebz = ST.buzz === id;
+      b.disabled = wrong || !!ST.buzz;
+      const bn = other ? (ST.players.find(x => x.id === ST.buzz) || {}).name : "";
+      s.textContent = minebz ? "You buzzed! Say the song out loud." : wrong ? "Not quite. Wait for the next song." : other ? `${bn} buzzed…` : "Know the song? Buzz, then say it out loud.";
+    }
+    if (r === "play") {
+      const j = $("#judge"); if (!j) return;
+      if (ST.buzz) {
+        if (!judgeShown) {
+          judgeShown = true; const b = ST.players.find(x => x.id === ST.buzz) || {};
+          j.innerHTML = `<div class="judge"><h3>🔔 ${esc(b.name)} buzzed!</h3><div class="muted">Did they say <b>${esc(secretSong ? secretSong.t : "it")}</b>?</div><div class="row"><button class="btn good" data-j="1">✓ Yes</button><button class="btn bad" data-j="0">✗ No</button></div></div>`;
+          j.onclick = e => { const b2 = e.target.closest("[data-j]"); if (b2) send({ t: "judge", ok: b2.dataset.j === "1" }); };
+        }
+      } else if (judgeShown) { judgeShown = false; j.innerHTML = ""; }
+    }
+  }
+  setInterval(() => { if (ST && ST.phase === "play") { const t = $("#ptm"); if (t) upd(role()); } }, 250);
+
+  // ---- start ----
+  if (!me) joinForm(); else render();
+  try { link = await connect(room, onMsg); } catch (e) { app.innerHTML = `<div class="home"><h2>Couldn't connect</h2><p class="muted">Check your internet and try again.</p><button class="btn gold" onclick="location.reload()">Try again</button></div>`; return; }
+  if (me) send({ t: "join", name: me.name, kid: me.kid });
+  setInterval(() => {
+    if (!me) return;
+    if (Date.now() - lastState > 8000) send({ t: "join", name: me.name, kid: me.kid });
+    else send({ t: "hi" });
+  }, 3000);
+  try { if (navigator.wakeLock) { let wl = await navigator.wakeLock.request("screen"); document.addEventListener("visibilitychange", async () => { if (document.visibilityState === "visible") try { wl = await navigator.wakeLock.request("screen"); } catch (e) { } }); } } catch (e) { }
+}
+</script>
+</body>
+</html>

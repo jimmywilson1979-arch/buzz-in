@@ -70,6 +70,22 @@ Each player takes a turn to draw on their phone; the drawing appears live in a g
 - **🎄 Christmas edition** (Edition in the lobby, on automatically in December): Christmas words and pictures for grown-ups and kids, falling snow, a bow on the frame, and prints dated "Christmas".
 - Installs as its own home-screen app with its own icon (`manifest-draw.webmanifest`, `draw-icon-*.png`, `draw-og.jpg` for link previews).
 
+## Tap That Tune (piano game)
+**Play:** https://jimmywilson1979-arch.github.io/buzz-in/piano.html
+
+Same set-up as Buzz In and Doodle Gallery. On their turn, a player's phone becomes a two-octave piano (shown sideways,
+and turned round for you if the phone is upright). The notes play through the TV, and everyone else guesses the song.
+- **Note guide:** Glowing keys (the next key lights up) or Note letters (the tune shown as letters, colour-coded by octave).
+  Kids always start on glowing keys and can switch to letters on their phone. A strip above the keys shows the rhythm.
+- **Songs:** Built-in tunes (30 out-of-copyright songs: nursery rhymes, carols, folk and classical) or From memory
+  (the pianist gets only a song title, such as "Mr Brightside", and works it out by ear; no melody is stored), or Both.
+- **Guessing:** Type answers (marked automatically, close guesses get "So close!", letter hints as time runs down) or Buzz in.
+  Kids guess by tapping one of four song pictures. Kids only mode works as in Doodle Gallery.
+- Sound comes from the TV (click once to switch it on). Notes are scheduled a fraction of a second after they arrive so the
+  rhythm survives the internet. The pianist can also turn sound on for their own phone.
+- At the reveal the TV plays the real tune (built-in songs). End of game: The Concert, press ▶ to hear any performance again.
+- **🎄 Christmas edition:** carols and Christmas songs, with falling snow.
+
 ## Buzz In Party (party games)
 **Play:** https://jimmywilson1979-arch.github.io/buzz-in/party.html
 
@@ -101,6 +117,7 @@ Controls use a direct Wi-Fi link between phone and laptop (WebRTC) when possible
 - `index.html` – the game page (TV, phones, Family Round set-up, TV guide)
 - `party.html` – Buzz In Party mini-games (self-contained), with `manifest-party.webmanifest` and `party-*` icons
 - `draw.html` – Doodle Gallery drawing game (self-contained)
+- `piano.html` – Tap That Tune piano game (self-contained), with `manifest-piano.webmanifest`, `piano-*` icons and `piano-og.jpg`
 - `pad-test.html` – controller test: phones as joystick, air pointer or touchpad, with a cloud vs direct (WebRTC) ping comparison
 - `admin.html` – owner admin page; installs as its own home-screen app ("BI Admin")
 - `app.js`, `app.css` – shared code and styles for both pages. Bump the `?v=` on both pages when they change.

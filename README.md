@@ -74,6 +74,9 @@ Each player takes a turn to draw on their phone; the drawing appears live in a g
 - **Kids only:** only kids draw and guess, grown-ups watch.
 - The first player to join is the host (settings, start, skip). The TV can also skip a drawing.
 - End of game: The Exhibition, every drawing framed with a plaque. Click one on the TV to save it as a framed print.
+- **🎨 Gallery look:** the TV is an art gallery, with damask wallpaper, wood panelling, a picture rail, carved gold corners on every frame,
+  a brass picture light over the drawing and a velvet rope on brass posts. Switch back with **🎨 Gallery / Classic** in the lobby
+  or press **L** on the TV (the same setting as Buzz In's Showtime look).
 - **🎄 Christmas edition** (Edition in the lobby, on automatically in December): Christmas words and pictures for grown-ups and kids, falling snow, a bow on the frame, and prints dated "Christmas".
 - Installs as its own home-screen app with its own icon (`manifest-draw.webmanifest`, `draw-icon-*.png`, `draw-og.jpg` for link previews).
 

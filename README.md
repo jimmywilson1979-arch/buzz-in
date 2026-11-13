@@ -47,6 +47,13 @@ and the Family Round.
 Choose **Kids' game** as well for Christmas rounds just for the kids: Christmas Elves, Christmas Tunes,
 Christmas Cartoon Emojis, Christmas True or False and Christmas Odd One Out.
 
+## 🎨 Showtime look
+Buzz In now looks like a TV game-show studio: sweeping spotlights, a shiny stage floor, a marquee of chasing light bulbs
+around the logo and each round title, glossy answer buttons, a glowing timer, and lit-up score bars and podium.
+In the Christmas edition the lights turn red, green and gold, a garland of twinkling lights hangs across the top and
+presents sit on the stage. Switch back to the original look with **🎨 Showtime / Classic** in the lobby (under the
+host QR code) or press **L** on the TV. The choice is remembered on that screen. All of it lives in `showtime.css`.
+
 ## Extras
 - One Joker per player to double their points on a round.
 - Original background music, drumroll reveals and a winner's fanfare. Music and volume on the host phone.

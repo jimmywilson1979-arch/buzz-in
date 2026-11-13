@@ -1,0 +1,68 @@
+/* =====================================================================
+   Buzz In · 🎨 Showtime look (html.fx). Game-show studio: spotlights,
+   stage floor, marquee bulbs, glossy answer buttons. Classic = no .fx.
+   Christmas edition adds a garland of lights and presents.
+   ===================================================================== */
+.studio{display:none}
+.fx body.tv .studio{display:block;position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.studio .beam{position:absolute;top:-12vh;width:24vw;height:125vh;transform-origin:50% 0;mix-blend-mode:screen;filter:blur(8px);
+  clip-path:polygon(44% 0,56% 0,100% 100%,0 100%);background:linear-gradient(180deg,var(--bc),rgba(0,0,0,0) 78%);opacity:.75}
+.studio .b1{left:0;--bc:rgba(255,214,120,.30);animation:sweep 11s ease-in-out infinite alternate;--r1:-24deg;--r2:4deg}
+.studio .b2{left:24vw;--bc:rgba(120,150,255,.26);animation:sweep 13s ease-in-out -4s infinite alternate;--r1:-10deg;--r2:14deg}
+.studio .b3{left:52vw;--bc:rgba(255,120,210,.22);animation:sweep 12s ease-in-out -7s infinite alternate;--r1:12deg;--r2:-12deg}
+.studio .b4{left:76vw;--bc:rgba(255,214,120,.30);animation:sweep 10s ease-in-out -2s infinite alternate;--r1:22deg;--r2:-4deg}
+@keyframes sweep{from{transform:rotate(var(--r1))}to{transform:rotate(var(--r2))}}
+.studio .floor{position:absolute;left:-20vw;right:-20vw;bottom:-2vh;height:30vh;transform:perspective(40vh) rotateX(58deg);transform-origin:50% 100%;
+  background:radial-gradient(50% 60% at 50% 0%,rgba(150,170,255,.28),transparent 70%),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 2px,transparent 2px 6vw),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.06) 0 2px,transparent 2px 5vh),linear-gradient(#171d45,#06081a);
+  border-top:.3vh solid rgba(255,201,60,.45);box-shadow:0 -1vh 4vh rgba(255,201,60,.18)}
+.studio .garland,.studio .gifts{display:none}
+.fx body.tv.xmas .studio .garland{display:block;position:absolute;left:-1vw;width:102vw;top:-.6vw;height:5.2vw}
+.fx body.tv.xmas .studio .gifts{display:block;position:absolute;bottom:.6vw;width:11vw;height:auto}
+.studio .gifts.gl{left:calc(50vw - 9.5vw);width:9vw!important}.studio .gifts.gr{left:calc(50vw - 3.4vw);width:9vw!important}
+.fx body.tv.xmas .studio .b1,.fx body.tv.xmas .studio .b4{--bc:rgba(255,200,120,.30)}
+.fx body.tv.xmas .studio .b2{--bc:rgba(255,90,90,.22)}.fx body.tv.xmas .studio .b3{--bc:rgba(90,220,140,.20)}
+.fx body.tv.xmas .studio .floor{background:radial-gradient(50% 60% at 50% 0%,rgba(255,220,180,.25),transparent 70%),
+  repeating-linear-gradient(90deg,rgba(255,255,255,.06) 0 2px,transparent 2px 6vw),repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 2px,transparent 2px 5vh),linear-gradient(#1b2a20,#070c09)}
+.studio .bulb ellipse{animation:bulb 2.4s ease-in-out infinite}
+.studio .bulb.b1 ellipse{animation-delay:-.6s}.studio .bulb.b2 ellipse{animation-delay:-1.2s}.studio .bulb.b3 ellipse{animation-delay:-1.8s}
+@keyframes bulb{50%{opacity:.4}}
+
+/* marquee boards with chasing bulbs: the lobby logo and the round title */
+.fx .tv .rtitle,.fx .tv .joincard .logo{position:relative;display:inline-block;align-self:center;padding:.12em .42em .06em;border-radius:.22em;
+  background:linear-gradient(180deg,#2c1b60,#120a2e);box-shadow:inset 0 0 0 .28rem #ffc93c,inset 0 0 0 .55rem #6b3fd0,inset 0 0 3rem rgba(0,0,0,.6),0 1.2rem 3rem rgba(0,0,0,.55);
+  text-shadow:0 .35rem 0 #7a4b00,0 0 2.2rem rgba(255,201,60,.55)}
+.fx .tv .joincard .logo{align-self:flex-start;margin-left:1.2rem}
+.fx .tv .rtitle::before,.fx .tv .rtitle::after,.fx .tv .joincard .logo::before,.fx .tv .joincard .logo::after{content:"";position:absolute;inset:-1.15rem;border-radius:.34em;padding:1.15rem;pointer-events:none;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+.fx .tv .rtitle::before,.fx .tv .joincard .logo::before{background:radial-gradient(circle,#fffbe0 0 .26rem,var(--bulbA,#ffc93c) .32rem,rgba(255,201,60,.35) .46rem,transparent .62rem) 0 0/2.2rem 2.2rem round;animation:chaseA 1s steps(1) infinite}
+.fx .tv .rtitle::after,.fx .tv .joincard .logo::after{background:radial-gradient(circle,#fffbe0 0 .26rem,var(--bulbB,#ffc93c) .32rem,rgba(255,201,60,.35) .46rem,transparent .62rem) 1.1rem 1.1rem/2.2rem 2.2rem round;animation:chaseB 1s steps(1) infinite}
+@keyframes chaseA{0%{opacity:1}50%{opacity:.25}}
+@keyframes chaseB{0%{opacity:.25}50%{opacity:1}}
+.fx body.xmas .rtitle,.fx body.xmas .joincard .logo{--bulbA:#ff5a5a;--bulbB:#3ddc84;background:linear-gradient(180deg,#5a1220,#2a0810);box-shadow:inset 0 0 0 .28rem #ffd34d,inset 0 0 0 .55rem #1f7a46,inset 0 0 3rem rgba(0,0,0,.6),0 1.2rem 3rem rgba(0,0,0,.55)}
+.fx .tv .rnum{color:#cfd6ff;text-shadow:0 0 1rem rgba(150,170,255,.6)}
+
+/* question and answers */
+.fx .tv .qtext{text-shadow:0 .3rem 0 rgba(0,0,0,.55),0 0 2.4rem rgba(140,160,255,.35)}
+.fx .tv .opt{border:.22rem solid rgba(255,255,255,.4);background-image:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,.04) 48%,rgba(0,0,0,.14) 52%,rgba(0,0,0,.06));
+  box-shadow:inset 0 .3rem 0 rgba(255,255,255,.25),inset 0 -.45rem 0 rgba(0,0,0,.22),0 .55rem 0 rgba(0,0,0,.35),0 1.2rem 2.4rem rgba(0,0,0,.45);text-shadow:0 .15rem 0 rgba(0,0,0,.3)}
+.fx .tv .opt .let{background:rgba(0,0,0,.3);box-shadow:inset 0 0 0 .2rem rgba(255,255,255,.55),0 .2rem .6rem rgba(0,0,0,.3)}
+.fx .tv .opt.right{transform:scale(1.04);box-shadow:0 0 0 .4rem #fff,0 0 3.5rem .5rem rgba(255,255,255,.55),0 .55rem 0 rgba(0,0,0,.35)}
+.fx .tv .timer{filter:drop-shadow(0 0 .9rem rgba(255,201,60,.65))}
+.fx .tv .bigans{text-shadow:0 .35rem 0 #7a4b00,0 0 2.4rem rgba(255,201,60,.5)}
+.fx .tv .buzzer{box-shadow:0 0 0 .4rem #fff,0 0 4rem rgba(255,255,255,.6)}
+.fx .tv .dot{box-shadow:0 0 0 .2rem rgba(255,255,255,.8),0 0 1rem rgba(255,255,255,.25)}
+.fx .ptile{background-image:linear-gradient(180deg,rgba(255,255,255,.08),rgba(0,0,0,.15));box-shadow:0 .4rem 1.2rem rgba(0,0,0,.35)}
+.fx .ptile .av{box-shadow:0 0 0 .18rem #fff3c4,0 0 0 .32rem #b8862a}
+.fx .tv .qr{box-shadow:0 0 0 .35rem #ffc93c,0 0 3rem rgba(255,201,60,.35)}
+.fx .tv .code{text-shadow:0 .4rem 0 rgba(0,0,0,.5),0 0 2rem rgba(150,170,255,.4)}
+.fx .tv .side>.setup{background-image:linear-gradient(180deg,rgba(255,255,255,.04),rgba(0,0,0,.1))}
+
+/* scores and the final podium */
+.fx .brow .bar{background-image:linear-gradient(180deg,rgba(255,255,255,.4),rgba(255,255,255,.05) 50%,rgba(0,0,0,.15));box-shadow:inset 0 0 0 .15rem rgba(255,255,255,.35),0 0 1.4rem rgba(255,255,255,.15)}
+.fx .pod .blk{background-image:linear-gradient(180deg,rgba(255,255,255,.35),rgba(255,255,255,.05) 40%,rgba(0,0,0,.25));box-shadow:inset 0 .3rem 0 rgba(255,255,255,.35),0 0 0 .2rem rgba(255,255,255,.3),0 1rem 3rem rgba(0,0,0,.5);color:rgba(0,0,0,.6)}
+.fx .pod:nth-child(2) .blk{box-shadow:inset 0 .3rem 0 rgba(255,255,255,.35),0 0 0 .3rem #ffc93c,0 0 4rem rgba(255,201,60,.55)}
+.fx .pod:nth-child(2) .pn{color:#ffc93c;text-shadow:0 0 1.6rem rgba(255,201,60,.6)}
+.fx .award{background-image:linear-gradient(180deg,rgba(255,255,255,.08),rgba(0,0,0,.15))}
+@media (prefers-reduced-motion:reduce){.studio .beam,.studio .bulb ellipse,.fx .tv .rtitle::before,.fx .tv .rtitle::after,.fx .tv .joincard .logo::before,.fx .tv .joincard .logo::after{animation:none}}

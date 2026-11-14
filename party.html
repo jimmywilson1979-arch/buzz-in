@@ -53,6 +53,8 @@ input{font:inherit;color:var(--fg);background:var(--bg2);border:2px solid var(--
 /* TV */
 body.tv{overflow:hidden;font-size:clamp(13px,1.15vw,24px)}
 #cv{position:fixed;inset:0;width:100%;height:100%;display:block}
+.sndctl{position:fixed;left:1.2vw;bottom:1.6vh;z-index:6;display:flex;gap:.4em}.sndctl .btn{padding:.35em .6em;font-size:1.1em;opacity:.75}
+.sndwake{position:fixed;left:50%;bottom:3vh;transform:translateX(-50%);z-index:7;font-size:1.3em}
 .hud{position:fixed;left:0;right:0;top:0;display:flex;align-items:center;justify-content:space-between;gap:1em;padding:1.6vh 2.4vw;pointer-events:none;z-index:2}
 .logo{font-family:var(--display);font-weight:800;font-size:2.2em;text-transform:uppercase;letter-spacing:.02em;text-shadow:0 .1em .3em rgba(0,0,0,.5)}
 .logo span{color:var(--gold)}
@@ -198,6 +200,112 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const ls = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } } };
+// ======================================================================
+// SOUND (TV only): synthesised effects + a little music between games. No sound files needed.
+// ======================================================================
+const SND = (() => {
+  let ac = null, master, sfx, mus, nb = null, on = ls.get("party_snd", true), music = ls.get("party_mus", true);
+  let tune = null, mPos = 0, mAt = 0, mTimer = null;
+  function init() {
+    try {
+      if (!ac) { ac = new (window.AudioContext || window.webkitAudioContext)(); master = ac.createGain(); master.gain.value = 1.9; const lim = ac.createDynamicsCompressor(); lim.threshold.value = -10; lim.ratio.value = 12; lim.attack.value = .003; lim.release.value = .15; master.connect(lim); lim.connect(ac.destination); sfx = ac.createGain(); sfx.connect(master); mus = ac.createGain(); mus.connect(master); apply(); }
+      if (ac.state === "suspended") ac.resume();
+    } catch (e) { ac = null; }
+    return ac;
+  }
+  function apply() { if (!ac) return; sfx.gain.value = on ? 1 : 0; mus.gain.value = on && music ? .38 : 0; }
+  function osc(f, t, d, type, v, f2, bus) {
+    const o = ac.createOscillator(), g = ac.createGain(); o.type = type || "sine"; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(v, t + .008); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+    o.connect(g); g.connect(bus || sfx); o.start(t); o.stop(t + d + .05);
+  }
+  function noise(t, d, v, type, freq, q, f2, attack, bus) {
+    if (!nb) { nb = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate); const a = nb.getChannelData(0); for (let i = 0; i < a.length; i++) a[i] = Math.random() * 2 - 1; }
+    const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(); s.buffer = nb;
+    f.type = type || "bandpass"; f.frequency.setValueAtTime(freq || 1000, t); if (f2) f.frequency.exponentialRampToValueAtTime(f2, t + d); f.Q.value = q || 1;
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(v, t + (attack || .005)); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+    s.connect(f); f.connect(g); g.connect(bus || sfx); s.start(t, Math.random() * 1.5); s.stop(t + d + .05);
+  }
+  const mf = m => 440 * Math.pow(2, (m - 69) / 12);
+  const arp = (t, ns, gap, d, type, v) => ns.forEach((m, i) => osc(mf(m), t + i * gap, d, type || "triangle", v || .14));
+  const FX = {
+    join: t => { osc(660, t, .12, "triangle", .15); osc(990, t + .08, .2, "triangle", .15); },
+    tick: t => { osc(880, t, .1, "square", .07); },
+    go: t => { [60, 64, 67, 72].forEach(m => osc(mf(m), t, .55, "sawtooth", .05)); noise(t, .35, .1, "highpass", 4000); osc(mf(84), t, .5, "triangle", .1); },
+    ding: t => { osc(1320, t, .3, "sine", .12); osc(1760, t + .06, .35, "sine", .08); },
+    good: t => arp(t, [72, 76, 79, 84], .08, .22),
+    bad: t => { osc(220, t, .3, "sawtooth", .07, 150); osc(160, t + .18, .4, "sawtooth", .07, 110); },
+    round: t => arp(t, [67, 72, 76, 79], .1, .3, "triangle", .13),
+    win: t => { [[72, 0], [76, .15], [79, .3], [84, .45], [79, .7], [84, .85]].forEach(([m, w]) => { osc(mf(m), t + w, .4, "triangle", .15); osc(mf(m - 12), t + w, .4, "square", .03); }); FX.cheer(t + .3); },
+    fanfare: t => { [[67, 0], [72, .12], [76, .24], [79, .36], [76, .55], [79, .67], [84, .8]].forEach(([m, w]) => osc(mf(m), t + w, w > .7 ? .7 : .2, "triangle", .15)); },
+    cheer: t => { for (let i = 0; i < 6; i++) noise(t + i * .05, 1.6 + Math.random() * .6, .05, "bandpass", 900 + Math.random() * 1500, .7, null, .25); for (let i = 0; i < 26; i++) noise(t + .1 + Math.random() * 1.6, .05, .12, "bandpass", 1500 + Math.random() * 1500, 1.5); },
+    drumroll: t => { for (let i = 0; i < 28; i++) noise(t + i * .045, .06, .03 + i * .004, "bandpass", 1800, .8); noise(t + 1.28, .9, .2, "highpass", 5000); osc(80, t + 1.28, .3, "sine", .3, 40); },
+    whoosh: t => noise(t, .4, .18, "bandpass", 400, 1.5, 2500, .15),
+    throw: t => noise(t, .22, .14, "bandpass", 700, 2, 2600, .05),
+    bump: t => { osc(140, t, .18, "sine", .3, 55); noise(t, .08, .12, "lowpass", 900); },
+    splash: t => { noise(t, .8, .3, "lowpass", 2500, .7, 250); for (let i = 0; i < 5; i++) osc(500 + Math.random() * 700, t + .1 + i * .07, .08, "sine", .06, 1400); },
+    slide: t => noise(t, 2.2, .14, "lowpass", 260, 1, 120, .2),
+    clack: t => { osc(1900, t, .05, "square", .1); osc(1300, t, .08, "triangle", .1); noise(t, .05, .2, "highpass", 3000); },
+    brush: t => noise(t, .12, .08, "highpass", 2500, 1, 6000, .02),
+    heave: (t, o) => { const v = .1 + .2 * ((o && o.v) || 0); osc(95, t, .22, "triangle", v, 70); noise(t, .15, v * .5, "lowpass", 400); },
+    heart: t => { osc(70, t, .14, "sine", .4, 45); osc(65, t + .2, .16, "sine", .3, 40); },
+    bang: t => { noise(t, .35, .5, "lowpass", 3000, .5, 300, .002); osc(120, t, .25, "sine", .4, 40); },
+    fake: t => { osc(300, t, .2, "sine", .1, 600); },
+    plop: t => { osc(900, t, .14, "sine", .2, 200); noise(t + .02, .2, .06, "lowpass", 1200); },
+    snap: t => { noise(t, .07, .35, "highpass", 2500); osc(400, t, .3, "sawtooth", .06, 120); },
+    boing: t => { osc(150, t, .5, "sine", .2, 500); osc(155, t + .05, .45, "triangle", .06, 480); },
+    reel: t => { for (let i = 0; i < 4; i++) noise(t + i * .03, .02, .08, "highpass", 4000); },
+    flip: t => { noise(t, .07, .18, "highpass", 3500); noise(t + .05, .05, .12, "bandpass", 2000, 2); },
+    bell: t => { osc(1568, t, .6, "triangle", .1); osc(2093, t + .02, .5, "sine", .05); osc(1568, t + .3, .6, "triangle", .1); },
+    gallop: t => { noise(t, .05, .25, "bandpass", 700 + Math.random() * 300, 3); noise(t + .07, .05, .18, "bandpass", 500 + Math.random() * 300, 3); },
+    note: (t, o) => { const m = [67, 72, 76, 79, 83, 86, 88, 91][((o && o.i) || 0) % 8]; osc(mf(m), t, .35, "triangle", .16); osc(mf(m + 12), t, .2, "sine", .04); },
+    thunk: t => { osc(160, t, .09, "square", .1, 90); noise(t, .06, .25, "bandpass", 700, 2); },
+    roll: t => noise(t, 1.6, .16, "lowpass", 220, 1, 400, .2),
+    crash: (t, o) => { const n = Math.max(2, Math.min(10, (o && o.n) || 5)); for (let i = 0; i < n; i++) { const w = t + Math.random() * .35; osc(1500 + Math.random() * 1500, w, .06, "square", .05); noise(w, .09, .15, "bandpass", 2500 + Math.random() * 2000, 2); } },
+    swish: t => noise(t, .35, .2, "highpass", 3000, 1, 7000, .08),
+    rim: t => { osc(520, t, .25, "square", .06); osc(780, t, .3, "triangle", .08); },
+    splat: t => { noise(t, .3, .3, "lowpass", 1500, .7, 300); osc(200, t, .15, "sine", .2, 80); },
+    pop: t => osc(650, t, .1, "sine", .14, 1100),
+    coins: t => { osc(1568, t, .15, "square", .05); osc(2093, t + .08, .3, "square", .05); },
+    coal: t => { osc(180, t, .25, "sawtooth", .08, 90); noise(t, .15, .15, "lowpass", 600); },
+    lap: t => noise(t, 1.1, .05, "lowpass", 500, 1, 250, .4),
+  };
+  // music: [midi, beats] melody, chord roots per bar, tempo
+  const TUNES = {
+    std: { bpm: 122, bells: false, bass: [48, 43, 45, 41, 48, 43, 41, 43], mel: [[76, .5], [79, .5], [84, .5], [79, .5], [76, 1], [0, 1], [74, .5], [79, .5], [83, .5], [79, .5], [74, 1], [0, 1], [72, .5], [76, .5], [81, .5], [76, .5], [72, .5], [74, .5], [76, 1], [77, .5], [76, .5], [74, .5], [72, .5], [74, 2],
+      [76, .5], [76, .5], [79, 1], [84, .5], [83, .5], [81, 1], [79, .5], [77, .5], [76, .5], [74, .5], [79, 2], [77, .5], [81, .5], [84, .5], [81, .5], [79, .5], [77, .5], [76, 1], [74, .5], [76, .5], [74, .5], [71, .5], [72, 2]] },
+    // Jingle Bells (James Lord Pierpont, 1857: public domain)
+    xmas: { bpm: 150, bells: true, bass: [48, 48, 48, 48, 41, 48, 43, 43, 48, 48, 48, 48, 41, 48, 43, 48], mel: [[76, 1], [76, 1], [76, 2], [76, 1], [76, 1], [76, 2], [76, 1], [79, 1], [72, 1.5], [74, .5], [76, 4], [77, 1], [77, 1], [77, 1.5], [77, .5], [77, 1], [76, 1], [76, 1], [76, .5], [76, .5], [76, 1], [74, 1], [74, 1], [76, 1], [74, 2], [79, 2],
+      [76, 1], [76, 1], [76, 2], [76, 1], [76, 1], [76, 2], [76, 1], [79, 1], [72, 1.5], [74, .5], [76, 4], [77, 1], [77, 1], [77, 1.5], [77, .5], [77, 1], [76, 1], [76, 1], [76, .5], [76, .5], [79, 1], [79, 1], [77, 1], [74, 1], [72, 4]] },
+  };
+  function schedule() {
+    if (!ac || !tune) return;
+    const T0 = TUNES[tune], spb = 60 / T0.bpm, bars = T0.bass.length;
+    // a bar-based backing (bass + drums) and the melody, scheduled ~0.4s ahead
+    while (mAt < ac.currentTime + .4) {
+      const beatInLoop = mPos, bar = Math.floor(beatInLoop / 4) % bars, b = beatInLoop % 4;
+      // backing on each half beat
+      const t = mAt;
+      if (b % 1 === 0) { const root = T0.bass[bar]; osc(mf(root - 12 + (b % 2 ? 7 : 0)), t, spb * .9, "triangle", .22, null, mus); if (b === 0 || b === 2) osc(120, t, .16, "sine", .5, 45, mus); else noise(t, .12, .16, "bandpass", 1800, .8, null, .003, mus); }
+      noise(t, .04, T0.bells ? .1 : .05, "highpass", T0.bells ? 7000 : 8000, 1, null, .002, mus);
+      // melody notes that start at this half beat
+      let acc = 0; for (const [m, d] of T0.mel) { if (Math.abs(acc - (beatInLoop % (bars * 4))) < .01 && m) { osc(mf(m), t, d * spb * .9, "square", .07, null, mus); osc(mf(m), t, d * spb * .95, "triangle", .14, null, mus); } acc += d; }
+      mPos = (mPos + .5) % (bars * 4); mAt += spb / 2;
+    }
+  }
+  return {
+    get on() { return on; }, get music() { return music; },
+    unlock() { init(); },
+    toggle() { on = !on; ls.set("party_snd", on); init(); apply(); return on; },
+    toggleMusic() { music = !music; ls.set("party_mus", music); init(); apply(); return music; },
+    play(name, o) { if (!on || !FX[name] || !init() || ac.state !== "running") return; try { FX[name](ac.currentTime + .01, o); } catch (e) { } },
+    tune(kind) { // start/stop the between-games music ("std", "xmas" or null)
+      if (kind === tune) return; tune = kind; clearInterval(mTimer); mTimer = null;
+      if (kind && init()) { mPos = 0; mAt = ac.currentTime + .15; mTimer = setInterval(schedule, 100); schedule(); }
+    },
+  };
+})();
+
 const code4 = () => Array.from({ length: 4 }, () => "BCDFGHJKLMNPQRSTVWXZ"[Math.random() * 20 | 0]).join("");
 const vib = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) { } };
 const ord = n => n + (["th", "st", "nd", "rd"][(n % 100 - 20) % 10] || ["th", "st", "nd", "rd"][n % 100] || "th");
@@ -316,7 +424,7 @@ function Sumo(C) {
     const g = S.peng.find(q => q.id === p.id); if (!g) return;
     if (m.t === "joy") { g.jx = clamp(+m.x || 0, -1, 1); g.jy = clamp(+m.y || 0, -1, 1); }
     if (m.t === "dash" && S.state === "fight" && g.alive && T() - g.dashAt > 1400) {
-      g.dashAt = T(); let dx = g.jx, dy = g.jy, l = Math.hypot(dx, dy); if (l < .25) { dx = g.fx; dy = g.fy; l = 1; }
+      g.dashAt = T(); C.sfx("whoosh"); let dx = g.jx, dy = g.jy, l = Math.hypot(dx, dy); if (l < .25) { dx = g.fx; dy = g.fy; l = 1; }
       g.vx += dx / l * .85 / Math.sqrt(g.m); g.vy += dy / l * .85 / Math.sqrt(g.m);
     }
   };
@@ -347,10 +455,10 @@ function Sumo(C) {
         a.x -= nx * o * b.m / tm; a.y -= ny * o * b.m / tm; b.x += nx * o * a.m / tm; b.y += ny * o * a.m / tm;
         const rel = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
         if (rel > 0) { const jj = 2.2 * rel / (1 / a.m + 1 / b.m); a.vx -= jj / a.m * nx; a.vy -= jj / a.m * ny; b.vx += jj / b.m * nx; b.vy += jj / b.m * ny; }
-        const now = T(); if (now - (a.bump[b.id] || 0) > 350) { a.bump[b.id] = now; C.buzz(a.id, 30); C.buzz(b.id, 30); S.fx.push({ x: a.x + nx * a.r, y: a.y + ny * a.r, t: now, k: "hit" }); }
+        const now = T(); if (now - (a.bump[b.id] || 0) > 350) { a.bump[b.id] = now; C.buzz(a.id, 30); C.buzz(b.id, 30); C.sfx("bump"); S.fx.push({ x: a.x + nx * a.r, y: a.y + ny * a.r, t: now, k: "hit" }); }
       }
     }
-    for (const g of al) if (Math.hypot(g.x, g.y) > S.R + g.r * .25) { g.alive = false; g.fall = 0; S.out.push(g.id); C.buzz(g.id, [60, 40, 220]); S.fx.push({ x: g.x, y: g.y, t: T(), k: "splash" }); }
+    for (const g of al) if (Math.hypot(g.x, g.y) > S.R + g.r * .25) { g.alive = false; g.fall = 0; S.out.push(g.id); C.buzz(g.id, [60, 40, 220]); C.sfx("splash"); S.fx.push({ x: g.x, y: g.y, t: T(), k: "splash" }); }
     const left = S.peng.filter(g => g.alive);
     if (left.length <= 1 || t > 80000) {
       const surv = left.slice().sort((a, b) => Math.hypot(b.x, b.y) - Math.hypot(a.x, a.y)).map(g => g.id);
@@ -400,6 +508,7 @@ function Sumo(C) {
   api.phone = () => ({ alive: S.peng.filter(g => g.alive).map(g => g.id), state: S.state, round: S.round });
   api.ranking = () => rankBy(ps.map(p => p.id), id => pts[id], true);
   api.skip = () => { api.done = true; };
+  api.S = S;
   return api;
 }
 
@@ -464,7 +573,7 @@ function Curling(C) {
         if (d > 0 && d < SR * 2) {
           const nx = dx / d, ny = dy / d, o = (SR * 2 - d) / 2; a.x -= nx * o; a.y -= ny * o; b.x += nx * o; b.y += ny * o;
           const rel = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
-          if (rel > 0) { const jj = rel * .95; a.vx -= jj * nx; a.vy -= jj * ny; b.vx += jj * nx; b.vy += jj * ny; C.buzz(a.id, 25); }
+          if (rel > 0) { const jj = rel * .95; a.vx -= jj * nx; a.vy -= jj * ny; b.vx += jj * nx; b.vy += jj * ny; C.buzz(a.id, 25); if (rel > .05) C.sfx("clack"); }
         }
       }
     }
@@ -519,6 +628,7 @@ function Curling(C) {
   };
   api.ranking = () => rankBy(ps.map(p => p.id).filter(id => S.best[id] != null), id => S.best[id], false); // no stones left = no points
   api.skip = () => { if (S.state === "aim" || S.state === "moving") { S.stones.forEach(s => { s.vx = s.vy = 0; }); next(); } else api.done = true; };
+  api.S = S;
   return api;
 }
 
@@ -594,6 +704,7 @@ function Tug(C) {
   api.phone = () => ({ teams: teams.map(tm => tm.map(p => p.id)), names, cols, wins: S.wins, state: S.state });
   api.ranking = () => S.wins[0] === S.wins[1] ? [ps.map(p => p.id)] : (S.wins[0] > S.wins[1] ? [teams[0], teams[1]] : [teams[1], teams[0]]).map(tm => tm.map(p => p.id));
   api.skip = () => { api.done = true; };
+  api.S = S;
   return api;
 }
 
@@ -612,7 +723,7 @@ function QuickDraw(C) {
   const active = () => ps.filter(p => C.alive(p.id));
   api.input = (p, m) => {
     if (m.t !== "qd" || m.r !== S.round || S.res[p.id]) return;
-    if (S.state === "wait" || m.early) { S.res[p.id] = { early: true }; C.buzz(p.id, 200); return; }
+    if (S.state === "wait" || m.early) { S.res[p.id] = { early: true }; C.buzz(p.id, 200); C.sfx("bad"); return; }
     if (S.state === "go") { const rt = +m.rt; S.res[p.id] = rt < 90 || !isFinite(rt) ? { early: true } : { rt: Math.min(rt, 3000) }; }
   };
   api.update = () => {
@@ -663,6 +774,7 @@ function QuickDraw(C) {
   api.phone = () => ({ state: S.state, round: S.round, res: Object.fromEntries(Object.entries(S.res).map(([k, v]) => [k, v.early ? "early" : v.rt])) });
   api.ranking = () => rankBy(ps.map(p => p.id), id => pts[id], true);
   api.skip = () => { api.done = true; };
+  api.S = S;
   return api;
 }
 // ---------- Blow Boat Race ----------
@@ -685,7 +797,7 @@ function Boat(C) {
       if (b.p.bot) { b.lvl = clamp(b.base + .15 * Math.sin(T() / 800 + b.base * 40) + (Math.random() - .5) * .2, 0, 1); b.lvlAt = T(); }
       let L = T() - b.lvlAt > 450 ? 0 : b.lvl; if (C.boost && b.p.kid) L = Math.min(1, L * 1.35);
       b.v += (L - b.v) * Math.min(1, dt * 2.5); b.x += b.v * .13 * dt;
-      if (b.x >= LEN) { b.x = LEN; b.fin = T(); S.order.push(b.id); if (!S.firstFin) S.firstFin = T(); C.buzz(b.id, [50, 50, 200]); }
+      if (b.x >= LEN) { b.x = LEN; b.fin = T(); S.order.push(b.id); if (!S.firstFin) S.firstFin = T(); C.buzz(b.id, [50, 50, 200]); C.sfx(S.order.length === 1 ? "good" : "ding"); }
     }
     if (S.boats.every(b => b.fin != null || !C.alive(b.id)) || t > 55000 || (S.firstFin && T() - S.firstFin > 9000)) {
       const w = ps.find(p => p.id === S.order[0]) || ps.find(p => p.id === api.ranking()[0][0]);
@@ -724,6 +836,7 @@ function Boat(C) {
   api.hud = () => "⛵ Blow Boat Race";
   api.phone = () => ({ state: S.state, ready: S.boats.filter(b => b.ready).map(b => b.id) });
   api.ranking = () => { const fin = S.order.map(id => [id]); const rest = rankBy(S.boats.filter(b => b.fin == null).map(b => b.id), id => S.boats.find(b => b.id === id).x, true); return fin.concat(rest); };
+  api.S = S;
   return api;
 }
 
@@ -790,21 +903,21 @@ function Fish(C) {
         q.fish.x = q.bob.x - .02; q.fish.y = q.bob.y + .01;
         if (now >= q.nextNib) {
           if (q.nib > 0) { q.nib--; q.dip = now; priv(q, { t: "fishn" }); q.nextNib = now + 700 + Math.random() * 900; }
-          else { setMode(q, "bite"); q.dip = now; priv(q, { t: "fishb" }); C.buzz(q.id, [120, 40, 120]); }
+          else { setMode(q, "bite"); q.dip = now; priv(q, { t: "fishb" }); C.buzz(q.id, [120, 40, 120]); C.sfx("plop"); }
         }
       }
       if (q.mode === "bite" && now - q.at > (kid(q.p) ? 2200 : 1300)) { release(q, true); setMode(q, "wait"); priv(q, { t: "fishx", m: "Too slow! It got away." }); }
       if (q.mode === "reel") {
         const f = q.fish;
-        if (!f.t.boot && !q.thrash && now > q.nextThrash) { q.thrash = true; q.thrashEnd = now + 700 + f.t.s * 450; priv(q, { t: "fishp", prog: q.prog, ten: q.ten, thr: true }); C.buzz(q.id, [200]); }
+        if (!f.t.boot && !q.thrash && now > q.nextThrash) { q.thrash = true; q.thrashEnd = now + 700 + f.t.s * 450; priv(q, { t: "fishp", prog: q.prog, ten: q.ten, thr: true }); C.buzz(q.id, [200]); C.sfx("splash"); }
         if (q.thrash && now > q.thrashEnd) { q.thrash = false; q.nextThrash = now + 1100 + Math.random() * 1700; }
         q.ten = Math.max(0, q.ten - dt * .35);
         f.x = q.bob.x + (q.x - q.bob.x) * q.prog; f.y = q.bob.y + (DOCK - .02 - q.bob.y) * q.prog;
-        if (q.ten >= 1) { release(q, true); fish.splice(fish.indexOf(f), 1); setTimeout(spawn, 2000); setMode(q, "idle"); q.bob = null; priv(q, { t: "fishx", m: "SNAP! The line broke." }); C.buzz(q.id, [300]); }
+        if (q.ten >= 1) { release(q, true); fish.splice(fish.indexOf(f), 1); setTimeout(spawn, 2000); setMode(q, "idle"); q.bob = null; priv(q, { t: "fishx", m: "SNAP! The line broke." }); C.buzz(q.id, [300]); C.sfx("snap"); }
         else if (q.prog >= 1) {
           q.score += f.t.w; if (!q.best || f.t.w > q.best.w) q.best = f.t;
           S.pops.push({ x: q.x, t: now, f: f.t, who: q.p.name }); fish.splice(fish.indexOf(f), 1); setTimeout(spawn, 1500);
-          q.fish = null; q.bob = null; setMode(q, "idle"); priv(q, { t: "fishx", m: f.t.boot ? "An old boot! 0 points 😂" : `You caught a ${f.t.n}! +${f.t.w}`, good: !f.t.boot }); C.buzz(q.id, [50, 50, 50, 50, 200]);
+          q.fish = null; q.bob = null; setMode(q, "idle"); priv(q, { t: "fishx", m: f.t.boot ? "An old boot! 0 points 😂" : `You caught a ${f.t.n}! +${f.t.w}`, good: !f.t.boot }); C.buzz(q.id, [50, 50, 50, 50, 200]); C.sfx(f.t.boot ? "boing" : "good");
         } else if (now - q.lastPriv > 160) { q.lastPriv = now; priv(q, { t: "fishp", prog: Math.round(q.prog * 100) / 100, ten: Math.round(q.ten * 100) / 100, thr: q.thrash }); }
       }
     }
@@ -860,6 +973,7 @@ function Fish(C) {
   api.hud = () => "🎣 Gone Fishing";
   api.phone = () => ({ state: S.state, modes: Object.fromEntries(pl.map(q => [q.id, q.mode])), scores: Object.fromEntries(pl.map(q => [q.id, q.score])) });
   api.ranking = () => rankBy(pl.map(q => q.id), id => pl.find(q => q.id === id).score, true);
+  api.S = S;
   return api;
 }
 
@@ -930,6 +1044,7 @@ function Cards(C) {
   api.hud = () => "🃏 Play Your Cards Right";
   api.phone = () => ({ state: S.state, card: S.cards.length ? (S.state === "reveal" ? S.cards[S.cards.length - 2] : S.cards[S.cards.length - 1]) : null, next: S.state === "reveal" ? S.cards[S.cards.length - 1] : null, picks: Object.keys(S.picks), res: S.state === "reveal" && S.last ? S.last.res : null, correct: S.state === "reveal" && S.last ? S.last.correct : [], pts: S.pts, n: S.cards.length, row: S.row });
   api.ranking = () => rankBy(ps.map(p => p.id), id => S.pts[id], true);
+  api.S = S;
   return api;
 }
 
@@ -1036,6 +1151,7 @@ function Derby(C) {
   api.hud = () => "🏇 Derby Day";
   api.phone = () => ({ state: S.state, race: S.race, horses: S.horses.map(h => ({ n: h.name, o: odds(h.o), d: h.dec })), coins: S.coins, bets: S.bets, win: S.state === "result" || S.state === "end" ? S.order[0] : null, wins: S.state === "result" ? S.wins : {} });
   api.ranking = () => rankBy(ps.map(p => p.id), id => S.coins[id], true);
+  api.S = S;
   return api;
 }
 
@@ -1064,7 +1180,7 @@ function CopyCat(C) {
     if (S.state === "repeat") {
       for (const p of ps) if (p.bot && !S.out[p.id] && S.res[p.id] == null && t > S.len * 420 + 300) S.res[p.id] = S.len <= S.cap[p.id];
       if (still().every(p => S.res[p.id] != null) || t > S.limit) {
-        for (const p of still()) { if (S.res[p.id]) S.best[p.id] = S.len; else { S.lives[p.id]--; if (S.lives[p.id] <= 0) { S.out[p.id] = true; C.buzz(p.id, [200]); } } }
+        for (const p of still()) { if (S.res[p.id]) S.best[p.id] = S.len; else { S.lives[p.id]--; if (S.lives[p.id] <= 0) { S.out[p.id] = true; C.buzz(p.id, [200]); C.sfx("bad"); } } }
         S.state = "result"; S.at = T();
       }
       return;
@@ -1097,6 +1213,7 @@ function CopyCat(C) {
   api.hud = () => `🟥 Copy Cat · ${Math.max(3, S.len)} colours`;
   api.phone = () => ({ state: S.state, len: S.len, seq: S.state === "repeat" ? seq.slice(0, S.len) : null, out: Object.keys(S.out), res: S.res, best: S.best, lives: S.lives });
   api.ranking = () => rankBy(ps.map(p => p.id), id => S.best[id], true);
+  api.S = S;
   return api;
 }
 
@@ -1125,7 +1242,7 @@ function Darts(C) {
   ps.forEach(p => S.total[p.id] = 0);
   function newRound() { S.round++; S.thrown = {}; S.darts = []; S.state = "throw"; S.at = T(); ps.forEach(p => { S.thrown[p.id] = 0; S.botAt[p.id] = T() + 1500 + Math.random() * 1500; }); }
   function land(p, x, y) {
-    const [s, lbl] = dartScore(x, y); S.darts.push({ id: p.id, color: p.color, x, y, s, lbl, t: T() }); S.total[p.id] += s; S.thrown[p.id]++;
+    const [s, lbl] = dartScore(x, y); S.darts.push({ id: p.id, color: p.color, x, y, s, lbl, t: T() }); S.total[p.id] += s; S.thrown[p.id]++; C.sfx(s ? "thunk" : "boing"); if (s >= 50) setTimeout(() => C.sfx("good"), 200);
     const tip = s ? "" : Math.abs(x) > Math.abs(y) ? " " + sideHint(x) : y < 0 ? " Too high. Flick a little gentler." : " Too low. Flick a little harder.";
     C.priv(p.id, { t: "toast", m: (s ? `${lbl}! +${s}` : lbl) + tip }); if (s >= 50 || lbl.startsWith("Treble")) C.buzz(p.id, [40, 40, 120]);
   }
@@ -1178,6 +1295,7 @@ function Darts(C) {
   api.hud = () => `🎯 Darts · Round ${Math.max(1, S.round)} of ${ROUNDS}`;
   api.phone = () => ({ state: S.state, round: S.round, thrown: S.thrown, total: S.total });
   api.ranking = () => rankBy(ps.map(p => p.id), id => S.total[id], true);
+  api.S = S;
   return api;
 }
 
@@ -1188,11 +1306,12 @@ function Bowling(C) {
   const S = { state: "count", at: T(), msg: "" };
   const lanes = ps.map(p => ({ p, id: p.id, frame: 1, ball: 1, score: 0, frames: [], pins: pinPos.map(([x, y]) => ({ x, y, x0: x, y0: y, vx: 0, vy: 0, down: false, gone: false })), b: null, state: "ready", at: T(), first: 0, botAt: T() + 2000 + Math.random() * 1500, bumpers: C.boost && p.kid, done: false, flash: "" }));
   function resetPins(L, all) { L.pins.forEach(pn => { if (all || !pn.down) { pn.x = pn.x0; pn.y = pn.y0; pn.vx = pn.vy = 0; if (all) { pn.down = false; pn.gone = false; } } else pn.gone = true; }); }
-  function throwBall(L, p, a) { if (L.state !== "ready" || L.done) return; L.aim = null; L.lastA = clamp(a, -1, 1); const v = 4.2 + clamp(p, 0, 1) * 5, ang = clamp(a, -1, 1) * .13; L.b = { x: 0, y: .6, vx: v * Math.sin(ang), vy: v * Math.cos(ang), gutter: false }; L.state = "roll"; L.at = T(); }
+  function throwBall(L, p, a) { if (L.state !== "ready" || L.done) return; L.aim = null; L.lastA = clamp(a, -1, 1); const v = 4.2 + clamp(p, 0, 1) * 5, ang = clamp(a, -1, 1) * .13; L.b = { x: 0, y: .6, vx: v * Math.sin(ang), vy: v * Math.cos(ang), gutter: false }; L.state = "roll"; L.at = T(); C.sfx("roll"); }
   api.input = (p, m) => { const L = lanes.find(l => l.id === p.id); if (L && m.t === "aim") L.aim = aimSet(m); if (L && m.t === "throw" && S.state === "play") throwBall(L, +m.p || 0, +m.a || 0); };
   function settle(L) {
     const down = L.pins.filter(pn => !pn.gone && (pn.down || Math.hypot(pn.x - pn.x0, pn.y - pn.y0) > .12)); down.forEach(pn => pn.down = true);
     const knocked = L.pins.filter(pn => pn.down && !pn.gone).length, total = L.pins.filter(pn => pn.down).length;
+    if (knocked) C.sfx("crash", { n: knocked }); if (total === 10) setTimeout(() => { C.sfx("good"); C.sfx("cheer"); }, 250); else if (!knocked && L.ball === 1) C.sfx("bad");
     if (L.ball === 1) {
       if (total === 10) { L.score += 20; L.frames.push("X"); L.flash = "STRIKE!"; C.priv(L.id, { t: "toast", m: "STRIKE! 🎳 +20" }); C.buzz(L.id, [50, 50, 50, 50, 300]); nextFrame(L); }
       else { L.first = knocked; L.score += knocked; L.ball = 2; L.flash = knocked ? `${knocked}` : "Gutter!"; C.priv(L.id, { t: "toast", m: knocked ? `${knocked} pins` : "Gutter ball! " + sideHint(L.lastA || 0) }); resetPins(L, false); L.state = "ready"; L.at = T(); L.botAt = T() + 1800 + Math.random() * 1200; }
@@ -1253,6 +1372,7 @@ function Bowling(C) {
   api.hud = () => `🎳 Bowling · ${FRAMES} frames`;
   api.phone = () => ({ state: S.state, lanes: Object.fromEntries(lanes.map(L => [L.id, { st: L.state, f: L.frame, b: L.ball, s: L.score, bump: L.bumpers }])) });
   api.ranking = () => rankBy(lanes.map(l => l.id), id => lanes.find(l => l.id === id).score, true);
+  api.S = S;
   return api;
 }
 
@@ -1266,8 +1386,9 @@ function Hoops(C) {
     if (S.state !== "play" || T() < S.cool[p.id]) return; S.cool[p.id] = T() + 650;
     S.aim[p.id] = null; const i = ps.indexOf(p), x0 = px(i), lx = .5 + a * K - S.hx, ly = (pw - .55) * .5, tol = .05 * (C.boost && p.kid ? 1.45 : 1), d = Math.hypot(lx, ly * .8);
     const res = d < tol * .4 ? "swish" : d < tol ? "in" : d < tol * 1.7 ? "rim" : "miss";
-    S.balls.push({ p, x0, tx: S.hx + lx, ty: ly, res, t: T() });
+    S.balls.push({ p, x0, tx: S.hx + lx, ty: ly, res, t: T() }); C.sfx("throw");
     setTimeout(() => {
+      C.sfx(res === "swish" ? "swish" : res === "in" ? "rim" : res === "rim" ? "rim" : "boing"); if (res === "swish" || res === "in") setTimeout(() => C.sfx("ding"), 150);
       if (res === "swish" || res === "in") { const n = res === "swish" ? 3 : 2; S.pts[p.id] += n; C.priv(p.id, { t: "toast", m: res === "swish" ? "SWISH! +3" : "In! +2" }); C.buzz(p.id, [40, 40, 120]); }
       else C.priv(p.id, { t: "toast", m: res === "rim" ? "Off the rim!" : ly < -tol ? "Too short! Flick a bit harder." : ly > tol ? "Too long! Flick a bit softer." : sideHint(lx) });
     }, 850);
@@ -1304,6 +1425,7 @@ function Hoops(C) {
   api.hud = () => "🏀 Basketball";
   api.phone = () => ({ state: S.state, pts: S.pts });
   api.ranking = () => rankBy(ps.map(p => p.id), id => S.pts[id], true);
+  api.S = S;
   return api;
 }
 
@@ -1314,7 +1436,7 @@ function Snowball(C) {
   const S = { state: "count", at: T(), balls: [], msg: "" };
   const pl = ps.map((p, i) => { const a = i / n * Math.PI * 2; return { p, id: p.id, x: A / 2 + Math.cos(a) * A * .38, y: .55 + Math.sin(a) * .3, jx: 0, jy: 0, fx: -Math.cos(a), fy: -Math.sin(a), hits: 0, hit: 0, stun: 0, cool: 0, botT: 0 }; });
   const inWall = (x, y, r) => walls.find(([wx, wy, ww, wh]) => x + r > wx - ww / 2 && x - r < wx + ww / 2 && y + r > wy - wh / 2 && y - r < wy + wh / 2);
-  function throwBall(q) { if (S.state !== "play" || T() < q.cool || T() < q.stun) return; q.cool = T() + 650; S.balls.push({ q, x: q.x + q.fx * R, y: q.y + q.fy * R, vx: q.fx * 1.05, vy: q.fy * 1.05, r: C.boost && q.p.kid ? .02 : .013, t: T() }); }
+  function throwBall(q) { if (S.state !== "play" || T() < q.cool || T() < q.stun) return; q.cool = T() + 650; S.balls.push({ q, x: q.x + q.fx * R, y: q.y + q.fy * R, vx: q.fx * 1.05, vy: q.fy * 1.05, r: C.boost && q.p.kid ? .02 : .013, t: T() }); C.sfx("throw"); }
   api.input = (p, m) => { const q = pl.find(z => z.id === p.id); if (!q) return; if (m.t === "joy") { q.jx = clamp(+m.x || 0, -1, 1); q.jy = clamp(+m.y || 0, -1, 1); } if (m.t === "throw") throwBall(q); };
   api.update = dt => {
     const t = T() - S.at;
@@ -1334,7 +1456,7 @@ function Snowball(C) {
     for (const b of S.balls) {
       b.x += b.vx * dt; b.y += b.vy * dt;
       if (inWall(b.x, b.y, b.r) || b.x < 0 || b.x > A || b.y < .12 || b.y > 1 || T() - b.t > 1400) { b.dead = true; continue; }
-      for (const q of pl) if (q !== b.q && T() > q.stun && Math.hypot(q.x - b.x, q.y - b.y) < R + b.r) { b.dead = true; b.q.hits++; q.hit++; q.stun = T() + 1100; C.buzz(q.id, [150]); C.buzz(b.q.id, [30, 30, 60]); break; }
+      for (const q of pl) if (q !== b.q && T() > q.stun && Math.hypot(q.x - b.x, q.y - b.y) < R + b.r) { b.dead = true; b.q.hits++; q.hit++; q.stun = T() + 1100; C.buzz(q.id, [150]); C.sfx("splat"); C.buzz(b.q.id, [30, 30, 60]); break; }
     }
     S.balls = S.balls.filter(b => !b.dead);
     if (t > DUR) { const top = api.ranking()[0]; S.msg = `${top.map(id => ps.find(p => p.id === id).name).join(" & ")} wins with ${pl.find(q => q.id === top[0]).hits} hits!`; S.state = "end"; S.at = T(); }
@@ -1362,6 +1484,7 @@ function Snowball(C) {
   api.hud = () => "❄️ Snowball Fight";
   api.phone = () => ({ state: S.state });
   api.ranking = () => rankBy(pl.map(q => q.id), id => { const q = pl.find(z => z.id === id); return q.hits * 100 - q.hit; }, true);
+  api.S = S;
   return api;
 }
 
@@ -1386,7 +1509,7 @@ function Catch(C) {
       it.y += it.vy * dt; it.sw += dt * 3; it.x += Math.sin(it.sw) * .02 * dt;
       if (it.y >= GY - .03 && !it.dead) {
         const q = pl.find(z => T() >= z.stun && Math.abs(z.x - it.x) < z.w);
-        if (q) { it.dead = true; const v = it.k === "gold" ? 3 : it.k === "coal" ? -2 : 1; q.pts += v; if (it.k === "coal") { q.stun = T() + 800; C.buzz(q.id, [200]); } else C.buzz(q.id, 30); S.pops.push({ x: it.x, t: T(), v, col: q.p.color }); }
+        if (q) { it.dead = true; const v = it.k === "gold" ? 3 : it.k === "coal" ? -2 : 1; q.pts += v; if (it.k === "coal") { q.stun = T() + 800; C.buzz(q.id, [200]); C.sfx("coal"); } else { C.buzz(q.id, 30); C.sfx(it.k === "gold" ? "coins" : "pop"); } S.pops.push({ x: it.x, t: T(), v, col: q.p.color }); }
         else if (it.y > GY + .05) it.dead = true;
       }
     }
@@ -1429,6 +1552,7 @@ function Catch(C) {
   api.hud = () => "🎁 Catch the Presents";
   api.phone = () => ({ state: S.state });
   api.ranking = () => rankBy(pl.map(q => q.id), id => pl.find(q => q.id === id).pts, true);
+  api.S = S;
   return api;
 }
 
@@ -1473,6 +1597,7 @@ async function tvMain() {
     buzz: (id, ms) => sendTo(S.players[id], { t: "buzz", ms }), priv: (id, m) => sendTo(S.players[id], m), bcast,
     fast: m => { bcast(m); list().forEach(p => { if (p.dc && p.dc.readyState === "open") try { p.dc.send(JSON.stringify(m)); } catch (e) { } }); },
     alive: id => alive(S.players[id]),
+    sfx: (n, o) => SND.play(n, o),
   });
 
   function pub() {
@@ -1526,7 +1651,7 @@ async function tvMain() {
     let p = S.players[m.id];
     if (!p) {
       p = S.players[m.id] = { id: m.id, color: COLORS[colorI++ % COLORS.length], score: 0, ch: null, pc: null, dc: null, pending: null };
-      S.order.push(m.id);
+      S.order.push(m.id); SND.play("join");
     }
     p.name = String(m.name || "Player").slice(0, 14); p.kid = !!m.kid; p.seen = T();
     if (!p.ch && !p.pending) p.pending = chan("party-" + room + "-" + m.id, msg => onPad(p, msg)).then(ch => { p.ch = ch; p.pending = null; }).catch(() => { p.pending = null; });
@@ -1568,8 +1693,62 @@ async function tvMain() {
       if (S.game.done) finishGame(!!S.game.skipped);
       else if (now - lastPhoneCheck > 150) { lastPhoneCheck = now; const j = JSON.stringify(S.game.phone()); if (j !== lastPhoneJSON) { lastPhoneJSON = j; push(); } }
     } else if ((S.phase === "intro" || S.phase === "result" || S.phase === "board") && S.endsAt && now > S.endsAt) advance();
+    phaseSounds(now); gameSounds(now);
   }
   setInterval(step, 16);
+
+  // ---- sound: react to what is happening ----
+  let lastPhase = "", lastSec = -1;
+  function phaseSounds(now) {
+    if (S.phase !== lastPhase) {
+      const was = lastPhase; lastPhase = S.phase; lastSec = -1;
+      SND.tune(S.phase === "play" ? null : S.settings.theme === "xmas" ? "xmas" : "std");
+      if (S.phase === "intro") SND.play("whoosh");
+      else if (S.phase === "result" && S.last && !S.last.skipped) SND.play("fanfare");
+      else if (S.phase === "board") SND.play("drumroll");
+      else if (S.phase === "end" && was) SND.play("win");
+    }
+    if (S.phase === "intro" && S.endsAt) { const sec = Math.ceil((S.endsAt - now) / 1000); if (sec !== lastSec) { lastSec = sec; if (sec >= 1 && sec <= 3) SND.play("tick"); } }
+  }
+  let sw = { g: null };
+  function gameSounds(now) {
+    const g = S.game; if (S.phase !== "play" || !g || !g.S) { sw.g = null; return; }
+    const s = g.S, id = g.id;
+    if (sw.g !== g) sw = { g, st: undefined, sec: -1, flash: -1, sweeps: 0, beat: 0, fake: false };
+    if (s.state !== sw.st) { const prev = sw.st; sw.st = s.state; sw.sec = -1; stateSound(id, prev, s.state, s); }
+    if (s.state === "count") { const k = Math.floor((now - s.at) / 1000); if (k !== sw.sec && k < 3) { sw.sec = k; SND.play("tick"); } }
+    if (now > sw.beat) {
+      sw.beat = now + 100;
+      if (id === "derby" && s.state === "race") { SND.play("gallop"); sw.beat = now + 150 + Math.random() * 70; }
+      else if (id === "tug" && s.state === "pull") { SND.play("heave", { v: Math.min(1, Math.abs(s.vel || 0) * 25) }); sw.beat = now + 520; }
+      else if (id === "draw" && s.state === "wait") { SND.play("heart"); sw.beat = now + 900; }
+      else if ((id === "boat" && s.state === "race") || (id === "fish" && s.state === "fish")) { SND.play("lap"); sw.beat = now + 1300 + Math.random() * 1400; }
+    }
+    if (id === "copy" && s.flash !== sw.flash) { sw.flash = s.flash; if (s.flash >= 0) SND.play("note", { i: s.flash }); }
+    if (id === "curl" && s.sweeps) { if (s.sweeps.length > sw.sweeps) SND.play("brush"); sw.sweeps = s.sweeps.length; }
+    if (id === "draw") { if (s.fakeShown && !sw.fake) SND.play("fake"); sw.fake = !!s.fakeShown; }
+  }
+  function stateSound(id, prev, st, s) {
+    if (prev === undefined && st !== "count") return; // joined part-way through: stay quiet
+    if (st === "end") return SND.play("win");
+    if (id === "draw") { if (st === "go") SND.play("bang"); else if (st === "res") SND.play("round"); return; }
+    if (id === "curl") { if (st === "aim") SND.play("ding"); else if (st === "moving") SND.play("slide"); else if (st === "score") SND.play("round"); return; }
+    if (id === "cards") { if (st === "deal") SND.play("flip"); else if (st === "guess") SND.play("ding"); else if (st === "reveal") { SND.play("flip"); setTimeout(() => SND.play(s.last && s.last.correct && s.last.correct.length ? "good" : "bad"), 350); } return; }
+    if (id === "derby") { if (st === "bet") SND.play("bell"); else if (st === "race") { SND.play("go"); SND.play("cheer"); } else if (st === "result") SND.play("cheer"); return; }
+    if (id === "copy") { if (st === "repeat") SND.play("ding"); else if (st === "result") SND.play("round"); return; }
+    if (prev === "count") return SND.play("go");
+    if (st === "roundEnd" || st === "res" || st === "result" || st === "score") SND.play(id === "tug" ? "cheer" : "round");
+    else if (id === "darts" && st === "throw") SND.play("ding");
+  }
+  // sound controls (bottom corner) + a button to switch sound on (browsers need one tap first)
+  const sc = document.createElement("div"); sc.className = "sndctl";
+  sc.innerHTML = `<button class="btn" id="sndb" title="Sound effects">${SND.on ? "🔊" : "🔇"}</button><button class="btn" id="musb" title="Music between games">${SND.music ? "🎵" : "🎵🚫"}</button>`;
+  document.body.appendChild(sc);
+  sc.querySelector("#sndb").onclick = e => { e.target.textContent = SND.toggle() ? "🔊" : "🔇"; };
+  sc.querySelector("#musb").onclick = e => { e.target.textContent = SND.toggleMusic() ? "🎵" : "🎵🚫"; };
+  const wake = document.createElement("button"); wake.className = "btn gold sndwake"; wake.textContent = "🔊 Tap here to turn on the sound";
+  if (!navigator.userActivation || !navigator.userActivation.hasBeenActive) document.body.appendChild(wake);
+  addEventListener("pointerdown", () => { SND.unlock(); wake.remove(); lastPhase = ""; }, { once: true });
   function frame() {
     const now = T();
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);

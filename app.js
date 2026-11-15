@@ -372,6 +372,18 @@ const baseUrl = () => location.origin + location.pathname;
 const withLocal = u => LOCAL ? u + "&local=1" : u;
 
 // 🎨 Showtime look switch, remembered per device (Classic = the original look)
+// Painted round title cards (img/rounds/, also in the art library: buzz-in/rounds). Showtime look only.
+const CARDS = ["general-knowledge", "kids-corner", "name-that-tune", "emoji-films", "famous-lines", "true-or-false", "higher-or-lower", "odd-one-out",
+  "closest-wins", "telly-and-films", "music", "sport", "food-and-drink", "buzzer-round", "anything-round", "family-round", "animal-antics",
+  "nursery-rhyme-tunes", "cartoon-emojis", "bigger-or-smaller", "christmas-cracker", "festive-films", "carol-tunes", "christmas-by-numbers"];
+const CARD_ALIAS = { "kids-true-or-false": "true-or-false", "christmas-true-or-false": "true-or-false", "kids-odd-one-out": "odd-one-out",
+  "festive-odd-one-out": "odd-one-out", "christmas-odd-one-out": "odd-one-out", "christmas-buzzer-round": "buzzer-round",
+  "christmas-cartoon-emojis": "cartoon-emojis", "christmas-tunes": "carol-tunes", "christmas-telly-and-tunes": "festive-films",
+  "christmas-traditions": "christmas-cracker", "christmas-elves": "kids-corner" };
+const cardFor = title => { const k = String(title || "").toLowerCase().replace(/&/g, " and ").replace(/'/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""), c = CARD_ALIAS[k] || k;
+  return CARDS.includes(c) ? "img/rounds/" + c + ".webp" : null; };
+let cardsLoaded = false;
+const preloadCards = () => { if (cardsLoaded) return; cardsLoaded = true; CARDS.forEach(c => { const i = new Image(); i.decoding = "async"; i.src = "img/rounds/" + c + ".webp"; }); };
 const FX = { on: (() => { try { const v = localStorage.getItem("buzzin_fx"); return v == null ? true : JSON.parse(v); } catch (e) { return true; } })(),
   toggle() { this.on = !this.on; try { localStorage.setItem("buzzin_fx", JSON.stringify(this.on)); } catch (e) { } document.documentElement.classList.toggle("fx", this.on); } };
 document.documentElement.classList.toggle("fx", FX.on);
@@ -1068,6 +1080,7 @@ function tvMain() {
   const save = () => { S.saved = Date.now(); ls.set("buzzin_tv", S); };
   const playersArr = () => S.order.filter(id => S.players[id]).map(id => S.players[id]);
   const curRound = () => S.plan[S.ri];
+  if (LOCAL) { window.__S = () => S; window.__render = () => render(); }
   const curQ = () => curRound() && curRound().qs[S.qi];
   const qkey = () => (S.gid || "g") + "-" + S.ri + "-" + S.qi;
   const left = () => S.pausedLeft != null ? S.pausedLeft : Math.max(0, S.qEnds - Date.now());
@@ -1397,7 +1410,7 @@ function tvMain() {
   }
 
   function render() {
-    syncTheme(); syncMusic();
+    syncTheme(); syncMusic(); if (FX.on) preloadCards();
     if (!opened && gate.st === "checking") {
       paint(app, `<div class="stage"><div class="center"><img class="appicon tvicon" src="icon-192.png" alt=""><div class="logo disp">Buzz In</div><div class="spin"></div></div></div>`);
       return;
@@ -1445,8 +1458,10 @@ function tvMain() {
       html = `<div class="stage">${top()}<div class="center"><div class="spin" style="width:4rem;height:4rem;border-width:.4rem"></div><div class="rblurb">Getting the questions ready…</div></div></div>`;
     } else if (ph === "intro") {
       const jokers = playersArr().filter(p => p.joker === S.ri);
+      const card = FX.on && cardFor(r.title), tl = String(r.title).length;
       html = `<div class="stage">${top()}<div class="center">
-        <div class="rnum disp">Round ${S.ri + 1}</div><div class="rtitle disp">${esc(r.title)}</div>
+        ${card ? `<div class="rcard"><img src="${card}" alt=""><div class="rcin"><div class="rcnum disp">Round ${S.ri + 1}</div><div class="rctitle disp" style="font-size:${tl > 20 ? 3.1 : tl > 17 ? 3.6 : tl > 12 ? 4.4 : 5.4}rem">${esc(r.title)}</div></div></div>`
+          : `<div class="rnum disp">Round ${S.ri + 1}</div><div class="rtitle disp">${esc(r.title)}</div>`}
         <div class="rblurb">${esc(r.blurb)}</div>
         ${r.kids ? `<div class="dbl" style="background:var(--b);color:#fff">${S.kg ? "Kids' game · grown-ups cheer them on" : "Kids only! Grown-ups sit this one out"}</div>` : ""}
         ${r.dbl ? `<div class="dbl">Final round · double points</div>` : ""}

@@ -79,6 +79,7 @@ Each player takes a turn to draw on their phone; the drawing appears live in a g
 - **🎨 Gallery look:** the TV is an art gallery, with damask wallpaper, wood panelling, a picture rail, carved gold corners on every frame,
   a brass picture light over the drawing and a velvet rope on brass posts. Switch back with **🎨 Gallery / Classic** in the lobby
   or press **L** on the TV (the same setting as Buzz In's Showtime look).
+- **🖼️ Picture frames** (Picture frame in the lobby, Gallery look): eight painted frames, Gold, Wooden, Crayon, Holly, Silver, Seaside, Jungle and Space. **🎲 Mix** (the default) gives each drawing a different frame, or always Holly in the Christmas edition. Pick one to use it for every picture, or **Classic** for the original gold frame. Each drawing keeps its frame in The Exhibition and on the saved print. The frames are in `img/frames/`, and the full set (with see-through PNGs and `frames.json`) is in the [art library](https://jimmywilson1979-arch.github.io/art-library/) (`buzz-in/frames/`).
 - **🎄 Christmas edition** (Edition in the lobby, on automatically in December): Christmas words and pictures for grown-ups and kids, falling snow, a bow on the frame, and prints dated "Christmas".
 - Installs as its own home-screen app with its own icon (`manifest-draw.webmanifest`, `draw-icon-*.png`, `draw-og.jpg` for link previews).
 

@@ -52,6 +52,15 @@ input{font:inherit;color:var(--fg);background:var(--bg2);border:2px solid var(--
 .setrow{display:flex;flex-wrap:wrap;gap:.4em;align-items:center;margin:.35em 0}
 .setrow b{width:100%;font-size:.85em;color:var(--muted);font-weight:700}
 
+/* painted picture frames (Gallery look) */
+.frame.pf{position:relative;padding:0!important;background:none!important;box-shadow:none!important;border-radius:0;filter:drop-shadow(0 3vh 3vh rgba(0,0,0,.55))}
+.frame.pf .mat{position:absolute;padding:0;box-shadow:none;background:var(--paper)}
+.frame.pf .mat::before{display:none}
+.frame.pf #art,.frame.pf .mat img{width:100%!important;height:100%!important}
+.frame.pf .overlay{inset:0}
+.frame.pf .pfimg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2;background:none!important}
+.mini .frame.pf .mat{padding:0}
+body.xmas .frame.pf::before{z-index:3}
 /* the frame */
 .frame{position:relative;padding:3.2vh;border-radius:4px;
   background:linear-gradient(135deg,#7a5713 0%,#f6dc8c 18%,#b48a2c 34%,#fbe7a8 50%,#a07a26 66%,#f3d27a 82%,#6e4f12 100%);
@@ -232,12 +241,39 @@ const HARD = parse("Volcano 🌋|Castle 🏰|Tent ⛺|Ferris wheel 🎡|Roller c
 
 const XEASY = parse("Santa 🎅|Snowman ⛄|Christmas tree 🎄|Present 🎁|Star ⭐|Bell 🔔|Reindeer 🦌|Penguin 🐧|Snowflake ❄️|Stocking 🧦|Teddy 🧸|Candle 🕯️|Angel 👼|Sledge 🛷|Gloves 🧤|Scarf 🧣|Cookie 🍪|Sweets 🍬|Carrot 🥕|Milk 🥛|Robin 🐦|Train 🚂|Drum 🥁|Polar bear 🐻‍❄️|Owl 🦉|Sheep 🐑|Moon 🌙|Bow 🎀|Lollipop 🍭|Chocolate 🍫|Elf 🧝|Fox 🦊");
 const XHARD = parse("Mrs Claus 🤶|Ice skating ⛸️|Turkey 🦃|Mince pie 🥧|Christmas cracker 🧨|Hot chocolate ☕|Church ⛪|Camel 🐫|Crown 👑|Snowboard 🏂|Skiing ⛷️|Fireworks 🎆|Champagne 🍾|Christmas card ✉️|Snowy mountain 🏔️|Advent calendar 📅|Party popper 🎉|Ice cube 🧊|Trumpet 🎺|Baby 👶|Yo-yo 🪀|Jumper 👕|Snowing 🌨️|Roast potato 🥔|Wine 🍷|Christmas lights 💡");
+// Painted picture frames (img/frames/, also in the art library: buzz-in/frames). Gallery look only.
+// [image width, image height, left, top, right, bottom]: where the 3:4 drawing sits, as a share of the frame's width
+const FRAMES = {
+  gold: [800, 990, 0.1815, 0.1924, 0.1815, 0.1957],
+  wooden: [800, 1001, 0.1681, 0.1873, 0.1717, 0.1837],
+  crayon: [800, 998, 0.1676, 0.1712, 0.1622, 0.1827],
+  christmas: [800, 965, 0.1834, 0.1732, 0.1713, 0.1726],
+  silver: [800, 1020, 0.1379, 0.1537, 0.1361, 0.1533],
+  seaside: [800, 985, 0.1593, 0.1613, 0.1664, 0.1709],
+  jungle: [800, 961, 0.1961, 0.1392, 0.18, 0.2302],
+  space: [800, 1000, 0.1491, 0.1563, 0.1491, 0.1581],
+};
+const FRAME_NAMES = { gold: "Gold", wooden: "Wooden", crayon: "Crayon", christmas: "🎄 Holly", silver: "Silver", seaside: "Seaside", jungle: "Jungle", space: "Space" };
+const fxOn = () => document.documentElement.classList.contains("fx");
+// pick the frame for a new picture: "mix" gives a different one each turn (always holly in the Christmas edition)
+const pickFrame = (st, n) => { const f = st.frame || "mix"; if (f === "classic") return null; if (FRAMES[f]) return f;
+  if (st.edition === "xmas") return "christmas"; const pool = Object.keys(FRAMES).filter(k => k !== "christmas"); return pool[(n - 1 + pool.length * 50) % pool.length]; };
+// a frame round some content. ph = the picture's height (CSS), the frame grows round it
+function framed(fid, inner, ph) {
+  const F = fid && fxOn() && FRAMES[fid];
+  if (!F) return `<div class="frame"><div class="mat">${inner}</div></div>`;
+  const [w, h, l, t, r, b] = F, hf = 1 - (t + b) * w / h;
+  return `<div class="frame pf" style="height:calc(${ph} / ${hf.toFixed(4)});aspect-ratio:${w}/${h}"><div class="mat" style="left:${(l * 100).toFixed(2)}%;right:${(r * 100).toFixed(2)}%;top:${(t * w / h * 100).toFixed(2)}%;bottom:${(b * w / h * 100).toFixed(2)}%">${inner}</div><img class="pfimg" src="img/frames/${fid}.webp" alt=""></div>`;
+}
+let framesLoaded = false;
+const preloadFrames = () => { if (framesLoaded) return; framesLoaded = true; Object.keys(FRAMES).forEach(k => { const i = new Image(); i.src = "img/frames/" + k + ".webp"; }); };
 const SETS = [
   ["edition", "Edition", [["std", "Standard"], ["xmas", "🎄 Christmas"]]],
   ["guess", "Guessing", [["type", "⌨️ Type answers"], ["buzz", "🔔 Buzz in"]]],
   ["who", "Who's playing", [["all", "Everyone"], ["kids", "🧒 Kids only"]]],
   ["laps", "Turns each", [[1, "1 each"], [2, "2 each"], [3, "3 each"]]],
   ["time", "Drawing time", [[60, "60 sec"], [80, "80 sec"], [100, "100 sec"]]],
+  ["frame", "Picture frame", [["mix", "🎲 Mix"], ...Object.keys(FRAME_NAMES).map(k => [k, FRAME_NAMES[k]]), ["classic", "Classic"]]],
 ];
 function setsHTML(st) {
   return SETS.map(([k, label, vals]) => `<div class="setrow"><b>${label}</b>${vals.map(([v, t]) => `<button class="chip ${st[k] === v ? "on" : ""}" data-set="${k}" data-val="${v}">${t}</button>`).join("")}</div>`).join("")
@@ -342,7 +378,7 @@ async function tvMain() {
   history.replaceState(null, "", "?tv=" + room + (LOCAL ? "&local=1" : ""));
   const joinUrl = location.origin + location.pathname + "?join=" + room + (LOCAL ? "&local=1" : "");
   const S = {
-    phase: "lobby", players: {}, order: [], settings: Object.assign({ guess: "type", who: "all", laps: 1, time: 80, edition: new Date().getMonth() === 11 ? "xmas" : "std" }, ls.get("doodle_settings", {})),
+    phase: "lobby", players: {}, order: [], settings: Object.assign({ guess: "type", who: "all", laps: 1, time: 80, edition: new Date().getMonth() === 11 ? "xmas" : "std", frame: "mix" }, ls.get("doodle_settings", {})),
     queue: [], turnNo: 0, totalTurns: 0, turn: null, gallery: [], feed: [], revealUntil: 0,
   };
   let conn = "Connecting…", link = null, colorI = 0, lastKey = "";
@@ -398,6 +434,7 @@ async function tvMain() {
   }
   function playAgain() { if (eligible().length >= 2) start(); else toLobby(); }
   function toLobby() { S.phase = "lobby"; S.turn = null; push(); }
+  if (LOCAL) { window.__S = () => S; window.__push = () => push(); }
   function nextTurn() {
     let id; while ((id = S.queue.shift())) { const p = S.players[id]; if (p && alive(p) && plays(p)) break; }
     if (!id) { S.phase = "end"; S.turn = null; feedAdd(""); push(); return; }
@@ -407,7 +444,7 @@ async function tvMain() {
     const xm = S.settings.edition === "xmas", E = xm ? XEASY : EASY, Hd = xm ? XHARD : HARD;
     let pool = (p.kid ? E : shuffle(Hd).slice(0, 40).concat(shuffle(E).slice(0, xm ? 14 : 10))).filter(x => !used.has(x.w));
     if (pool.length < 3) pool = p.kid ? E.slice() : Hd.concat(E);
-    S.turn = { drawer: id, opts: shuffle(pool).slice(0, 3), word: null, got: {}, wrong: {}, kidWrong: {}, buzz: null, paused: null, dpts: 0, chooseEnds: now() + 20000 };
+    S.turn = { drawer: id, opts: shuffle(pool).slice(0, 3), word: null, got: {}, wrong: {}, kidWrong: {}, buzz: null, paused: null, dpts: 0, chooseEnds: now() + 20000, frame: pickFrame(S.settings, S.turnNo) };
     strokes.clear(); dirty = true;
     S.phase = "choose"; S.feed = [];
     needSecret.add(id); push();
@@ -439,7 +476,7 @@ async function tvMain() {
       const x = c.getContext("2d"); x.fillStyle = "#fffdf8"; x.fillRect(0, 0, 600, 800);
       strokes.forEach(s => drawStroke(x, s, 600, 800));
       const d = S.players[t.drawer];
-      S.gallery.push({ w: t.word.w, e: t.word.e, by: d ? d.name : "", color: d ? d.color : "#fff", xmas: S.settings.edition === "xmas", img: c.toDataURL("image/jpeg", .88) });
+      S.gallery.push({ w: t.word.w, e: t.word.e, by: d ? d.name : "", color: d ? d.color : "#fff", xmas: S.settings.edition === "xmas", frame: t.frame || null, img: c.toDataURL("image/jpeg", .88) });
     }
     if (t.word && !skipped) { const n = Object.keys(t.got).length; feedAdd(n ? "" : "Nobody got it this time"); }
     S.phase = "reveal"; S.revealUntil = now() + (skipped ? 3500 : 7000);
@@ -525,6 +562,7 @@ async function tvMain() {
 
   // ---- rendering ----
   function render() {
+    if (fxOn()) preloadFrames();
     const key = S.phase + "|" + S.turnNo;
     if (key !== lastKey) { lastKey = key; build(); }
     upd();
@@ -544,12 +582,12 @@ async function tvMain() {
           <button class="btn gold big" id="again">▶ Play again</button><div class="lobbynote" id="snote"></div><div id="sets"></div>
           <button class="btn" id="tolobby">Back to the lobby (to add players)</button></div></main>`
       : `<main class="tvmain">
-        <div class="framecol"><div class="frame"><div class="mat"><canvas id="art" width="900" height="1200"></canvas><div class="overlay" id="ov"></div></div></div><div class="plaque" id="plaque"></div></div>
+        <div class="framecol">${framed(S.turn && S.turn.frame, `<canvas id="art" width="900" height="1200"></canvas><div class="overlay" id="ov"></div>`, "51vh")}<div class="plaque" id="plaque"></div></div>
         <div class="panel"><div class="timer" id="timer"></div><div class="plist" id="plist"></div><div class="feed" id="feed"></div><button class="btn" id="skip" style="margin-top:auto">Skip this one</button></div></main>`;
     app.innerHTML = `<div class="tvwrap">${header()}${main}</div><div id="bov"></div>`;
     if (S.phase === "lobby") { try { new QRCode($("#qr"), { text: joinUrl, width: 400, height: 400, correctLevel: QRCode.CorrectLevel.M }); } catch (e) { $("#qr").textContent = joinUrl; } }
     if (S.phase === "end") {
-      $("#gal").innerHTML = S.gallery.length ? S.gallery.map((g, i) => `<div class="mini" data-i="${i}" style="--h:${S.gallery.length > 8 ? 17 : S.gallery.length > 4 ? 23 : 34}vh;animation-delay:${i * .12}s"><div class="frame"><div class="mat"><img src="${g.img}" alt="${esc(g.w)}"></div></div><div class="plaque"><b>${esc(g.w)}</b><small>by ${esc(g.by)}</small></div></div>`).join("") : `<div class="muted">No pictures this time.</div>`;
+      $("#gal").innerHTML = S.gallery.length ? S.gallery.map((g, i) => `<div class="mini" data-i="${i}" style="--h:${S.gallery.length > 8 ? 17 : S.gallery.length > 4 ? 23 : 34}vh;animation-delay:${i * .12}s">${framed(g.frame, `<img src="${g.img}" alt="${esc(g.w)}">`, "calc(var(--h) * .8)")}<div class="plaque"><b>${esc(g.w)}</b><small>by ${esc(g.by)}</small></div></div>`).join("") : `<div class="muted">No pictures this time.</div>`;
       $("#gal").onclick = e => { const m = e.target.closest(".mini"); if (m) saveFramed(S.gallery[+m.dataset.i]); };
     }
     dirty = true;
@@ -633,6 +671,23 @@ async function tvMain() {
   // framed print for the gallery
   function saveFramed(g) {
     const img = new Image();
+    const F = g.frame && fxOn() && FRAMES[g.frame];
+    if (F) {
+      const load = src => new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = src; });
+      Promise.all([load(g.img), load("img/frames/" + g.frame + ".webp")]).then(([pic, fr]) => {
+        const [w, h, l, t, r, b] = F, fw = 800, fh = Math.round(fw * h / w), fx = 80, fy = 70, W = 960, H = fy + fh + 260;
+        const c = document.createElement("canvas"); c.width = W; c.height = H; const x = c.getContext("2d");
+        x.fillStyle = "#2a1820"; x.fillRect(0, 0, W, H);
+        const hx = fx + l * fw, hy = fy + t * fw, hw = fw * (1 - l - r), hh = fh - (t + b) * fw;
+        x.fillStyle = "#fffdf8"; x.fillRect(hx, hy, hw, hh); x.drawImage(pic, hx, hy, hw, hh); x.drawImage(fr, fx, fy, fw, fh);
+        const py = fy + fh + 50, pw = 600, px = (W - pw) / 2, pg = x.createLinearGradient(0, py, 0, py + 150); pg.addColorStop(0, "#f8e3a0"); pg.addColorStop(.55, "#c9a24a"); pg.addColorStop(1, "#a9822d");
+        x.fillStyle = pg; x.fillRect(px, py, pw, 150); x.fillStyle = "#2a1d02"; x.textAlign = "center";
+        x.font = "800 54px 'Playfair Display', Georgia, serif"; x.fillText(`“${g.w}”`, W / 2, py + 70);
+        x.font = "700 30px Barlow, sans-serif"; x.fillText(`by ${g.by} · ${g.xmas ? "Christmas " + new Date().getFullYear() : new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}`, W / 2, py + 118);
+        const a = document.createElement("a"); a.href = c.toDataURL("image/png"); a.download = `${g.w} by ${g.by}.png`.replace(/[^\w .-]/g, ""); a.click();
+      }).catch(() => { });
+      return;
+    }
     img.onload = () => {
       const W = 960, H = 1330, c = document.createElement("canvas"); c.width = W; c.height = H; const x = c.getContext("2d");
       x.fillStyle = "#2a1820"; x.fillRect(0, 0, W, H);

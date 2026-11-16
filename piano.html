@@ -23,6 +23,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@500;600;700;800&family=Playfair+Display:ital,wght@0,700;0,800;1,700&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="rejoin.js?v=1"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <style>
 :root{
@@ -393,6 +394,7 @@ async function tvMain() {
   const room = (P.get("tv") || "").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 4) || code4();
   history.replaceState(null, "", "?tv=" + room + (LOCAL ? "&local=1" : ""));
   const joinUrl = location.origin + location.pathname + "?join=" + room + (LOCAL ? "&local=1" : "");
+  joinQRButton(room);
   const S = {
     phase: "lobby", players: {}, order: [], settings: Object.assign({ songs: "lib", guide: "lights", guess: "type", who: "all", laps: 1, time: 90, edition: new Date().getMonth() === 11 ? "xmas" : "std" }, ls.get("piano_settings", {})),
     queue: [], turnNo: 0, totalTurns: 0, turn: null, concert: [], feed: [], revealUntil: 0, custom: {},
@@ -587,6 +589,8 @@ async function tvMain() {
     const p = m.id && S.players[m.id];
     if (m.t === "join" && m.id) {
       let q = S.players[m.id];
+      // same name on a new phone gets their old place back
+      if (!q) { const old = findRejoin(S.players, m.name, m.id); if (old) { rebindId(S, old, m.id); q = S.players[m.id]; } }
       if (!q) { q = S.players[m.id] = { id: m.id, color: COLORS[colorI++ % COLORS.length], score: 0 }; S.order.push(m.id); }
       q.name = String(m.name || "Player").slice(0, 16); q.kid = !!m.kid; q.seen = now();
       needSecret.add(q.id); push(); return;

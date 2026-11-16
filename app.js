@@ -1329,6 +1329,8 @@ function tvMain() {
     if (m.t === "join") {
       const name = String(m.name || "").trim().slice(0, 24); if (!name) return;
       const members = String(m.members || "").trim().slice(0, 60), kid = !!m.kid;
+      // same name on a new phone gets their old place back
+      if (!S.players[m.pid]) { const old = findRejoin(S.players, name, m.pid); if (old) rebindId(S, old, m.pid); }
       if (!S.players[m.pid]) {
         S.players[m.pid] = { id: m.pid, name, members, kid, joker: null, color: COLORS[S.order.length % COLORS.length], score: 0, seen: Date.now(), st: { fast: [], close1: 0, close2: 0, buzz: 0, joker: 0 } };
         S.order.push(m.pid); Sound.join();
@@ -1377,6 +1379,7 @@ function tvMain() {
 
   // ----- rendering -----
   const joinUrl = () => withLocal(baseUrl() + "?join=" + S.room);
+  joinQRButton(() => S.room);
   const hostUrl = () => withLocal(baseUrl() + "?host=" + S.room + "&k=" + S.token);
   function qr(el, text) {
     if (!el) return; el.innerHTML = "";

@@ -65,6 +65,9 @@ host QR code) or press **L** on the TV. The choice is remembered on that screen.
 Used questions are remembered on the TV device so replays get fresh ones.
 Live sync runs over Supabase Realtime (broadcast only, nothing stored).
 
+## 📱 Getting back in (every game)
+Every TV screen (Buzz In, Doodle Gallery, Tap That Tune and Party) has a **📱 Join QR** button in the bottom-left corner. It shows a big QR code and the 4-letter code so anyone can scan in mid-game. If someone dropped out, they join again with the **same name** and get their old place back, with their score and turn. A new player only takes over a name if that player has been offline for 15 seconds or more, so two people with the same name won't swap places. The shared code is in `rejoin.js`.
+
 ## Doodle Gallery (drawing game)
 **Play:** https://jimmywilson1979-arch.github.io/buzz-in/draw.html
 

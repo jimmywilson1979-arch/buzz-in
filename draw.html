@@ -77,7 +77,7 @@ body.xmas .frame.pf::before{z-index:3}
 body.tv{overflow:hidden;font-size:clamp(13px,1.15vw,24px);background:
   radial-gradient(45vw 55vh at 38% 8%,rgba(255,230,170,.18),transparent 70%),
   repeating-linear-gradient(90deg,rgba(255,255,255,.015) 0 2px,transparent 2px 9vw),var(--wall)}
-.tvwrap{position:fixed;inset:0;display:flex;flex-direction:column;padding:2.2vh 2.6vw;gap:1.6vh}
+.tvwrap{position:fixed;inset:0;display:flex;flex-direction:column;padding:1.6vh 2.2vw;gap:1.2vh}
 .tvtop{display:flex;align-items:center;justify-content:space-between;gap:1em}
 .logo{font-family:var(--serif);font-weight:800;font-size:2.2em;color:var(--gold);font-style:italic}
 .logo span{color:var(--fg)}
@@ -87,7 +87,9 @@ body.tv{overflow:hidden;font-size:clamp(13px,1.15vw,24px);background:
 .framecol{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0}
 .panel{width:min(24em,30vw);display:flex;flex-direction:column;gap:1em;min-height:0;overflow:auto;padding:1.2em;background:rgba(0,0,0,.25);border:2px solid var(--line);border-radius:1em}
 .panel h3{margin:0;font-family:var(--serif);font-size:1.5em;color:var(--gold)}
-#art{height:63vh;width:calc(63vh*3/4)}
+#art{height:var(--ph,63vh);width:calc(var(--ph,63vh)*3/4)}
+/* while drawing, the frame fills the space it has (fitArt) and the name plate hangs over its bottom edge */
+.framecol.fit>.plaque{margin-top:calc(-1 * var(--pov,0px));position:relative;z-index:4}
 .qrbox{width:40vh;height:53.3vh;display:flex;align-items:center;justify-content:center;background:var(--paper)}
 .qrbox img,.qrbox canvas{width:30vh!important;height:30vh!important}
 .plist{display:flex;flex-direction:column;gap:.45em}
@@ -582,7 +584,7 @@ async function tvMain() {
           <button class="btn gold big" id="again">▶ Play again</button><div class="lobbynote" id="snote"></div><div id="sets"></div>
           <button class="btn" id="tolobby">Back to the lobby (to add players)</button></div></main>`
       : `<main class="tvmain">
-        <div class="framecol">${framed(S.turn && S.turn.frame, `<canvas id="art" width="900" height="1200"></canvas><div class="overlay" id="ov"></div>`, "51vh")}<div class="plaque" id="plaque"></div></div>
+        <div class="framecol fit">${framed(S.turn && S.turn.frame, `<canvas id="art" width="900" height="1200"></canvas><div class="overlay" id="ov"></div>`, "var(--ph,51vh)")}<div class="plaque" id="plaque"></div></div>
         <div class="panel"><div class="timer" id="timer"></div><div class="plist" id="plist"></div><div class="feed" id="feed"></div><button class="btn" id="skip" style="margin-top:auto">Skip this one</button></div></main>`;
     app.innerHTML = `<div class="tvwrap">${header()}${main}</div><div id="bov"></div>`;
     if (S.phase === "lobby") { try { new QRCode($("#qr"), { text: joinUrl, width: 400, height: 400, correctLevel: QRCode.CorrectLevel.M }); } catch (e) { $("#qr").textContent = joinUrl; } }
@@ -592,7 +594,23 @@ async function tvMain() {
     }
     dirty = true;
   }
+  // make the picture as big as the screen allows (tablets and big TVs alike)
+  function fitArt() {
+    const col = document.querySelector(".framecol.fit"); if (!col) return;
+    const fr = col.querySelector(".frame"), pl = col.querySelector(".plaque"); if (!fr) return;
+    const plH = pl ? pl.offsetHeight : 0, ov = Math.round(plH * .55);
+    const avH = col.clientHeight - (plH - ov) - 4, avW = col.clientWidth - 4;
+    const F = fr.classList.contains("pf") && S.turn && FRAMES[S.turn.frame];
+    let ph;
+    if (F) { const [w, h, , t, , b] = F, hf = 1 - (t + b) * w / h; ph = hf * Math.min(avH, avW * h / w); }
+    else { const pad = 11.2 * innerHeight / 100; ph = Math.min(avH - pad, (avW - pad) * 4 / 3); }
+    ph = Math.max(120, Math.floor(ph));
+    if (col.style.getPropertyValue("--ph") !== ph + "px") col.style.setProperty("--ph", ph + "px");
+    col.style.setProperty("--pov", ov + "px");
+  }
+  addEventListener("resize", () => fitArt());
   function upd() {
+    setTimeout(fitArt, 0);
     festive(S.settings.edition === "xmas", 60);
     const lg = $("#logo"); if (lg) lg.innerHTML = `Doodle <span>Gallery</span>${S.settings.edition === "xmas" ? " 🎄" : ""}`;
     const list = S.order.map(id => S.players[id]).filter(Boolean), t = S.turn;
@@ -726,6 +744,7 @@ async function phoneMain(codeRaw) {
   let me = ls.get("doodle_me", null); // {name, kid}
   let ST = null, link = null, lastState = 0, secretOpts = null, secretWord = null, lastKey = "", localEnd = 0;
   let myGuesses = [], kidNo = new Set(), judgeShown = false;
+  let editing = false; // the name / child form is open: don't let TV updates wipe it
   // drawing state (kept across re-renders)
   let myStrokes = [], pen = { c: "#111111", w: 12 }, pending = new Map(), sidN = 0;
 
@@ -735,8 +754,9 @@ async function phoneMain(codeRaw) {
     app.innerHTML = `<div class="home"><h1>Doodle <span>Gallery</span></h1><p class="muted">Game ${esc(room)}</p>
       <input id="nm" maxlength="16" placeholder="Your name" value="${esc(me ? me.name : "")}">
       <label class="check"><input type="checkbox" id="kid" ${me && me.kid ? "checked" : ""}> 🧒 A child is playing<br><span class="muted" style="font-weight:500;font-size:.9em">They'll draw from pictures and guess by tapping a picture, no reading needed.</span></label>
-      <button class="btn big gold" id="go">Join</button></div>`;
-    const go = () => { const v = $("#nm").value.trim(); if (!v) return $("#nm").focus(); me = { name: v, kid: $("#kid").checked }; ls.set("doodle_me", me); lastKey = ""; send({ t: "join", name: me.name, kid: me.kid }); render(); };
+      <button class="btn big gold" id="go">${editing ? "Save" : "Join"}</button>${editing ? `<button class="btn" id="cancel">Cancel</button>` : ""}</div>`;
+    const go = () => { const v = $("#nm").value.trim(); if (!v) return $("#nm").focus(); me = { name: v, kid: $("#kid").checked }; ls.set("doodle_me", me); editing = false; lastKey = ""; send({ t: "join", name: me.name, kid: me.kid }); render(); };
+    const c = $("#cancel"); if (c) c.onclick = () => { editing = false; lastKey = ""; render(); };
     $("#go").onclick = go; $("#nm").onkeydown = e => { if (e.key === "Enter") go(); };
   }
 
@@ -784,7 +804,7 @@ async function phoneMain(codeRaw) {
   function render() {
     const r = role();
     const key = r + "|" + (ST ? ST.turnNo + "|" + ST.phase : "") + "|" + (secretOpts ? 1 : 0) + (secretWord ? 1 : 0);
-    if (r === "join") { if (lastKey !== "join") joinForm(); return; }
+    if (r === "join" || editing) { if (lastKey !== "join") joinForm(); return; }
     if (key !== lastKey) { lastKey = key; build(r); }
     upd(r);
   }
@@ -794,7 +814,7 @@ async function phoneMain(codeRaw) {
     let body = "";
     if (r === "wait") body = `<div class="center"><div class="bigemoji">🖼️</div><h2>Finding the TV…</h2><p class="muted">Make sure the TV screen is on game ${esc(room)}.</p></div>`;
     else if (r === "lobby") body = `<div class="center" style="flex:none;padding-top:1em"><div class="bigemoji" style="font-size:5rem">🎨</div><h2>You're in!</h2>
-        <p class="muted">${me.kid ? "🧒 Child player" : "Grown-up player"} · <button id="edit" style="text-decoration:underline;color:var(--muted)">change</button></p></div>
+        <p class="muted">${me.kid ? "🧒 Child player" : "Grown-up player"}</p><p style="display:flex;gap:.5em;justify-content:center;flex-wrap:wrap"><button class="btn" id="kidsw">${me.kid ? "Switch to grown-up" : "🧒 Switch to child"}</button><button class="btn" id="edit">✏️ Change name</button></p></div>
         ${isHost ? `<div id="sets"></div><button class="btn gold big" id="start">Start the game</button><div class="muted" id="snote" style="text-align:center"></div>` : `<p class="muted" style="text-align:center">Waiting for ${esc((ST.players.find(x => x.id === ST.host) || {}).name || "the host")} to start the game.</p>`}`;
     else if (r === "choose") {
       const o = secretOpts || [];
@@ -829,14 +849,15 @@ async function phoneMain(codeRaw) {
     else if (r === "end") {
       const sorted = ST.players.slice().sort((a, b) => b.score - a.score), pos = sorted.findIndex(x => x.id === id) + 1;
       body = `<div class="center"><div class="bigemoji">${pos === 1 ? "🏆" : "🖼️"}</div><h2>${pos === 1 ? "You won!" : `You came ${ord(pos)}`}</h2><p style="font-size:1.4rem;font-weight:800;color:var(--gold)">${mine().score} points</p>
-        <p class="muted">Your pictures are in the exhibition on the TV.</p><p class="muted">${me.kid ? "🧒 Child player" : "Grown-up player"} · <button id="edit" style="text-decoration:underline;color:var(--muted)">change</button></p></div>
+        <p class="muted">Your pictures are in the exhibition on the TV.</p><p class="muted">${me.kid ? "🧒 Child player" : "Grown-up player"}</p><p style="display:flex;gap:.5em;justify-content:center;flex-wrap:wrap"><button class="btn" id="kidsw">${me.kid ? "Switch to grown-up" : "🧒 Switch to child"}</button><button class="btn" id="edit">✏️ Change name</button></p></div>
         ${isHost ? `<div style="font-weight:800">Next game</div><button class="btn gold big" id="again">▶ Play again</button><div class="muted" id="snote" style="text-align:center"></div><div id="sets"></div><button class="btn" id="tolobby">Back to the lobby</button>` : `<p class="muted" style="text-align:center">Waiting for ${esc((ST.players.find(x => x.id === ST.host) || {}).name || "the host")} to start the next game.</p>`}`;
     }
     app.innerHTML = `<div class="pw">${top(skipBtn)}<div class="pbody">${body}</div></div>`;
     // wire up
     const on = (sel, fn) => { const el = $(sel); if (el) el.onclick = fn; };
     on("#skp", () => send({ t: "skip" }));
-    on("#edit", () => joinForm());
+    on("#edit", () => { editing = true; joinForm(); });
+    on("#kidsw", () => { me = { name: me.name, kid: !me.kid }; ls.set("doodle_me", me); send({ t: "join", name: me.name, kid: me.kid }); buzzPhone(20); lastKey = ""; render(); });
     on("#start", () => send({ t: "start" }));
     on("#again", () => send({ t: "again" }));
     on("#tolobby", () => send({ t: "lobby" }));

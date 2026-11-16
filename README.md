@@ -93,6 +93,12 @@ Same set-up as Buzz In and Doodle Gallery. On their turn, a player's phone becom
 and turned round for you if the phone is upright). The notes play through the TV, and everyone else guesses the song.
 - **Note guide:** Glowing keys (the next key lights up) or Note letters (the tune shown as letters, colour-coded by octave).
   Kids always start on glowing keys and can switch to letters on their phone. A strip above the keys shows the rhythm.
+- **⏱ Tempo guide:** the next key only lights up when it's time to play it, so following the lights keeps you in time.
+  The key you're holding shows a green bar that runs down for as long as the note lasts, and the strip above the keys
+  fills it in too (longer bars = longer notes). Let go of a long note too early and it says "Hold that one longer".
+  **👀 Show me** (left of the strip) has a light pulsing to the song's beat with Slow / Steady / Quick; tap it and the next
+  few keys light up in yellow in the right rhythm, silently, with the rhythm tapped out on the phone's vibration
+  (Android), so only the pianist knows.
 - **Songs:** Built-in tunes (52 out-of-copyright songs: nursery rhymes, carols, folk, anthems and classical), From memory
   (the pianist gets only a song title, such as "Mr Brightside", and works it out by ear; no melody is stored),
   ⭐ Our songs (made in My songs, below), or 🎲 Mix of all.

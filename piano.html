@@ -157,6 +157,25 @@ body.ph{overflow:hidden;overscroll-behavior:none}
 .lane .n.now{opacity:1;outline:3px solid #fff;transform:scale(1.06)}
 .lane .msg{color:var(--muted);font-weight:700;padding:0 .3em}
 .lane .done{color:var(--good);font-weight:800}
+/* tempo guide: hold bars, the beat light and "show me" */
+.lane .n.soon{opacity:.8;outline:2px dashed rgba(255,255,255,.55)}
+.lane .n.held{opacity:1;position:relative;overflow:hidden;isolation:isolate;outline:3px solid var(--good)}
+.lane .n.held::after{content:"";position:absolute;inset:0;background:rgba(255,255,255,.55);transform-origin:left;animation:fillbar var(--dur) linear forwards;animation-delay:var(--del,0s);z-index:-1}
+.lane .n.held.ok{outline-color:#fff}
+@keyframes fillbar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.lane .n.go{animation:gopop .25s}
+@keyframes gopop{from{transform:scale(1.35)}}
+.lane .tip{position:absolute;right:.5em;top:.15em;font-size:.8rem;font-weight:800;color:#ffd43b;background:#16122bee;padding:.1em .5em;border-radius:99px;animation:pop .2s}
+.beatbtn{flex:none;display:flex;align-items:center;gap:.4em;padding:.3em .6em;margin-right:.4em;border-radius:.6rem;background:#241d45;color:#fff;font-weight:800;font-size:.8rem;line-height:1.05;text-align:left;border:2px solid #3a3266}
+.beatbtn i{width:.95em;height:.95em;border-radius:50%;background:var(--pc);flex:none;animation:beat var(--beat) infinite}
+.beatbtn small{display:block;font-weight:600;color:var(--muted);font-size:.72rem}
+@keyframes beat{0%{transform:scale(1.35);opacity:1;box-shadow:0 0 .6em var(--pc)}35%,100%{transform:scale(.7);opacity:.35;box-shadow:none}}
+.notes{display:flex;align-items:center;gap:4px;flex:1;min-width:0;overflow:hidden}
+.wk.hold::after,.bk.hold::after{content:"";position:absolute;left:12%;right:12%;bottom:.25rem;height:.45rem;border-radius:99px;background:var(--good);transform-origin:left;animation:drain var(--dur) linear forwards}
+@keyframes drain{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+.wk.demo,.bk.demo{background:#ffe9a8;box-shadow:inset 0 0 0 .3rem #ffd43b}
+.wk.go,.bk.go{animation:keygo .3s}
+@keyframes keygo{from{filter:brightness(1.6)}}
 .kb{flex:1;position:relative;display:flex;padding:0 .3em .3em;min-height:0;touch-action:none;user-select:none;-webkit-user-select:none}
 .wk{flex:1;position:relative;margin:0 1px;background:linear-gradient(180deg,#f4f1ea,#fff 30%);border-radius:0 0 .5rem .5rem;box-shadow:inset 0 -.4rem 0 #d8d3c6;display:flex;align-items:flex-end;justify-content:center;padding-bottom:.6rem;font-family:var(--display);font-weight:800;font-size:1.25rem;touch-action:none}
 .bk{position:absolute;top:0;height:58%;width:calc(100% / 15 * .62);background:linear-gradient(180deg,#2c2c34,#111 85%);border-radius:0 0 .35rem .35rem;z-index:2;box-shadow:inset 0 -.3rem 0 #000,0 .2rem .3rem rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;padding-bottom:.35rem;font-family:var(--display);font-weight:800;font-size:.8rem;color:#ddd;touch-action:none}
@@ -435,7 +454,7 @@ async function tvMain() {
   function secret(p) {
     const t = S.turn; if (!t || !p || t.drawer !== p.id) return;
     if (S.phase === "choose") send({ t: "secret", to: p.id, opts: t.opts.map(s => ({ t: s.t, e: s.e, mem: !!s.mem, by: s.own ? s.by : null })) });
-    if (S.phase === "play" || S.phase === "reveal") send({ t: "secret", to: p.id, song: { t: t.song.t, e: t.song.e, mem: !!t.song.mem, n: t.song.n || null, bpm: t.song.bpm || 0 } });
+    if (S.phase === "play" || S.phase === "reveal") send({ t: "secret", to: p.id, song: { t: t.song.t, e: t.song.e, mem: !!t.song.mem, n: t.song.n || null, bpm: t.song.bpm || 0, own: !!t.song.own } });
   }
   function hint(t) {
     const w = t.song.t, frac = 1 - Math.max(0, (t.paused != null ? t.paused : t.endsAt - now())) / t.dur;
@@ -775,6 +794,8 @@ async function phoneMain(codeRaw) {
   let ST = null, link = null, lastState = 0, secretOpts = null, secretSong = null, lastKey = "", localEnd = 0;
   let myGuesses = [], kidNo = new Set(), judgeShown = false;
   // piano state
+  // tempo guide: dueAt = when the next note should be played, held = the note being held now
+  let dueAt = 0, dueT = null, held = null, demoT = [], tipT = null;
   let guide = null, seq = [], idx = 0, loops = 0, phoneSound = ls.get("piano_phonesound", false), pressN = 0;
   // song maker ("My songs"): songs live on this phone and are sent to the TV
   let mySongs = ls.get("piano_mysongs", []), making = null, rec = [], recPlay = [];
@@ -806,7 +827,7 @@ async function phoneMain(codeRaw) {
     if (m.to !== id) return;
     if (m.t === "secret") {
       if (m.opts) secretOpts = m.opts;
-      if (m.song && (!secretSong || secretSong.t !== m.song.t)) { secretSong = m.song; seq = m.song.n ? parseNotes(m.song.n) : []; idx = 0; loops = 0; }
+      if (m.song && (!secretSong || secretSong.t !== m.song.t)) { secretSong = m.song; seq = m.song.n ? parseNotes(m.song.n) : []; idx = 0; loops = 0; resetTempo(); }
       lastKey = ""; render();
     }
     if (m.t === "close") toast("So close!");
@@ -855,8 +876,8 @@ async function phoneMain(codeRaw) {
         ${isHost ? `<div id="sets"></div><button class="btn gold big" id="start">Start the game</button><div class="muted" id="snote" style="text-align:center"></div>` : `<p class="muted" style="text-align:center">Waiting for ${esc((ST.players.find(x => x.id === ST.host) || {}).name || "the host")} to start the game.</p>`}`;
     else if (r === "choose") {
       const o = secretOpts || [];
-      body = p.kid ? `<div class="center" style="flex:none"><h2>Pick a song to play!</h2></div><div class="kopts" style="grid-template-columns:1fr">${o.map((x, i) => `<button class="ktile" data-c="${i}"><span>${x.e}</span>${esc(x.t)}</button>`).join("")}</div>`
-        : `<div class="center" style="flex:none"><h2>Your turn at the piano!</h2><p class="muted">Pick a song. Nobody else can see this.</p></div><div class="opts">${o.map((x, i) => `<button class="btn" data-c="${i}">${x.e} ${esc(x.t)}<small>${x.mem ? "🧠 play it from memory" : x.by ? `⭐ by ${esc(x.by)}, with a note guide` : "🎼 with a note guide"}</small></button>`).join("")}</div>`;
+      body = p.kid ? `<div class="center" style="flex:none"><h2>Pick a song to play!</h2><p class="muted">Play each key when it lights up, and hold it while the green bar goes down.</p></div><div class="kopts" style="grid-template-columns:1fr">${o.map((x, i) => `<button class="ktile" data-c="${i}"><span>${x.e}</span>${esc(x.t)}</button>`).join("")}</div>`
+        : `<div class="center" style="flex:none"><h2>Your turn at the piano!</h2><p class="muted">Pick a song. Nobody else can see this.</p><p class="muted" style="font-size:.85rem">⏱ Play each note when it lights up and hold it while its bar runs down. Stuck on the rhythm? Tap 👀 Show me.</p></div><div class="opts">${o.map((x, i) => `<button class="btn" data-c="${i}">${x.e} ${esc(x.t)}<small>${x.mem ? "🧠 play it from memory" : x.by ? `⭐ by ${esc(x.by)}, with a note guide` : "🎼 with a note guide"}</small></button>`).join("")}</div>`;
     }
     else if (r === "play") { buildPiano(); return; }
     else if (r === "waitplay") { const d = ST.players.find(x => x.id === ST.drawer); body = `<div class="center"><div class="bigemoji">🎹</div><h2>${esc(d ? d.name : "Someone")} is choosing a song…</h2><p class="muted">Listen to the TV!</p></div>`; }
@@ -912,7 +933,7 @@ async function phoneMain(codeRaw) {
         <span class="song">${s.e} Play <b>${esc(s.t)}</b>${s.mem ? " · from memory" : ""}</span>
         ${s.mem ? "" : `<button class="btn" id="gd">${guide === "lights" ? "🔤 Letters" : "💡 Lights"}</button><button class="btn" id="fromtop">🔁 From the top</button>`}
         <button class="btn" id="snd">${phoneSound ? "🔊" : "🔈"}</button>${ST.solo ? `<button class="btn gold" id="dfin">✓ Done</button>` : ""}<button class="btn" id="dskip">Skip</button><span class="ptm" id="ptm"></span></div>
-      <div class="lane" id="lane"></div>
+      <div class="lane" id="lane">${seq.length ? `<button class="beatbtn" id="showme" style="--beat:${beatLen().toFixed(2)}s"><i></i><span>👀 Show me<small>${tempoName()}</small></span></button>` : ""}<div class="notes" id="notes"></div></div>
       <div class="kb ${!s.mem && guide === "lights" ? "nolabels" : ""}" id="kb">${keys}</div>
       <div id="judge"></div></div>`;
     orient(); addEventListener("resize", orient);
@@ -923,46 +944,112 @@ async function phoneMain(codeRaw) {
       try { el.setPointerCapture(e.pointerId); } catch (_) { }
       down.set(e.pointerId, { el, k, v: phoneSound && Synth.ok() ? Synth.note(m, 0, .35) : null });
       el.classList.add("down"); send({ t: "key", k, n: m, at: Date.now() }); buzzPhone(8);
-      advance(m, el);
+      stopDemo(); advance(m, el);
     };
-    const release = e => { const d = down.get(e.pointerId); if (!d) return; down.delete(e.pointerId); d.el.classList.remove("down"); d.v && d.v.stop(); send({ t: "off", k: d.k, at: Date.now() }); };
+    const release = e => { const d = down.get(e.pointerId); if (!d) return; down.delete(e.pointerId); d.el.classList.remove("down"); d.v && d.v.stop(); send({ t: "off", k: d.k, at: Date.now() }); letGo(d.el); };
     kb.querySelectorAll("[data-m]").forEach(el => { el.onpointerdown = e => press(el, e); el.onpointerup = el.onpointercancel = el.onlostpointercapture = release; });
     kb.oncontextmenu = e => e.preventDefault();
     const on = (sel, fn) => { const el = $(sel); if (el) el.onclick = fn; };
     on("#gd", () => { guide = guide === "lights" ? "letters" : "lights"; $("#gd").textContent = guide === "lights" ? "🔤 Letters" : "💡 Lights"; kb.classList.toggle("nolabels", guide === "lights"); paintGuide(); });
-    on("#fromtop", () => { idx = 0; paintGuide(); });
+    on("#fromtop", () => { idx = 0; resetTempo(); paintGuide(); });
+    on("#showme", showMe);
     on("#snd", () => { phoneSound = !phoneSound; ls.set("piano_phonesound", phoneSound); if (phoneSound) Synth.init(); $("#snd").textContent = phoneSound ? "🔊" : "🔈"; toast(phoneSound ? "Sound on this phone too" : "Sound from the TV only"); });
     on("#dskip", () => { if (confirm("Skip this song? Nobody scores for it.")) send({ t: "skip" }); });
     on("#dfin", () => send({ t: "finish" }));
     judgeShown = false; paintGuide();
   }
+  // ---- tempo guide ----
+  // Each note's length in seconds (built-in tunes are in beats at the song's bpm; "our songs" are already in seconds).
+  const secsOf = o => o.b * 60 / ((secretSong && secretSong.bpm) || 120);
+  function beatLen() { // one beat in seconds, for the pulsing light
+    const s = secretSong || {};
+    if (s.own || !s.bpm) { const d = seq.filter(o => o.m).map(secsOf).sort((a, b) => a - b); return Math.min(1, Math.max(.3, d.length ? d[d.length >> 1] : .5)); }
+    return Math.min(1.2, Math.max(.25, 60 / s.bpm));
+  }
+  const tempoName = () => { const b = beatLen(); return b >= .62 ? "🐢 Slow tune" : b <= .42 ? "🐇 Quick tune" : "🚶 Steady tune"; };
+  const laneW = sec => Math.max(1.4, 1.1 + sec * 2.4); // longer notes = longer bars
+  function clearHold() { if (held && held.el) held.el.classList.remove("hold"); held = null; }
+  function resetTempo() { clearTimeout(dueT); dueAt = 0; clearHold(); stopDemo(); }
+  function tip(t) {
+    const ln = $("#lane"); if (!ln) return; ln.querySelectorAll(".tip").forEach(e => e.remove());
+    const d = document.createElement("span"); d.className = "tip"; d.textContent = t; ln.appendChild(d);
+    clearTimeout(tipT); tipT = setTimeout(() => d.remove(), 1200);
+  }
   function advance(m, el) {
     if (!seq.length) return;
     const target = nextNote(); if (!target) return;
     if (m === target.m) {
+      const t = Date.now(), dur = secsOf(target);
       idx = seq.indexOf(target) + 1;
-      if (!nextNote()) { loops++; idx = 0; const ln = $("#lane"); if (ln) { ln.innerHTML = `<span class="done">🎉 That's the whole tune! Play it again, it starts from the top.</span>`; } setTimeout(paintGuide, 1600); buzzPhone([30, 30, 30]); return; }
+      let gap = 0; for (let i = idx; i < seq.length && !seq[i].m; i++) gap += secsOf(seq[i]); // rests after it
+      // hold bar: drains on the key, fills in the lane, for as long as the note should last
+      clearHold(); held = { o: target, el, at: t, dur };
+      el.style.setProperty("--dur", dur.toFixed(2) + "s"); el.classList.remove("hold"); void el.offsetWidth; el.classList.add("hold");
+      // the next key lights up when it's time to play it (a touch early so you land on the beat)
+      clearTimeout(dueT);
+      const wait = Math.max((dur + gap) * 500, (dur + gap) * 1000 - 120);
+      dueAt = t + wait; dueT = setTimeout(() => { dueAt = 0; paintGuide(true); }, wait);
+      if (!nextNote()) { clearTimeout(dueT); dueAt = 0; loops++; idx = 0; const ln = $("#notes"); if (ln) { ln.innerHTML = `<span class="done">🎉 That's the whole tune! Play it again, it starts from the top.</span>`; } setTimeout(paintGuide, 1600); buzzPhone([30, 30, 30]); return; }
     } else if (guide === "lights") { el.classList.add("oops"); setTimeout(() => el.classList.remove("oops"), 220); }
     paintGuide();
   }
+  function letGo(el) { // a key was released
+    if (!held || held.el !== el) return;
+    const sofar = (Date.now() - held.at) / 1000;
+    if (held.dur >= .6 && sofar < held.dur * .5) tip("⏳ Hold that one longer");
+    clearHold(); paintGuide();
+  }
+  function stopDemo() {
+    if (!demoT.length) return;
+    demoT.forEach(clearTimeout); demoT = [];
+    document.querySelectorAll(".demo").forEach(e => e.classList.remove("demo"));
+    try { navigator.vibrate && navigator.vibrate(0); } catch (e) { }
+  }
+  // 👀 Show me: silently lights the next few keys in time (and taps the rhythm on the phone), so only the pianist knows
+  function showMe() {
+    stopDemo(); const kb = $("#kb"); if (!kb || !seq.length) return;
+    let t = 300, n = 0, vib = [0], lastEnd = 0;
+    const from = idx >= seq.length ? 0 : idx;
+    for (let i = from; i < seq.length && n < 8 && t < 7000; i++) {
+      const o = seq[i], d = secsOf(o) * 1000;
+      if (o.m) {
+        n++; const on = t, len = Math.max(120, d * .85), key = kb.querySelector(`[data-m="${o.m}"]`);
+        demoT.push(setTimeout(() => key && key.classList.add("demo"), on), setTimeout(() => key && key.classList.remove("demo"), on + len));
+        const buzz = Math.min(len * .6, 260); vib.push(Math.max(30, on - lastEnd), buzz); lastEnd = on + buzz;
+      }
+      t += d;
+    }
+    demoT.push(setTimeout(() => { demoT = []; }, t + 100));
+    try { navigator.vibrate && navigator.vibrate(vib); } catch (e) { }
+  }
   const nextNote = () => { for (let i = idx; i < seq.length; i++) if (seq[i].m) return seq[i]; return null; };
-  function paintGuide() {
-    const kb = $("#kb"), ln = $("#lane"); if (!kb || !ln) return;
-    kb.querySelectorAll(".next,.next2").forEach(e => e.classList.remove("next", "next2"));
+  function paintGuide(go) {
+    const kb = $("#kb"), ln = $("#notes"); if (!kb || !ln) return;
+    kb.querySelectorAll(".next,.next2,.go").forEach(e => e.classList.remove("next", "next2", "go"));
     if (!seq.length) { ln.innerHTML = `<span class="msg">🧠 Play it from memory. The note names are on the keys to help. Hum it to yourself first!</span>`; return; }
+    const ready = !dueAt || Date.now() >= dueAt;
     const ahead = []; for (let i = idx; i < seq.length && ahead.length < 14; i++) ahead.push(seq[i]);
     const notes = ahead.filter(o => o.m);
     if (guide === "lights") {
-      if (notes[0]) { const a = kb.querySelector(`[data-m="${notes[0].m}"]`); a && a.classList.add("next"); }
-      if (notes[1] && notes[1].m !== notes[0].m) { const b = kb.querySelector(`[data-m="${notes[1].m}"]`); b && b.classList.add("next2"); }
+      const a = notes[0] && kb.querySelector(`[data-m="${notes[0].m}"]`);
+      if (a) { a.classList.add(ready ? "next" : "next2"); if (ready && go) { void a.offsetWidth; a.classList.add("go"); } }
+      if (ready && notes[1] && notes[1].m !== notes[0].m) { const b = kb.querySelector(`[data-m="${notes[1].m}"]`); b && b.classList.add("next2"); }
     }
-    const unit = 1.9; let first = true;
-    ln.innerHTML = ahead.map(o => {
-      if (!o.m) return `<span style="flex:none;width:${o.b * unit * .6}rem"></span>`;
+    if (ready && go && !demoT.length) buzzPhone(12);
+    let html = "";
+    if (held) {
+      const el = (Date.now() - held.at) / 1000, done = el >= held.dur;
+      html += `<span class="n held ${done ? "ok" : ""}" style="width:${laneW(held.dur)}rem;background:${guide === "lights" ? "var(--pc)" : octCol(held.o.m)};--dur:${held.dur.toFixed(2)}s;--del:-${Math.min(el, held.dur).toFixed(2)}s">${guide === "letters" ? NAMES[held.o.m % 12] : ""}</span>`;
+    }
+    let first = true;
+    html += ahead.map(o => {
+      if (!o.m) return `<span style="flex:none;width:${(secsOf(o) * 2.4 * .6).toFixed(2)}rem"></span>`;
       const col = guide === "lights" ? (first ? "var(--pc)" : "#4a4170") : octCol(o.m);
-      const html = `<span class="n ${first ? "now" : ""}" style="width:${Math.max(1.5, o.b * unit)}rem;background:${col}">${guide === "letters" ? NAMES[o.m % 12] : ""}</span>`;
-      first = false; return html;
+      const cls = first ? (ready ? "now" + (go ? " go" : "") : "soon") : "";
+      const h = `<span class="n ${cls}" style="width:${laneW(secsOf(o)).toFixed(2)}rem;background:${col}">${guide === "letters" ? NAMES[o.m % 12] : ""}</span>`;
+      first = false; return h;
     }).join("");
+    ln.innerHTML = html;
   }
 
 

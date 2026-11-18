@@ -27,6 +27,10 @@ A Mario-style platformer starring Pip the robot: **https://jimmywilson1979-arch.
 - Special Stages: S-1 Goo Tower (climb a tall tower before the rising goo catches you) and S-2 Switch Squad (stand on switches to open
   gates; switches stay down for a few seconds so you can do it alone, or split up with friends in co-op).
 - Secret bonus rooms: a purple ★ door is hidden in 2-2, 3-1, 4-3, 5-1 and S-2. Stand still on it to go in, grab the batteries, and use the door at the end to come back.
+- 🛠 Level Maker (title screen, or press L): pick a tool from the bottom bar and tap/drag on the map to build a level. Choose the
+  look (Sunny, Night, Cave, Beach, Snow, Factory, Clouds; some add their own pieces like ice, conveyor belts or bouncy clouds), the
+  length, and one of 3 save slots (it saves by itself). ▶ Play or 📺 Co-op play to try it, and 📱 Share shows a QR code/link that
+  opens your level straight into play on any phone or tablet.
 - 🏠 button (top right) goes back to the level menu at any time.
 - Power-ups from ⚡ blocks: shield, rocket boots (big double jump and a hover), battery magnet and speed boost.
 - Artwork comes from the art library (`pip/` folders). World 1 is built into `pip.html`; Worlds 2-5 art lives in `pip-art/` and loads when you start a level from that world.

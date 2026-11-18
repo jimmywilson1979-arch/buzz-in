@@ -19,6 +19,7 @@
   #topbtns button{width:44px;height:44px;border-radius:14px;border:3px solid #01579B;background:#ffffffdd;font-size:20px;line-height:1;cursor:pointer;color:#01579B;font-family:inherit;font-weight:700}
   body:not(.playing) #btnPause{display:none}
   body:not(.ingame) #btnMenu{display:none}
+  body.maker #topbtns{display:none}
   body.phone #topbtns{display:none}
   /* touch controls (solo on a phone/tablet) */
   #touch{position:fixed;inset:0;pointer-events:none;z-index:10;display:none}
@@ -1314,7 +1315,7 @@ const TXT = (size, color = '#fff', stroke = '#01579B', sw = 0) => ({ fontFamily:
 class Boot extends Phaser.Scene {
   constructor() { super('Boot'); }
   preload() { this.load.image('pip', PIP_ATLAS); for (const k in ENEMY_IMG) this.load.image(k, ENEMY_IMG[k]); for (const k in ART_IMG) this.load.image(k, ART_IMG[k]); for (const k in W2_IMG) this.load.image(k, W2_IMG[k]); }
-  create() { makeArt(this); makeCaveArt(this); makeColourPips(this); makeWorld2Art(this); makeSpecialArt(this); this.scene.start('Title'); }
+  create() { makeArt(this); makeCaveArt(this); makeColourPips(this); makeWorld2Art(this); makeSpecialArt(this); const shared = Maker.fromHash(); if (shared) { Maker.play(shared, 'solo'); Sound.setTheme(musicFor(Session.level)); this.scene.start('Game'); } else this.scene.start('Title'); }
 }
 
 
@@ -1472,6 +1473,7 @@ class Title extends Phaser.Scene {
   constructor() { super('Title'); }
   create() {
     this.started = false;
+    for (let i = LEVELS.length - 1; i >= 0; i--) if (LEVELS[i].custom) LEVELS.splice(i, 1);
     document.body.classList.remove('playing', 'coop', 'ingame'); document.body.classList.add('solo');
     Hooks.phase = () => 'title';
     this.bg = makeBackground(this, 'sunny'); this.t = 0;
@@ -1505,8 +1507,9 @@ class Title extends Phaser.Scene {
     };
     btn(160, 322, '▶ Play', 0x4FC3F7, () => this.go('solo'));
     btn(380, 322, '📺 Co-op (TV)', 0x66BB6A, () => this.go('coop'));
-    btn(270, 404, '🔑 Join with a code', 0xFFB300, () => showCodePop());
-    this.add.text(270, 362, IS_TOUCH ? 'Co-op: press Co-op on the TV screen, then Join on each phone' : '◀ ▶ level · ▲ ▼ world · SPACE play · C co-op · J join', TXT(15, '#ffffff', '#01579B', 4)).setOrigin(0.5);
+    btn(160, 404, '🔑 Join a code', 0xFFB300, () => showCodePop());
+    btn(380, 404, '🛠 Level Maker', 0xAB47BC, () => { if (this.started) return; this.started = true; Sound.init(); Sound.sfx.select(); this.cameras.main.fadeOut(200, 255, 255, 255); this.time.delayedCall(210, () => this.scene.start('Maker')); });
+    this.add.text(270, 362, IS_TOUCH ? 'Co-op: press Co-op on the TV screen, then Join on each phone' : '◀ ▶ level · ▲ ▼ world · SPACE play · C co-op · J join · L maker', TXT(15, '#ffffff', '#01579B', 4)).setOrigin(0.5);
     // QR to open on another device
     const url = gameUrl(), cv = qrCanvas(url, 5);
     if (cv) {
@@ -1525,6 +1528,7 @@ class Title extends Phaser.Scene {
       if (e.code === 'ArrowUp' || e.code === 'PageUp') this.jumpWorld(-1);
       if (e.code === 'ArrowDown' || e.code === 'PageDown') this.jumpWorld(1);
       if (e.code === 'KeyJ') showCodePop();
+      if (e.code === 'KeyL' && !this.started) { this.started = true; this.scene.start('Maker'); }
     });
     if (this.input.gamepad) this.input.gamepad.on('down', (pad, button) => {
       const i = button.index;
@@ -2922,21 +2926,23 @@ class Game extends Phaser.Scene {
     this.finished = true; Sound.stopMusic(); Sound.sfx.win();
     this.players.forEach(P => { if (P.out) return; const b = P.body.body; b.setVelocityX(0); P.vis.anims.stop(); P.vis.setFrame('happy').setAlpha(1).setAngle(0); this.time.delayedCall(200 + P.slot * 120, () => { if (b.blocked.down) b.setVelocityY(-500); }); });
     for (let i = 0; i < 4; i++) this.time.delayedCall(i * 260, () => this.fxConfetti.explode(30, this.cameras.main.midPoint.x + Phaser.Math.Between(-300, 300), this.cameras.main.scrollY + VH));
-    store.set('pip_sel', Math.min(Session.level + 1, LEVELS.length - 1));
-    const LV = this.LV, pct = (this.batteries - this.gold * 5) / Math.max(1, this.totalBatteries);
+    const LV = this.LV;
+    if (!LV.custom) store.set('pip_sel', Math.min(Session.level + 1, LEVELS.length - 1));
+    const pct0 = 0, pct = (this.batteries - this.gold * 5) / Math.max(1, this.totalBatteries);
     const stars = 1 + (pct >= 0.75 ? 1 : 0) + (this.clock <= LV.par ? 1 : 0);
     const best = store.get('pip_best_' + LV.id, null);
     const isBest = !best || stars > best.stars || (stars === best.stars && this.clock < best.time);
     if (isBest) store.set('pip_best_' + LV.id, { stars, time: this.clock });
     store.set('pip_unlocked', Math.max(store.get('pip_unlocked', 0), Session.level + 1));
-    const next = Session.level + 1 < LEVELS.length;
+    const next = !LV.custom && Session.level + 1 < LEVELS.length;
     this.time.delayedCall(1500, () => this.showPanel(LV.last ? (LV.world === 5 ? 'Cloud Kingdom saved! 🎉' : 'World ' + LV.world + ' complete!') : 'Level complete!', [
       '★'.repeat(stars) + '☆'.repeat(3 - stars),
       `Batteries ${this.batteries}   ·   Golden ${this.gold} / ${this.totalGold}   ·   Time ${fmtTime(this.clock)}`,
       `Baddies beaten: ${this.kills}` + (isBest ? '   ·   New best!' : ''),
       `★ finish  ★ 75% batteries  ★ under ${fmtTime(LV.par)}`
-    ], next ? 'Next level' : 'Play again', () => {
+    ], LV.custom ? 'Back to the maker' : next ? 'Next level' : 'Play again', () => {
       this.registry.set('checkpoint', null);
+      if (LV.custom) { this.registry.set('makerLevel', Maker.current); Sound.stopMusic(); this.scene.start('Maker'); return; }
       if (next) Session.level++;
       Sound.setTheme(musicFor(Session.level)); Sound.startMusic(); this.scene.restart();
     }, true));
@@ -2963,6 +2969,171 @@ class Game extends Phaser.Scene {
     Net.bcast({ t: 'state', st: Net.pub() });
   }
   panelGo() { if (!this.panel || this.time.now < this.panelAt) return; const fn = this.panelFn; this.panel = null; Sound.sfx.select(); fn(); }
+}
+
+// =====================================================================
+//  LEVEL MAKER: paint a level, play it, share it by QR code
+// =====================================================================
+const MAKER_THEMES = [
+  { k: 'sunny', name: 'Sunny', art: 1 }, { k: 'night', name: 'Night', art: 1 }, { k: 'cave', name: 'Cave', art: 1 }, { k: 'beach', name: 'Beach', art: 2 },
+  { k: 'snow', name: 'Snow', art: 3 }, { k: 'factory', name: 'Factory', art: 4 }, { k: 'cloud', name: 'Clouds', art: 5 },
+];
+const MAKER_TOOLS = [
+  ['#', 'Ground'], ['X', 'Stone'], ['B', 'Brick'], ['Q', '⚡ Block'], ['P', 'Shield'], ['U', 'Rocket'], ['-', 'Plank'], ['M', 'Mover'],
+  ['o', 'Battery'], ['G', 'Gold'], ['H', 'Heart'], ['S', 'Spring'], ['^', 'Spikes'], ['g', 'Gloop'], ['k', 'Clanker'], ['f', 'Buzzbot'],
+  ['C', 'Checkpoint'], ['@', 'Start'], ['E', 'Goal'], [' ', 'Rubber'],
+];
+const MAKER_EXTRA = { snow: [['I', 'Ice'], ['p', 'Penguin'], ['n', 'Snowman']], factory: [['>', 'Belt ▶'], ['<', 'Belt ◀'], ['r', 'Rust-rat'], ['h', 'Hopper']], cloud: [['u', 'Bouncy'], ['=', 'Cloud'], ['a', 'Balloon'], ['w', 'Bird']], night: [['L', 'Lamp']], cave: [['v', 'Icicle'], ['c', 'Crumble']] };
+const MAKER_EMOJI = { I: ['🧊', 0xb3e5fc], p: ['🐧', 0x90caf9], n: ['⛄', 0xe3f2fd], '>': ['▶', 0x455a64], '<': ['◀', 0x455a64], r: ['🐀', 0xffccbc], h: ['🌀', 0xc8e6c9], u: ['☁️', 0xf8bbd0], '=': ['☁', 0xe3f2fd], a: ['🎈', 0xf8bbd0], w: ['🐦', 0xbbdefb], L: ['💡', 0xfff59d], v: ['🔻', 0xd1c4e9], c: ['🧱', 0xd7ccc8], ' ': ['🧽', 0xffffff], U: ['🚀', 0xffe082], M: ['⬌', 0x90a4ae] };
+const Maker = {
+  slot: store.get('pip_maker_slot', 0),
+  blank(theme = 'sunny', W = 80) {
+    const H = 12, g = []; for (let y = 0; y < H; y++) g.push(new Array(W).fill('.'));
+    for (let x = 0; x < W; x++) { g[10][x] = '#'; g[11][x] = '#'; } g[9][3] = '@'; g[9][W - 4] = 'E';
+    return { theme, W, H, g, name: 'My level ' + (this.slot + 1) };
+  },
+  encode(L) { return [L.theme, L.W, L.g.map(r => { let o = '', i = 0; while (i < r.length) { let n = 1; while (i + n < r.length && r[i + n] === r[i] && n < 99) n++; o += (n > 1 ? n : '') + r[i]; i += n; } return o; }).join('|')].join('~'); },
+  decode(s) {
+    try {
+      const [theme, Ws, rows] = s.split('~'), W = +Ws, g = rows.split('|').map(r => { const out = []; let num = ''; for (const ch of r) { if (/[0-9]/.test(ch) && !(ch === '0' && num === '')) num += ch; else { const n = num ? +num : 1; for (let i = 0; i < n; i++) out.push(ch); num = ''; } } while (out.length < W) out.push('.'); return out.slice(0, W); });
+      if (!MAKER_THEMES.some(t => t.k === theme) || g.length !== 12 || !(W >= 30 && W <= 200)) return null;
+      return { theme, W, H: 12, g };
+    } catch (e) { return null; }
+  },
+  load(i) { const c = store.get('pip_maker_' + i, null), L = c && this.decode(c); return L || this.blank(); },
+  save(L) { store.set('pip_maker_' + this.slot, this.encode(L)); store.set('pip_maker_slot', this.slot); },
+  link(L) { return (gameUrl() || GAME_URL).split('#')[0].split('?')[0] + '#lvl=' + btoa(this.encode(L)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); },
+  fromHash() { const m = /#lvl=([A-Za-z0-9_-]+)/.exec(location.hash); if (!m) return null; try { return this.decode(atob(m[1].replace(/-/g, '+').replace(/_/g, '/'))); } catch (e) { return null; } },
+  play(L, mode) {
+    for (let i = LEVELS.length - 1; i >= 0; i--) if (LEVELS[i].custom) LEVELS.splice(i, 1);
+    const th = MAKER_THEMES.find(t => t.k === L.theme) || MAKER_THEMES[0], snap = L.g.map(r => r.slice());
+    if (!snap.some(r => r.includes('@'))) snap[9][3] = '@';
+    if (!snap.some(r => r.includes('E'))) snap[9][L.W - 4] = 'E';
+    LEVELS.push({ id: '★', world: 0, art: th.art, name: (L.name || 'MY LEVEL').toUpperCase(), theme: L.theme, par: Math.round(L.W * 1.6), custom: true, build: () => ({ g: snap.map(r => r.slice()), W: L.W, H: 12 }) });
+    Session.level = LEVELS.length - 1; Session.mode = mode || 'solo'; this.current = L;
+  },
+};
+class MakerScene extends Phaser.Scene {
+  constructor() { super('Maker'); }
+  create() {
+    document.body.classList.remove('playing', 'coop', 'ingame'); document.body.classList.add('solo', 'maker');
+    Hooks.phase = () => 'title';
+    for (let i = LEVELS.length - 1; i >= 0; i--) if (LEVELS[i].custom) LEVELS.splice(i, 1);
+    this.L = this.registry.get('makerLevel') || Maker.load(Maker.slot); this.registry.set('makerLevel', null);
+    this.tool = '#'; this.scroll = 0; this.ts = 34; this.top = 64; this.help = null; this.sharePanel = null; this.clearArm = false;
+    this.cameras.main.setBackgroundColor('#4FC3F7');
+    this.mapC = this.add.container(0, this.top); this.cells = {};
+    this.grid = this.add.graphics().setDepth(2);
+    this.drawAll();
+    // top bar
+    const bar = this.add.graphics().setDepth(5); bar.fillStyle(0x01579B, 0.92).fillRect(0, 0, VW, 56);
+    const tb = (x, w, label, fn) => { const c = this.add.container(x, 28).setDepth(6), g = this.add.graphics(); g.fillStyle(0xffffff, 1).fillRoundedRect(-w / 2, -20, w, 40, 12); const t = this.add.text(0, 0, label, TXT(17, '#01579B')).setOrigin(0.5); c.add([g, t]); c.t = t; c.setSize(w, 40).setInteractive({ useHandCursor: true }).on('pointerdown', (p, x, y, ev) => { if (ev) ev.stopPropagation(); Sound.init(); Sound.sfx.select(); fn(); }); return c; };
+    tb(52, 92, '🏠 Menu', () => { this.cameras.main.fadeOut(150, 255, 255, 255); this.time.delayedCall(160, () => { document.body.classList.remove('maker'); this.scene.start('Title'); }); });
+    this.slotB = tb(158, 104, '', () => { Maker.save(this.L); Maker.slot = (Maker.slot + 1) % 3; this.L = Maker.load(Maker.slot); store.set('pip_maker_slot', Maker.slot); this.scroll = 0; this.drawAll(); this.refreshBar(); });
+    this.themeB = tb(274, 112, '', () => { const i = MAKER_THEMES.findIndex(t => t.k === this.L.theme); this.L.theme = MAKER_THEMES[(i + 1) % MAKER_THEMES.length].k; this.changed(); this.makePalette(); this.refreshBar(); });
+    this.widthB = tb(386, 96, '', () => { const sizes = [60, 80, 120, 160], i = sizes.indexOf(this.L.W), W = sizes[(i + 1) % sizes.length]; this.resize(W); });
+    tb(486, 88, '🗑 Clear', () => { if (this.clearArm) { this.L = Maker.blank(this.L.theme, this.L.W); this.changed(); this.drawAll(); this.clearArm = false; this.refreshBar(); } else { this.clearArm = true; this.refreshBar(); this.time.delayedCall(2500, () => { this.clearArm = false; this.refreshBar(); }); } });
+    this.clearB = this.children.list[this.children.list.length - 1];
+    tb(598, 116, '📱 Share', () => this.share());
+    tb(726, 124, '▶ Play', () => this.playIt('solo'));
+    tb(866, 136, '📺 Co-op play', () => this.playIt('coop'));
+    this.refreshBar();
+    // palette
+    this.pal = this.add.container(0, 0).setDepth(6); this.makePalette();
+    // scroll buttons + keys
+    const arr = (x, d) => this.add.text(x, this.top + 6 * this.ts, d < 0 ? '◀' : '▶', TXT(40, '#fff', '#01579B', 8)).setOrigin(0.5).setDepth(6).setInteractive({ useHandCursor: true }).on('pointerdown', (p, a, b, ev) => { if (ev) ev.stopPropagation(); this.scrollBy(d * 10); });
+    arr(22, -1); arr(VW - 22, 1);
+    this.input.keyboard.on('keydown', e => { if (e.code === 'ArrowLeft') this.scrollBy(-4); if (e.code === 'ArrowRight') this.scrollBy(4); if (e.code === 'Enter') this.playIt('solo'); });
+    this.input.on('wheel', (p, o, dx, dy) => this.scrollBy(Math.sign(dy || dx) * 3));
+    this.input.on('pointerdown', p => this.paint(p, true));
+    this.input.on('pointermove', p => { if (p.isDown) this.paint(p, false); });
+    this.help = this.add.text(VW / 2, this.top + 12 * this.ts + 1, '', TXT(14, '#ffffff', '#01579B', 4)).setOrigin(0.5, 0).setDepth(6); this.drawPal();
+    this.cameras.main.fadeIn(200, 255, 255, 255);
+  }
+  refreshBar() {
+    const th = MAKER_THEMES.find(t => t.k === this.L.theme) || MAKER_THEMES[0];
+    this.slotB.t.setText('💾 Slot ' + (Maker.slot + 1)); this.themeB.t.setText('🎨 ' + th.name); this.widthB.t.setText('↔ ' + this.L.W);
+    this.clearB.t && this.clearB.t.setText(this.clearArm ? 'Sure?' : '🗑 Clear');
+  }
+  makePalette() {
+    this.pal.removeAll(true);
+    const tools = MAKER_TOOLS.concat(MAKER_EXTRA[this.L.theme] || []), n = tools.length, w = Math.min(46, (VW - 20) / n), y0 = VH - 48;
+    const bg = this.add.graphics(); bg.fillStyle(0x01579B, 0.92).fillRect(0, y0 - 6, VW, 54); this.pal.add(bg);
+    this.palItems = tools.map(([ch, name], i) => {
+      const x = 10 + w / 2 + i * w, c = this.add.container(x, y0 + 22), g = this.add.graphics();
+      c.add(g); const ic = this.icon(ch, 0, -2, w * 0.7); if (ic) c.add(ic);
+      c.g = g; c.ch = ch; c.name = name; c.setSize(w, 48).setInteractive({ useHandCursor: true }).on('pointerdown', (p, a, b, ev) => { if (ev) ev.stopPropagation(); this.tool = ch; Sound.sfx.select(); this.drawPal(); });
+      this.pal.add(c); return c;
+    });
+    if (!tools.some(t => t[0] === this.tool)) this.tool = '#';
+    this.drawPal();
+  }
+  drawPal() { this.palItems.forEach(c => { c.g.clear(); const on = c.ch === this.tool; c.g.fillStyle(on ? 0xFFD54F : 0xffffff, on ? 1 : 0.85).fillRoundedRect(-20, -22, 40, 44, 9); }); const t = this.palItems.find(c => c.ch === this.tool); if (this.help) this.help.setText('Tool: ' + (t ? t.name : '') + '   ·   tap or drag on the map   ·   ◀ ▶ scroll   ·   saves by itself'); }
+  icon(ch, x, y, size) {
+    const tex = { '#': ['tiles', 't0'], X: ['tiles', 't6'], B: ['tiles', 't2'], Q: ['tiles', 't3'], P: ['orb'], '-': ['tiles', 't5'], o: ['battery'], G: ['gold'], H: ['heart'], S: ['spring', 'up'], '^': ['spike'], g: ['gloop', 'w2'], k: ['clank', 'k1'], f: ['buzz', 'b1'], C: ['checkpoint', 'on'], '@': ['pip', 'idle1'], E: ['goal'] }[ch];
+    if (tex && this.textures.exists(tex[0])) { const im = this.add.image(x, y, tex[0], tex[1]); const s = size / Math.max(im.width, im.height); im.setScale(s); return im; }
+    const em = MAKER_EMOJI[ch]; if (!em) return null;
+    const c = this.add.container(x, y), g = this.add.graphics(); g.fillStyle(em[1], 1).fillRoundedRect(-size / 2, -size / 2, size, size, 6); c.add([g, this.add.text(0, 0, em[0], { fontSize: Math.round(size * 0.62) + 'px' }).setOrigin(0.5)]); return c;
+  }
+  cellKey(x, y) { return x + ',' + y; }
+  drawCell(x, y) {
+    const k = this.cellKey(x, y); if (this.cells[k]) { this.cells[k].destroy(); delete this.cells[k]; }
+    const ch = this.L.g[y][x]; if (ch === '.') return;
+    const ts = this.ts, px = (x - this.scroll) * ts + ts / 2, py = y * ts + ts / 2;
+    if (px < -ts || px > VW + ts) return;
+    let ic;
+    if (ch === '#') { const top = !(y > 0 && '#I<>'.includes(this.L.g[y - 1][x])); ic = this.add.image(px, py, 'tiles', top ? 't0' : 't1').setDisplaySize(ts, ts); }
+    else ic = this.icon(ch, px, py, ch === 'E' || ch === 'C' ? ts * 1.6 : ch === 'M' ? ts * 1.0 : ts * 0.92);
+    if (ic) { if (ch === 'E' || ch === 'C') ic.y -= ts * 0.3; this.mapC.add(ic); this.cells[k] = ic; }
+  }
+  drawAll() {
+    Object.values(this.cells).forEach(c => c.destroy()); this.cells = {};
+    const cols = Math.ceil(VW / this.ts) + 1;
+    for (let y = 0; y < 12; y++) for (let x = this.scroll; x < Math.min(this.L.W, this.scroll + cols); x++) this.drawCell(x, y);
+    const g = this.grid; g.clear(); g.lineStyle(1, 0xffffff, 0.25);
+    for (let x = 0; x <= cols; x++) g.lineBetween(x * this.ts, this.top, x * this.ts, this.top + 12 * this.ts);
+    for (let y = 0; y <= 12; y++) g.lineBetween(0, this.top + y * this.ts, VW, this.top + y * this.ts);
+    const endX = (this.L.W - this.scroll) * this.ts; if (endX < VW) { g.fillStyle(0x01579B, 0.5).fillRect(endX, this.top, VW - endX, 12 * this.ts); }
+  }
+  scrollBy(d) { this.scroll = Phaser.Math.Clamp(this.scroll + d, 0, Math.max(0, this.L.W - Math.floor(VW / this.ts) + 1)); this.drawAll(); }
+  paint(p, first) {
+    if (this.sharePanel) return;
+    if (p.y < this.top || p.y >= this.top + 12 * this.ts || p.x < 44 || p.x > VW - 44) return;
+    const x = this.scroll + Math.floor(p.x / this.ts), y = Math.floor((p.y - this.top) / this.ts);
+    if (x < 0 || x >= this.L.W || y < 0 || y >= 12) return;
+    const ch = this.tool === ' ' ? '.' : this.tool;
+    if (this.L.g[y][x] === ch) return;
+    if (ch === '@' || ch === 'E') for (let yy = 0; yy < 12; yy++) for (let xx = 0; xx < this.L.W; xx++) if (this.L.g[yy][xx] === ch) { this.L.g[yy][xx] = '.'; this.drawCell(xx, yy); }
+    this.L.g[y][x] = ch; this.drawCell(x, y); if (y + 1 < 12) this.drawCell(x, y + 1);
+    if (first) Sound.sfx.bump();
+    this.changed();
+  }
+  changed() { Maker.save(this.L); }
+  resize(W) {
+    const g = this.L.g.map(r => { const o = r.slice(0, W); while (o.length < W) o.push(o.length && r[r.length - 1] === '#' ? '.' : '.'); return o; });
+    for (let x = this.L.W; x < W; x++) { g[10][x] = '#'; g[11][x] = '#'; }
+    this.L.W = W; this.L.g = g; this.changed(); this.scroll = Math.min(this.scroll, Math.max(0, W - 20)); this.drawAll(); this.refreshBar();
+  }
+  playIt(mode) {
+    Maker.save(this.L); Maker.play(this.L, mode); document.body.classList.remove('maker');
+    Sound.init(); Sound.setTheme(musicFor(Session.level));
+    this.cameras.main.fadeOut(200, 255, 255, 255);
+    this.time.delayedCall(210, () => { if (mode === 'coop') this.scene.start('Lobby'); else { Sound.startMusic(); this.scene.start('Game'); } });
+  }
+  share() {
+    const url = Maker.link(this.L), cv = qrCanvas(url, 4);
+    if (this.sharePanel) this.sharePanel.destroy();
+    const c = this.sharePanel = this.add.container(VW / 2, VH / 2).setDepth(50), g = this.add.graphics();
+    g.fillStyle(0x0b1630, 0.55).fillRect(-VW, -VH, VW * 2, VH * 2); g.fillStyle(0xffffff, 1).fillRoundedRect(-230, -210, 460, 420, 26); g.lineStyle(6, 0x01579B).strokeRoundedRect(-230, -210, 460, 420, 26);
+    c.add(g); c.add(this.add.text(0, -180, 'Share your level', TXT(28, '#FFD54F', '#01579B', 8)).setOrigin(0.5));
+    if (cv) { if (this.textures.exists('shareqr')) this.textures.remove('shareqr'); this.textures.addCanvas('shareqr', cv); c.add(this.add.image(0, -10, 'shareqr').setDisplaySize(270, 270)); }
+    c.add(this.add.text(0, 150, 'Scan to play it on another phone or tablet', TXT(16, '#01579B')).setOrigin(0.5));
+    const copy = this.add.text(-90, 184, '📋 Copy link', TXT(18, '#fff', '#01579B', 6)).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    copy.on('pointerdown', (p, a, b, ev) => { if (ev) ev.stopPropagation(); try { navigator.clipboard.writeText(url).then(() => copy.setText('✓ Copied')); } catch (e) {} });
+    const close = this.add.text(100, 184, '✕ Close', TXT(18, '#fff', '#01579B', 6)).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    close.on('pointerdown', (p, a, b, ev) => { if (ev) ev.stopPropagation(); c.destroy(); this.sharePanel = null; });
+    c.add([copy, close]); c.setSize(VW * 2, VH * 2).setInteractive().on('pointerdown', (p, a, b, ev) => { if (ev) ev.stopPropagation(); });
+  }
 }
 
 // =====================================================================
@@ -3082,10 +3253,11 @@ function togglePause(force) {
   else { s.physics.resume(); s.tweens.resumeAll(); s.anims.resumeAll(); s.time.paused = false; Sound.startMusic(); document.getElementById('qrbox').classList.add('hidden'); }
 }
 function toTitle() {
-  const s = gameScene(); document.getElementById('pause').classList.add('hidden');
+  const s = gameScene(), custom = LEVELS[Session.level] && LEVELS[Session.level].custom; document.getElementById('pause').classList.add('hidden');
   if (s) { s.paused = false; s.physics.resume(); s.tweens.resumeAll(); s.time.paused = false; }
   document.body.classList.remove('playing', 'ingame');
-  Sound.stopMusic(); Sound.setTheme('sunny'); window.__game.scene.getScenes(true).forEach(sc => sc.scene.stop()); window.__game.scene.start('Title');
+  Sound.stopMusic(); Sound.setTheme('sunny'); window.__game.scene.getScenes(true).forEach(sc => sc.scene.stop());
+  if (custom && s) { s.registry.set('makerLevel', Maker.current); window.__game.scene.start('Maker'); } else window.__game.scene.start('Title');
 }
 function toggleMute() { Sound.setMuted(!Sound.muted); document.getElementById('btnMute').style.opacity = Sound.muted ? 0.45 : 1; document.getElementById('btnMute').textContent = Sound.muted ? '✕' : '♪'; }
 function showJoinQR() {
@@ -3138,7 +3310,7 @@ function startGame() {
     physics: { default: 'arcade', arcade: { gravity: { y: FEEL.gravity }, debug: false } },
     input: { gamepad: true, activePointers: 3 },
     render: { antialias: true, roundPixels: false },
-    scene: [Boot, Title, Lobby, Game]
+    scene: [Boot, Title, Lobby, Game, MakerScene]
   });
 }
 (async function boot() {

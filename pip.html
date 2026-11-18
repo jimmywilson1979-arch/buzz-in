@@ -791,8 +791,8 @@ function buildBarrels() {
   ground(112, 128); s(114, 9, 'C'); s(118, 9, 'g'); s(122, 9, 'g'); s(125, 4, 'f');
   s(131, 9, 'b'); s(134, 8, 'b'); s(137, 7, 'b'); s(140, 8, 'b'); s(143, 9, 'b'); row(134, 140, 4, 'o'); s(137, 2, 'G');
   ground(146, W - 1); s(150, 9, 'g'); for (let i = 0; i < 4; i++) fill(155 + i, 155 + i, 9 - i, 9, 'X');
-  s(164, 9, 'E');
-  return { g, W, H, sea: 9 * T + 22 };
+  s(164, 9, 'E'); s(103, 6, 'O');
+  return withBonus({ g, W, H, sea: 9 * T + 22 }, 103, 6);
 }
 function buildDive() {
   const W = 160, H = 12, { g, s, fill, ground, row } = grid(W, H);
@@ -904,7 +904,7 @@ function buildSnow1() {
   s(132, 6, 'o');                                                           // pit 131-133
   ground(134, W - 1); s(140, 9, 'p'); s(146, 6, 'B'); s(147, 6, 'H'); s(150, 9, 'n'); ice(155, 166); row(158, 162, 6, '-'); s(160, 4, 'G'); s(161, 3, 'i');
   row(156, 165, 9, 'o'); for (let i = 0; i < 4; i++) fill(170 + i, 170 + i, 9 - i, 9, 'X'); s(178, 9, 'E');
-  return { g, W, H };
+  return withBonus({ g, W, H }, 109, 5);
 }
 function buildAvalanche() {
   const W = 200, H = 12, { g, s, fill, ground, row } = grid(W, H), ice = (a, b) => row(a, b, 10, 'I');
@@ -1075,7 +1075,7 @@ function buildMagnets() {
   ground(113, 132); s(116, 9, 'C'); s(120, 1, 'V'); s(124, 1, 'V'); row(119, 125, 9, 'o'); s(129, 9, 'r');
   s(136, 2, 'm'); s(143, 2, 'm'); s(150, 2, 'm'); s(140, 7, 'd'); s(147, 6, 'd'); row(135, 152, 5, 'o');   // pit 133-154
   ground(155, W - 1); s(158, 9, 'h'); fill(162, 165, 6, 9, 'X'); s(164, 5, 'G'); s(170, 9, 'r'); s(179, 9, 'E');
-  return { g, W, H };
+  return withBonus({ g, W, H }, 115, 3);
 }
 function buildKingArena() {
   const W = 26, H = 12, { g, s, fill, ground, row } = grid(W, H);
@@ -1154,7 +1154,7 @@ function buildBreezy() {
   ground(117, 150); s(119, 9, 'C'); s(124, 6, 'B'); s(125, 6, 'U'); s(126, 6, 'B'); s(132, 4, 'w'); s(140, 9, 'k'); row(128, 146, 9, 'o');
   row(152, 155, 7, '='); row(158, 161, 5, '='); s(160, 2, 'G'); s(159, 4, 'o');               // pit 151-163
   ground(164, W - 1); for (let i = 0; i < 3; i++) fill(168 + i, 168 + i, 9 - i, 9, 'X'); s(176, 9, 'E');
-  return { g, W, H, wind: [{ x0: 30, x1: 52, dir: -1 }, { x0: 117, x1: 150, dir: 1 }, { x0: 151, x1: 163, dir: -1 }] };
+  return withBonus({ g, W, H, wind: [{ x0: 30, x1: 52, dir: -1 }, { x0: 117, x1: 150, dir: 1 }, { x0: 151, x1: 163, dir: -1 }] }, 84, 2);
 }
 function buildBeat() {
   const W = 176, H = 12, { g, s, fill, ground, row } = grid(W, H);
@@ -1228,6 +1228,74 @@ function makeWorld5Art(scene) {
   canvasTex(scene, 'cloudSkyD', VW, VH, c => { const g = c.createLinearGradient(0, 0, 0, VH); g.addColorStop(0, '#ffd6e8'); g.addColorStop(1, '#bfe3ff'); c.fillStyle = g; c.fillRect(0, 0, VW, VH); });
 }
 
+// =====================================================================
+//  SPECIAL STAGES + BONUS ROOMS
+//  O = bonus door (stand still on it to go in)   K = floor switch   D = gate (top tile of a 3-tall gate)
+// =====================================================================
+// Adds a hidden bonus room to the right of a level (the camera never shows it until you go in).
+function withBonus(L, dx, dy) {
+  const { g, W, H } = L, R = 22;
+  g.forEach(row => { for (let i = 0; i < R; i++) row.push('.'); });
+  const s = (x, y, c) => { if (y >= 0 && y < H) g[y][x] = c; }, fill = (a, b, y0, y1, c) => { for (let x = a; x <= b; x++) for (let y = y0; y <= y1; y++) s(x, y, c); };
+  const x0 = W;
+  fill(x0, x0 + 1, 0, H - 1, 'X'); fill(x0 + R - 2, x0 + R - 1, 0, H - 1, 'X'); fill(x0, x0 + R - 1, 0, 1, 'X'); fill(x0 + 2, x0 + R - 3, 10, H - 1, '#');
+  for (let i = 0; i < 7; i++) { s(x0 + 4 + i * 2, 9 - Math.round(Math.sin(i / 6 * Math.PI) * 4), 'o'); s(x0 + 5 + i * 2, 9, 'o'); }
+  fill(x0 + 8, x0 + 13, 4, 4, '-'); for (let x = x0 + 8; x <= x0 + 13; x++) s(x, 3, 'o'); s(x0 + 6, 9, 'S'); s(x0 + 15, 3, 'H');
+  L.mainW = L.mainW || W; L.W = W + R;
+  L.doors = (L.doors || []).concat([
+    { x: dx, y: dy, to: { x: x0 + 3, y: 9 }, room: [x0 + 1, x0 + 20] },
+    { x: x0 + 18, y: 9, to: { x: dx + 1, y: dy }, exit: true },
+  ]);
+  return L;
+}
+function buildGooTower() {
+  const W = 22, H = 60, { g, s, fill, ground, row } = grid(W, H);
+  fill(0, 0, 0, H - 1, 'X'); fill(W - 1, W - 1, 0, H - 1, 'X'); fill(1, W - 2, H - 2, H - 1, '#');
+  const y = r => H - 2 - r;                                     // rows counted up from the floor
+  s(4, y(1), '@'); row(7, 12, y(1), 'o');
+  row(14, 19, y(3), '-'); row(9, 13, y(5), '-'); row(2, 7, y(7), '-'); s(4, y(8), 'o'); s(5, y(8), 'o'); row(10, 15, y(9), '-'); s(12, y(10), 'g');
+  row(16, 20, y(11), '-'); s(19, y(12), 'C'); row(11, 15, y(13), '-'); s(8, y(14), 'S'); fill(5, 9, y(14) + 1, y(14) + 1, 'X'); row(2, 6, y(18), '-'); s(3, y(19), 'G');
+  row(10, 14, y(17), '-'); s(12, y(18), 'o'); s(13, y(18), 'o'); s(16, y(20), 'f'); row(15, 20, y(21), '-'); s(17, y(24), 'B'); s(18, y(24), 'U'); s(19, y(24), 'B');
+  row(9, 13, y(23), '-'); row(2, 6, y(25), '-'); s(4, y(26), 'C'); s(6, y(28), 'M'); row(14, 19, y(29), '-'); s(16, y(30), 'g');
+  row(9, 12, y(31), '-'); s(10, y(32), 'o'); s(11, y(32), 'o'); row(2, 6, y(33), '-'); s(8, y(36), 'f'); row(12, 18, y(35), '-'); s(18, y(36), 'G');
+  row(5, 10, y(37), '-'); s(3, y(39), 'S'); fill(2, 4, y(38), y(38), 'X'); row(10, 15, y(41), '-'); s(13, y(42), 'C');
+  row(16, 20, y(43), '-'); row(9, 13, y(45), '-'); s(4, y(46), 'f'); row(2, 6, y(47), '-'); s(3, y(48), 'G'); row(8, 13, y(49), '-'); row(14, 20, y(51), '-');
+  fill(1, 20, y(53), y(53), 'X'); fill(9, 12, y(53), y(53), '.'); s(16, y(54), 'E'); row(3, 7, y(54), 'o');
+  return { g, W, H, flood: { speed: 26, delay: 4 }, tip: 'The goo is rising – climb to the top!' };
+}
+function buildSwitches() {
+  const W = 150, H = 12, { g, s, fill, ground, row } = grid(W, H);
+  ground(0, W - 1); fill(0, W - 1, 0, 0, 'R'); s(3, 9, '@'); row(6, 9, 9, 'o');
+  // room 1: one switch opens the gate
+  s(12, 9, 'K'); s(18, 7, 'D'); fill(18, 18, 1, 6, 'X'); row(13, 16, 6, 'o');
+  // room 2: two switches far apart (a friend helps, or be quick on your own)
+  s(22, 9, 'C'); fill(26, 28, 6, 9, 'X'); s(27, 5, 'K'); s(36, 9, 'K'); s(42, 7, 'D'); fill(42, 42, 1, 6, 'X'); s(32, 9, 'g'); row(29, 35, 9, 'o'); s(31, 3, 'G'); row(29, 33, 4, '-');
+  // room 3: high switch on a ledge, spring to reach it, conveyor home
+  s(46, 9, 'C'); s(50, 9, 'S'); fill(52, 56, 4, 4, 'X'); s(55, 3, 'K'); row(57, 66, 10, '<'); s(60, 9, 'r'); s(68, 7, 'D'); fill(68, 68, 1, 6, 'X'); row(52, 56, 3, 'o');
+  // room 4: three switches, one each side of a crusher
+  s(72, 9, 'C'); s(74, 9, 'K'); s(78, 1, 'V'); s(84, 9, 'K'); fill(88, 90, 7, 9, 'X'); s(89, 6, 'K'); s(94, 7, 'D'); fill(94, 94, 1, 6, 'X'); row(80, 87, 9, 'o'); s(86, 4, 'G');
+  s(100, 9, 'C'); s(106, 9, 'h'); fill(110, 112, 7, 9, 'X'); s(111, 6, 'O'); row(114, 124, 9, 'o'); s(120, 1, 'l'); s(128, 9, 'r'); s(134, 6, 'B'); s(135, 6, 'Z'); s(136, 6, 'B'); s(145, 9, 'E');
+  const L = { g, W, H, tip: 'Stand on a switch to open its gate. Switches stay down for a few seconds!', gates: [
+    { gate: 18, sw: [[12, 9]] }, { gate: 42, sw: [[27, 5], [36, 9]] }, { gate: 68, sw: [[55, 3]] }, { gate: 94, sw: [[74, 9], [84, 9], [89, 6]] },
+  ] };
+  return withBonus(L, 111, 6);
+}
+function makeSpecialArt(scene) {
+  canvasTex(scene, 'bonusDoor', 56, 88, c => {
+    rr(c, 4, 4, 48, 84, 22); const g = c.createLinearGradient(0, 0, 0, 88); g.addColorStop(0, '#7c4dff'); g.addColorStop(1, '#4527a0'); c.fillStyle = g; c.fill(); c.strokeStyle = '#1a0f3d'; c.lineWidth = 4; c.stroke();
+    rr(c, 12, 14, 32, 74, 14); c.fillStyle = '#1a0f3d'; c.fill();
+    c.fillStyle = '#FFD54F'; c.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 6 : 13; c.lineTo(28 + Math.cos(a) * r, 40 + Math.sin(a) * r); } c.closePath(); c.fill();
+  });
+  canvasTex(scene, 'switchUp', 48, 22, c => { rr(c, 2, 12, 44, 10, 4); c.fillStyle = '#455a64'; c.fill(); rr(c, 10, 2, 28, 14, 6); c.fillStyle = '#ff5252'; c.fill(); c.strokeStyle = '#b71c1c'; c.lineWidth = 3; c.stroke(); });
+  canvasTex(scene, 'switchDown', 48, 22, c => { rr(c, 2, 12, 44, 10, 4); c.fillStyle = '#455a64'; c.fill(); rr(c, 10, 10, 28, 8, 4); c.fillStyle = '#69f0ae'; c.fill(); c.strokeStyle = '#1b5e20'; c.lineWidth = 3; c.stroke(); });
+  canvasTex(scene, 'gate', 48, 144, c => {
+    c.fillStyle = '#37474f'; c.fillRect(0, 0, 48, 144); for (let i = 0; i < 4; i++) { c.fillStyle = '#90a4ae'; c.fillRect(6 + i * 10, 0, 6, 144); }
+    for (let i = 0; i < 9; i++) { c.fillStyle = i % 2 ? '#212121' : '#FFC107'; c.fillRect(0, i * 16, 48, 8); c.fillRect(0, 136, 48, 8); }
+    c.fillStyle = '#37474f'; c.fillRect(0, 8, 48, 120); for (let i = 0; i < 4; i++) { c.fillStyle = '#b0bec5'; c.fillRect(6 + i * 10, 8, 6, 120); }
+    c.strokeStyle = '#11171b'; c.lineWidth = 3; c.strokeRect(1.5, 1.5, 45, 141);
+  });
+}
+
 function gameUrl() { return GAME_URL || (/^https?:/.test(location.href) && !/claudeusercontent|sandbox/.test(location.host) ? location.href : ''); }
 function qrCanvas(url, scale = 6) {
   if (!url || typeof qrcode === 'undefined') return null;
@@ -1246,7 +1314,7 @@ const TXT = (size, color = '#fff', stroke = '#01579B', sw = 0) => ({ fontFamily:
 class Boot extends Phaser.Scene {
   constructor() { super('Boot'); }
   preload() { this.load.image('pip', PIP_ATLAS); for (const k in ENEMY_IMG) this.load.image(k, ENEMY_IMG[k]); for (const k in ART_IMG) this.load.image(k, ART_IMG[k]); for (const k in W2_IMG) this.load.image(k, W2_IMG[k]); }
-  create() { makeArt(this); makeCaveArt(this); makeColourPips(this); makeWorld2Art(this); this.scene.start('Title'); }
+  create() { makeArt(this); makeCaveArt(this); makeColourPips(this); makeWorld2Art(this); makeSpecialArt(this); this.scene.start('Title'); }
 }
 
 
@@ -1275,8 +1343,10 @@ const LEVELS = [
   { id: '5-2', world: 5, name: 'BEAT BRIDGE', theme: 'cloud', build: buildBeat, par: 170 },
   { id: '5-3', world: 5, name: 'STORMY SKIES', theme: 'cloud', build: buildStormy, par: 200 },
   { id: '5-4', world: 5, name: 'QUEEN BUZZ', theme: 'cloud', build: buildQueenArena, par: 140, last: true },
+  { id: 'S-1', world: 6, art: 1, name: 'GOO TOWER', theme: 'sunny', build: buildGooTower, par: 150, music: 'chase' },
+  { id: 'S-2', world: 6, art: 4, name: 'SWITCH SQUAD', theme: 'factory', build: buildSwitches, par: 200 },
 ];
-const WORLDS = { 1: 'Sunny Springs', 2: 'Sandy Shores', 3: 'Frosty Peaks', 4: 'Junkyard Factory', 5: 'Cloud Kingdom' };
+const WORLDS = { 1: 'Sunny Springs', 2: 'Sandy Shores', 3: 'Frosty Peaks', 4: 'Junkyard Factory', 5: 'Cloud Kingdom', 6: 'Special Stages' };
 const THEME_CFG = {
   sunny: { tiles: 'tiles', top: 0, under: 1, tint: null, music: 'sunny' },
   cave: { tiles: 'tiles', top: 1, under: 7, tint: 0xa898d8, music: 'cave', vignette: true },
@@ -1401,7 +1471,8 @@ window.__Net = Net;
 class Title extends Phaser.Scene {
   constructor() { super('Title'); }
   create() {
-    document.body.classList.remove('playing', 'coop'); document.body.classList.add('solo');
+    this.started = false;
+    document.body.classList.remove('playing', 'coop', 'ingame'); document.body.classList.add('solo');
     Hooks.phase = () => 'title';
     this.bg = makeBackground(this, 'sunny'); this.t = 0;
     for (let x = 0; x < VW; x += T) { this.add.image(x, VH - T * 2, 'tiles', 't0').setOrigin(0); this.add.image(x, VH - T, 'tiles', 't1').setOrigin(0); }
@@ -1503,6 +1574,7 @@ class Title extends Phaser.Scene {
 class Lobby extends Phaser.Scene {
   constructor() { super('Lobby'); }
   create() {
+    this.starting = false;
     document.body.classList.remove('playing', 'solo'); document.body.classList.add('coop');
     Session.localSlot = null;
     Hooks.phase = () => 'lobby';
@@ -1568,7 +1640,7 @@ class Game extends Phaser.Scene {
   constructor() { super('Game'); }
 
   preload() {
-    const w = LEVELS[Session.level].world; this.needWorlds = [];
+    const LV0 = LEVELS[Session.level], w = LV0.art || LV0.world; this.needWorlds = [];
     if (w < 2 || WorldArt.done.has(w)) return;
     this.needWorlds = [w];
     for (const k in WORLD_FILES[w]) if (!this.textures.exists(k)) this.load.image(k, WORLD_FILES[w][k]);
@@ -1621,7 +1693,7 @@ class Game extends Phaser.Scene {
         else if (r === 7 || r === 15) this.add.image(x * T + 14 + (r % 3) * 6, y * T + 2, 'flowers', 'f' + (r % 2)).setOrigin(0.5, 1).setDepth(-1);
       }
     }
-    if (!this.L.swim && !this.L.arena && !TC.cloud) this.add.image(5 * T, 10 * T + 2, 'sign').setOrigin(0.5, 1).setDepth(-1).setTint(TC.tint || 0xffffff);
+    if (!this.L.swim && !this.L.arena && !TC.cloud && H === 12) this.add.image(5 * T, 10 * T + 2, 'sign').setOrigin(0.5, 1).setDepth(-1).setTint(TC.tint || 0xffffff);
     this.lamps = [];
 
     // groups
@@ -1694,6 +1766,7 @@ class Game extends Phaser.Scene {
     if (TC.factory) this.setupFactory();
     this.beats = [];
     if (TC.cloud) this.setupClouds();
+    this.setupSpecials();
     if (TC.snow) this.snowFx = this.add.particles(0, 0, 'flake', { x: { min: 0, max: VW + 200 }, y: -10, lifespan: 9000, speedY: { min: 35, max: 85 }, speedX: { min: -40, max: 10 }, scale: { min: 0.5, max: 1.3 }, alpha: { min: 0.5, max: 0.95 }, frequency: 70 }).setScrollFactor(0).setDepth(60);
     if (this.L.scroll) { this.scrollX = 0; this.scrollWait = this.L.scroll.delay; this.avalanche = this.add.image(-200, -40, 'avalanche').setOrigin(0, 0).setDepth(50); }
     // checkpoint restore
@@ -1734,8 +1807,8 @@ class Game extends Phaser.Scene {
     this.physics.add.overlap(this.pbodies, this.drops, (a, b2) => { const pb = a.P ? a : b2, d = pb === a ? b2 : a; if (d.dead) return; this.hurt(pb.P, d.x); this.popShot(d); });
     this.physics.add.overlap(this.pbodies, this.rollers, (a, b2) => { const pb = a.P ? a : b2, r = pb === a ? b2 : a; this.hurt(pb.P, r.x); });
     // water: tide, sea or a full underwater level
-    this.waterY = this.L.sea != null ? this.L.sea : this.L.tide ? this.L.tide.lo : null;
-    if (this.waterY != null) this.water = this.add.tileSprite(0, this.waterY - 8, this.worldW, this.worldH + 200, 'water').setOrigin(0).setDepth(6);
+    this.waterY = this.L.sea != null ? this.L.sea : this.L.tide ? this.L.tide.lo : this.L.flood ? this.worldH + 30 : null; this.floodWait = this.L.flood ? this.L.flood.delay : 0;
+    if (this.waterY != null) { this.water = this.add.tileSprite(0, this.waterY - 8, this.worldW, this.worldH + 200, 'water').setOrigin(0).setDepth(6); if (this.L.flood) this.water.setTint(0x9ccc65); }
     if (this.L.swim) this.add.rectangle(0, 0, VW, VH, 0x1565c0, 0.12).setOrigin(0).setScrollFactor(0).setDepth(7);
     // darkness for the night level: light around each Pip, lamps and shiny things
     if (TC.dark) {
@@ -1770,7 +1843,7 @@ class Game extends Phaser.Scene {
 
     // camera
     const cam = this.cameras.main;
-    cam.setBounds(0, 0, this.worldW, this.worldH);
+    cam.setBounds(0, 0, (this.L.mainW || this.L.W) * T, this.worldH);
     this.camTarget = this.add.zone(this.respawnPt.x, this.respawnPt.y, 2, 2);
     cam.startFollow(this.camTarget, false, 0.14, 0.12);
     cam.fadeIn(300, 255, 255, 255);
@@ -2001,6 +2074,7 @@ class Game extends Phaser.Scene {
     if (this.L.scroll) this.updateScroll(dt);
     if (this.TC.factory) this.updateFactory(dt);
     if (this.TC.cloud) this.updateClouds(dt);
+    this.updateSpecials(dt);
     const cam = this.cameras.main;
     this.updateEnemies(dt, cam);
     this.movers.getChildren().forEach(m => { const v = m.spd || 80; if (m.x >= m.maxX) m.setVelocityX(-v); else if (m.x <= m.minX) m.setVelocityX(v); });
@@ -2380,6 +2454,60 @@ class Game extends Phaser.Scene {
     }
   }
   // ---------- World 5: cloud kingdom
+  // ---------- bonus doors, switches and gates, rising goo
+  setupSpecials() {
+    const L = this.L;
+    this.doors = (L.doors || []).map(d => Object.assign({}, d, { img: this.add.image(d.x * T + 24, (d.y + 1) * T + 2, 'bonusDoor').setOrigin(0.5, 1).setDepth(-0.4), t: 0 }));
+    this.inRoom = null; this.gates = []; this.switches = [];
+    if (L.gates) {
+      this.gateG = this.physics.add.group({ allowGravity: false, immovable: true });
+      L.gates.forEach(G => {
+        let row = 7; for (let y = 0; y < L.H; y++) if (L.g[y][G.gate] === 'D') row = y;
+        const gate = this.gateG.create(G.gate * T + 24, row * T, 'gate').setOrigin(0.5, 0).setDepth(-0.3); gate.body.setSize(48, 144); gate.y0 = row * T;
+        const sws = G.sw.map(([x, y]) => { const o = { x: x * T + 24, y: (y + 1) * T, latch: 0 }; o.img = this.add.image(o.x, o.y + 2, 'switchUp').setOrigin(0.5, 1).setDepth(1); o.txt = this.add.text(o.x, o.y - 44, '', TXT(20, '#fff', '#01579B', 6)).setOrigin(0.5).setDepth(20); this.switches.push(o); return o; });
+        this.gates.push({ gate, sws, open: false });
+      });
+      this.physics.add.collider(this.pbodies, this.gateG); this.physics.add.collider(this.enemies, this.gateG);
+    }
+    if (L.tip) { const t = this.add.text(VW / 2, VH / 2 + 10, L.tip, { ...TXT(22, '#fff', '#01579B', 6), align: 'center', wordWrap: { width: 700 } }).setOrigin(0.5).setScrollFactor(0).setDepth(this.H0 || 100).setAlpha(0); this.tweens.chain({ targets: t, tweens: [{ alpha: 1, delay: 900, duration: 300 }, { alpha: 0, delay: 3200, duration: 500, onComplete: () => t.destroy() }] }); }
+  }
+  updateSpecials(dt) {
+    const alive = this.alivePlayers();
+    this.doors.forEach(d => {
+      const on = alive.find(P => { const b = P.body.body; return Math.abs(b.center.x - (d.x * T + 24)) < 24 && Math.abs(b.bottom - (d.y + 1) * T) < 8 && b.blocked.down && Math.abs(b.velocity.x) < 60; });
+      d.t = on ? d.t + dt : 0; d.img.setScale(1 + Math.min(d.t, 0.6) * 0.2).setTint(d.t > 0 ? 0xfff59d : 0xffffff);
+      if (d.t > 0.6 && !this.doorBusy) { d.t = 0; this.useDoor(d); }
+    });
+    if (this.gates.length) {
+      const latchT = this.coop ? 3.5 : 7;
+      this.switches.forEach(s => {
+        const on = alive.some(P => { const b = P.body.body; return Math.abs(b.center.x - s.x) < 30 && Math.abs(b.bottom - s.y) < 12; });
+        if (on) { if (s.latch <= 0) { Sound.sfx.select(); s.img.setTexture('switchDown'); } s.latch = latchT; }
+        else if (s.latch > 0) { s.latch = Math.max(0, s.latch - dt); if (s.latch === 0) { s.img.setTexture('switchUp'); Sound.sfx.bump(); } }
+        s.txt.setText(s.latch > 0 && !on ? String(Math.ceil(s.latch)) : '');
+      });
+      this.gates.forEach(G => {
+        const open = G.sws.every(s => s.latch > 0);
+        if (open && !G.open) { G.open = true; Sound.sfx.power(); this.shake(0.004, 100); }
+        if (!open && G.open) { const blocked = alive.some(P => { const b = P.body.body; return b.right > G.gate.x - 24 && b.left < G.gate.x + 24; }); if (!blocked) G.open = false; }
+        G.gy = approach(G.gy == null ? G.gate.y0 : G.gy, G.open ? G.gate.y0 - 150 : G.gate.y0, (G.open ? 520 : 360) * dt); G.gate.y = G.gy; G.gate.body.enable = !G.open || G.gy > G.gate.y0 - 100; if (G.gate.body.enable) G.gate.body.reset(G.gate.x, G.gy);
+      });
+    }
+    if (this.L.flood && !this.finished) {
+      if (this.floodWait > 0) this.floodWait -= dt; else this.waterY -= this.L.flood.speed * dt;
+      const top = this.cameras.main.worldView; if (this.waterY < top.bottom + 60 && this.waterY > top.y && Math.random() < 0.15) this.fxGoo.explode(1, top.x + Math.random() * VW, this.waterY);
+    }
+  }
+  useDoor(d) {
+    const cam = this.cameras.main; this.doorBusy = true; Sound.sfx.power(); cam.fadeOut(180, 20, 10, 50);
+    cam.once('camerafadeoutcomplete', () => {
+      this.alivePlayers().forEach((P, i) => { P.body.body.reset(d.to.x * T + 24 + i * 22, (d.to.y + 1) * T - 29); P.invuln = 0.6; });
+      if (d.room) cam.setBounds(d.room[0] * T, 0, (d.room[1] - d.room[0] + 1) * T, this.worldH); else cam.setBounds(0, 0, (this.L.mainW || this.L.W) * T, this.worldH);
+      this.inRoom = d.room ? d : null; this.camTarget.setPosition(d.to.x * T, d.to.y * T); cam.centerOn(d.to.x * T + (d.room ? VW / 2 - 3 * T : 0), d.to.y * T);
+      cam.fadeIn(240, 20, 10, 50); this.time.delayedCall(400, () => { this.doorBusy = false; });
+      if (d.room) { const t = this.add.text(VW / 2, 120, '★ BONUS ROOM ★', TXT(40, '#FFD54F', '#4527a0', 10)).setOrigin(0.5).setScrollFactor(0).setDepth(this.H0 || 100); this.tweens.add({ targets: t, alpha: 0, delay: 1200, duration: 500, onComplete: () => t.destroy() }); }
+    });
+  }
   setupClouds() {
     const { g, W, H } = this.L; this.bouncers = this.physics.add.staticGroup(); this.beats = [];
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
@@ -2768,6 +2896,8 @@ class Game extends Phaser.Scene {
     cam.once('camerafadeoutcomplete', () => {
       if (this.arenaLocked) this.respawnPt = { x: (this.L.arena.x0 + 2) * T, y: this.worldH - 2 * T - 29 };
       if (this.L.scroll) { this.scrollX = Math.max(0, this.respawnPt.x - 260); this.scrollWait = 1.6; this.shots.clear(true, true); }
+      if (this.inRoom) { this.inRoom = null; cam.setBounds(0, 0, (this.L.mainW || this.L.W) * T, this.worldH); }
+      if (this.L.flood) { this.waterY = Math.max(this.waterY, this.respawnPt.y + 5 * T); this.floodWait = 2; }
       P.body.body.enable = true; P.body.body.reset(this.respawnPt.x, this.respawnPt.y); P.vis.setVisible(true);
       P.shield = false; P.hudShield.setVisible(false); P.invuln = 1.5; P.respawning = false; cam.fadeIn(250, 255, 255, 255);
     });

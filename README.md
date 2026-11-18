@@ -24,6 +24,9 @@ A Mario-style platformer starring Pip the robot: **https://jimmywilson1979-arch.
 - World 5 Cloud Kingdom: 5-1 Breezy Heights (wind gusts, bouncy clouds, balloon-bots you can stomp for a super bounce), 5-2 Beat Bridge
   (pink and blue blocks swap on the beat), 5-3 Stormy Skies (storm clouds drop lightning) and 5-4 Queen Buzz (dodge her stingers,
   let her dive-bomb the floor, then stomp her while she's dizzy). Worlds 3-5 characters were made with Sprixen.
+- Special Stages: S-1 Goo Tower (climb a tall tower before the rising goo catches you) and S-2 Switch Squad (stand on switches to open
+  gates; switches stay down for a few seconds so you can do it alone, or split up with friends in co-op).
+- Secret bonus rooms: a purple ★ door is hidden in 2-2, 3-1, 4-3, 5-1 and S-2. Stand still on it to go in, grab the batteries, and use the door at the end to come back.
 - 🏠 button (top right) goes back to the level menu at any time.
 - Power-ups from ⚡ blocks: shield, rocket boots (big double jump and a hover), battery magnet and speed boost.
 - Artwork comes from the art library (`pip/` folders). World 1 is built into `pip.html`; Worlds 2-5 art lives in `pip-art/` and loads when you start a level from that world.

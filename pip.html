@@ -22,10 +22,11 @@
   /* touch controls (solo on a phone/tablet) */
   #touch{position:fixed;inset:0;pointer-events:none;z-index:10;display:none}
   body.touch.playing.solo #touch{display:block}
-  #tpad{position:absolute;left:0;bottom:0;width:42%;height:62%;pointer-events:auto;touch-action:none}
-  #tpad .pill{position:absolute;left:22px;bottom:22px;width:190px;height:96px;border-radius:48px;background:#ffffff40;border:3px solid #ffffff90;display:flex;align-items:center;justify-content:space-between;padding:0 18px;box-sizing:border-box;color:#fff;font-size:38px;text-shadow:0 2px 0 #0005}
-  #tpad .pill span{opacity:.85;transition:transform .05s}
-  #tpad[data-dir="l"] .l,#tpad[data-dir="r"] .r{transform:scale(1.35);opacity:1}
+  #tpad{position:absolute;left:0;bottom:0;width:45%;height:70%;pointer-events:auto;touch-action:none}
+  .base,.knob{position:absolute;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%)}
+  .base{width:150px;height:150px;border:3px solid #ffffffaa;background:#ffffff1a}
+  .knob{width:68px;height:68px;background:#FFD54F;border:3px solid #fff;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+  .base.idle{opacity:.55} .knob.idle{opacity:.7}
   #tjump{position:absolute;right:26px;bottom:26px;width:118px;height:118px;border-radius:50%;background:#FFD54Fcc;border:4px solid #fff;pointer-events:auto;touch-action:none;color:#7a4a00;font-weight:700;font-size:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 0 #0004}
   #tjump.on{transform:translateY(4px) scale(.95);box-shadow:0 2px 0 #0004}
   /* pause menu */
@@ -57,10 +58,8 @@
   #phState{margin-left:auto;font-size:15px;opacity:.8;text-align:right}
   #phStart{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:auto;z-index:3;font-size:26px;padding:16px 30px}
   #phMid{position:absolute;left:50%;top:58%;transform:translateX(-50%);text-align:center;font-size:17px;opacity:.85;width:60%;pointer-events:none}
-  #phDpad{position:absolute;left:0;bottom:0;width:58%;height:78%;touch-action:none}
-  #phDpad .b{position:absolute;bottom:22px;width:44%;height:64%;border-radius:28px;background:#ffffff1f;border:4px solid #ffffff66;display:flex;align-items:center;justify-content:center;font-size:64px;color:#fffd}
-  #phDpad .l{left:16px} #phDpad .r{left:calc(16px + 44% + 14px)}
-  #phDpad .b.on{background:#ffffff55;transform:scale(.96)}
+  #phStick{position:absolute;left:14px;bottom:18px;width:calc(58% - 20px);height:calc(100% - 80px);border-radius:24px;background:#ffffff12;border:3px dashed #ffffff44;touch-action:none;overflow:hidden}
+  #phStick .hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:1em;color:#ffffffaa;font-size:17px;pointer-events:none;line-height:1.4}
   #phJ{position:absolute;right:20px;bottom:22px;width:38%;height:64%;border-radius:999px;background:#FFD54F;border:5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:38px;font-weight:700;color:#7a4a00;box-shadow:0 8px 0 #b8860b;touch-action:none;max-width:260px;max-height:260px;aspect-ratio:1}
   #phJ.on{transform:translateY(6px);box-shadow:0 2px 0 #b8860b}
   #phPad.flash{animation:fl .35s}
@@ -77,7 +76,7 @@
 </div>
 <button id="joinbtn">📱 Join QR</button>
 <div id="touch">
-  <div id="tpad"><div class="pill"><span class="l">◀</span><span class="r">▶</span></div></div>
+  <div id="tpad"><div class="base idle" style="left:110px;top:calc(100% - 110px)"></div><div class="knob idle" style="left:110px;top:calc(100% - 110px)"></div></div>
   <div id="tjump">JUMP</div>
 </div>
 <div id="pause" class="hidden">
@@ -122,7 +121,7 @@
     <div id="phTop"><span id="phDot"></span><b id="phWho">Player</b><span id="phState">Connecting…</span></div>
     <button id="phStart" class="hidden">▶ Start the game</button>
     <div id="phMid"></div>
-    <div id="phDpad"><div class="b l">◀</div><div class="b r">▶</div></div>
+    <div id="phStick"><div class="hint">Put your thumb anywhere here<br>and slide ◀ ▶ to run</div><div class="base hidden"></div><div class="knob hidden"></div></div>
     <div id="phJ">JUMP</div>
   </div>
 </div>
@@ -792,7 +791,7 @@ const Net = {
     if (!m || !m.t) return; p.seen = Date.now();
     if (m.t === 'offer') return this.answer(p, m.sdp);
     if (m.t === 'in') {
-      p.inp = { l: !!m.l, r: !!m.r, j: !!m.j };
+      p.inp = { l: !!m.l, r: !!m.r, j: !!m.j, x: typeof m.x === 'number' ? Math.max(-1, Math.min(1, m.x)) : null };
       if (typeof m.jn === 'number') { if (p.lastJn >= 0 && m.jn !== p.lastJn) p.q = true; p.lastJn = m.jn; }
       return;
     }
@@ -803,7 +802,7 @@ const Net = {
   read(slot) {
     const p = this.bySlot(slot); if (!p) return { left: false, right: false, jump: false, q: false };
     const fresh = Date.now() - p.seen < 2500, q = p.q; p.q = false;
-    return { left: fresh && p.inp.l, right: fresh && p.inp.r, jump: fresh && p.inp.j, q };
+    return { left: fresh && p.inp.l, right: fresh && p.inp.r, jump: fresh && p.inp.j, ax: fresh ? p.inp.x : 0, q };
   },
   online(slot) { const p = this.bySlot(slot); return !!p && Date.now() - p.seen < 6000; },
   buzz(slot, ms) { const p = this.bySlot(slot); if (p) this.sendTo(p, { t: 'buzz', ms }); },
@@ -1211,13 +1210,13 @@ class Game extends Phaser.Scene {
     }
     const pressed = Ctl.queued || (jump && !this.prevLocalJump); Ctl.queued = false; this.prevLocalJump = jump;
     const startPressed = start && !this.prevStart; this.prevStart = start;
-    return { left, right, jump, pressed, startPressed };
+    return { left, right, jump, pressed, startPressed, ax: (Ctl.touchL || Ctl.touchR) ? Ctl.ax : null };
   }
   readFor(P, local) {
     if (P.src === 'local') return local;
     const r = Net.read(P.slot);
     const pressed = r.q || (r.jump && !P.prevJump); P.prevJump = r.jump;
-    return { left: r.left, right: r.right, jump: r.jump, pressed };
+    return { left: r.left, right: r.right, jump: r.jump, pressed, ax: r.ax };
   }
 
   // ---------- main loop
@@ -1265,7 +1264,8 @@ class Game extends Phaser.Scene {
       const dir = (inp.right ? 1 : 0) - (inp.left ? 1 : 0); let vx = b.velocity.x;
       if (dir) {
         const turning = vx !== 0 && Math.sign(vx) !== dir;
-        vx = approach(vx, dir * FEEL.run, (onGround ? (turning ? FEEL.turnAccel : FEEL.accel) : FEEL.airAccel) * dt); P.facing = dir;
+        const amt = inp.ax == null ? 1 : Math.max(0.4, Math.min(1, Math.abs(inp.ax) * 1.4));
+        vx = approach(vx, dir * FEEL.run * amt, (onGround ? (turning ? FEEL.turnAccel : FEEL.accel) : FEEL.airAccel) * dt); P.facing = dir;
         if (turning && onGround && Math.abs(vx) > 160 && Math.random() < 0.4) this.fxDust.explode(1, p.x, b.bottom);
       } else vx = approach(vx, 0, (onGround ? FEEL.decel : FEEL.airDecel) * dt);
       b.setVelocityX(vx);
@@ -1687,11 +1687,11 @@ async function phoneMain(codeRaw) {
   const id = store.get('pip_id', null) || uid(); store.set('pip_id', id);
   $('phName').value = store.get('pip_name', '') || (store.get('party_me', null) || {}).name || '';
   let own = null, mainCh = null, pc = null, dc = null, welcomed = false, slot = -1, phase = 'lobby', jn = 0, lastSent = '', joinT = null;
-  const st = { l: false, r: false, j: false };
+  const st = { l: false, r: false, j: false, x: 0 };
   const dcOpen = () => dc && dc.readyState === 'open';
   function send(m) { m.id = id; if (dcOpen()) { try { dc.send(JSON.stringify(m)); return; } catch (e) {} } own && own.send(m); }
   const join = () => mainCh && mainCh.send({ t: 'join', id, name: $('phName').value.trim() || 'Player' });
-  function sendIn(force) { const m = { t: 'in', l: st.l ? 1 : 0, r: st.r ? 1 : 0, j: st.j ? 1 : 0, jn }; const k = JSON.stringify(m); if (force || k !== lastSent) { lastSent = k; send(m); } }
+  function sendIn(force) { const m = { t: 'in', l: st.l ? 1 : 0, r: st.r ? 1 : 0, j: st.j ? 1 : 0, x: st.x, jn }; const k = JSON.stringify(m); if (force || k !== lastSent) { lastSent = k; send(m); } }
   function pill() { $('phState').textContent = !welcomed ? 'Connecting…' : (dcOpen() ? '⚡ Direct' : '● Online') + (phase === 'lobby' ? ' · in the lobby' : ''); }
   function ui() {
     $('phStart').classList.toggle('hidden', !(welcomed && phase === 'lobby'));
@@ -1715,7 +1715,7 @@ async function phoneMain(codeRaw) {
     if (m.t === 'welcome') {
       welcomed = true; slot = m.slot; if (m.phase) phase = m.phase;
       $('phDot').style.background = m.color; $('phWho').textContent = ($('phName').value.trim() || 'Player') + ' · ' + m.cname + ' Pip';
-      $('phJ').style.background = m.color; $('phJoin').classList.add('hidden'); $('phPad').classList.remove('hidden'); vib(40);
+      $('phJ').style.background = m.color; document.querySelectorAll('#phStick .knob').forEach(k => k.style.background = m.color); $('phJoin').classList.add('hidden'); $('phPad').classList.remove('hidden'); vib(40);
       if (!pc) startDirect(); ui();
     }
     if (m.t === 'answer' && pc && pc.signalingState === 'have-local-offer') pc.setRemoteDescription({ type: 'answer', sdp: m.sdp }).catch(() => {});
@@ -1727,14 +1727,9 @@ async function phoneMain(codeRaw) {
     if (m.t === 'state') { phase = m.st.phase; if (welcomed && !m.st.players.some(p => p.id === id)) { welcomed = false; join(); } ui(); }
     if (m.t === 'full' && m.id === id) { $('phMsg').textContent = 'Sorry, the game is full (4 players).'; }
   }
-  // buttons
-  const dpad = document.querySelector('#phDpad'), bl = dpad.querySelector('.l'), br = dpad.querySelector('.r'), jb = $('phJ');
-  let padId = null;
-  const updPad = e => { const r = br.getBoundingClientRect(); const right = e.clientX >= r.left - 7; st.r = right; st.l = !right; bl.classList.toggle('on', st.l); br.classList.toggle('on', st.r); sendIn(); };
-  dpad.addEventListener('pointerdown', e => { e.preventDefault(); padId = e.pointerId; try { dpad.setPointerCapture(e.pointerId); } catch (x) {} updPad(e); });
-  dpad.addEventListener('pointermove', e => { if (e.pointerId === padId) updPad(e); });
-  const endPad = e => { if (e.pointerId !== padId) return; padId = null; st.l = st.r = false; bl.classList.remove('on'); br.classList.remove('on'); sendIn(); };
-  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => dpad.addEventListener(ev, endPad));
+  // joystick (thumb anywhere, like the Party games) + jump button
+  const jb = $('phJ');
+  bindStick($('phStick'), (x) => { st.x = x; st.l = x < -0.25; st.r = x > 0.25; sendIn(); }, () => $('phStick').querySelector('.hint').classList.add('hidden'));
   jb.addEventListener('pointerdown', e => { e.preventDefault(); try { jb.setPointerCapture(e.pointerId); } catch (x) {} st.j = true; jn++; jb.classList.add('on'); vib(12); sendIn(); if (phase === 'panel') send({ t: 'go' }); });
   const endJ = () => { if (!st.j) return; st.j = false; jb.classList.remove('on'); sendIn(); };
   ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => jb.addEventListener(ev, endJ));
@@ -1758,13 +1753,30 @@ async function phoneMain(codeRaw) {
 // =====================================================================
 //  DOM: touch, pause, mute, fullscreen, join QR
 // =====================================================================
+function bindStick(area, onX, onStart) {
+  const base = area.querySelector('.base'), knob = area.querySelector('.knob'), RAD = 70; let cx = 0, cy = 0, pid = null, home = null, last = 0;
+  if (base.classList.contains('idle')) home = { l: base.style.left, t: base.style.top };
+  const put = (el, x, y) => { el.style.left = x + 'px'; el.style.top = y + 'px'; };
+  area.addEventListener('pointerdown', e => {
+    e.preventDefault(); if (pid != null) return; pid = e.pointerId; try { area.setPointerCapture(pid); } catch (x) {}
+    const r = area.getBoundingClientRect(); cx = e.clientX - r.left; cy = e.clientY - r.top;
+    put(base, cx, cy); put(knob, cx, cy); base.classList.remove('hidden', 'idle'); knob.classList.remove('hidden', 'idle'); onStart && onStart(); Sound.init && Sound.init();
+  });
+  area.addEventListener('pointermove', e => {
+    if (e.pointerId !== pid) return; const r = area.getBoundingClientRect();
+    let dx = e.clientX - r.left - cx, dy = e.clientY - r.top - cy; const d = Math.hypot(dx, dy); if (d > RAD) { dx *= RAD / d; dy *= RAD / d; }
+    put(knob, cx + dx, cy + dy); const x = Math.round(dx / RAD * 10) / 10; if (x !== last) { last = x; onX(x); }
+  });
+  const end = e => {
+    if (e.pointerId !== pid) return; pid = null; last = 0; onX(0);
+    if (home) { base.style.left = knob.style.left = home.l; base.style.top = knob.style.top = home.t; base.classList.add('idle'); knob.classList.add('idle'); }
+    else { base.classList.add('hidden'); knob.classList.add('hidden'); }
+  };
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => area.addEventListener(ev, end));
+}
 function setupTouch() {
-  const pad = document.getElementById('tpad'), jb = document.getElementById('tjump'); let padId = null;
-  const upd = e => { const r = pad.getBoundingClientRect(); const mid = r.left + 22 + 95; Ctl.touchL = e.clientX < mid; Ctl.touchR = !Ctl.touchL; pad.dataset.dir = Ctl.touchL ? 'l' : 'r'; };
-  pad.addEventListener('pointerdown', e => { e.preventDefault(); padId = e.pointerId; try { pad.setPointerCapture(e.pointerId); } catch (x) {} upd(e); Sound.init(); });
-  pad.addEventListener('pointermove', e => { if (e.pointerId === padId) upd(e); });
-  const end = e => { if (e.pointerId === padId) { padId = null; Ctl.touchL = Ctl.touchR = false; pad.dataset.dir = ''; } };
-  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => pad.addEventListener(ev, end));
+  const pad = document.getElementById('tpad'), jb = document.getElementById('tjump');
+  bindStick(pad, x => { Ctl.ax = x; Ctl.touchL = x < -0.25; Ctl.touchR = x > 0.25; });
   jb.addEventListener('pointerdown', e => { e.preventDefault(); try { jb.setPointerCapture(e.pointerId); } catch (x) {} Ctl.touchJ = true; Ctl.queued = true; jb.classList.add('on'); });
   const jend = () => { Ctl.touchJ = false; jb.classList.remove('on'); };
   ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => jb.addEventListener(ev, jend));

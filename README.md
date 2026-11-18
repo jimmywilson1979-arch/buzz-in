@@ -16,6 +16,9 @@ A Mario-style platformer starring Pip the robot: **https://jimmywilson1979-arch.
 - World 2 Sandy Shores: 2-1 Tide Pools (the sea rises and falls), 2-2 Barrel Bay (floating barrels sink when you stand on them),
   2-3 Bubble Dive (swim under the sea past jellyfish and urchins) and 2-4 Captain Clank, the pirate crab boss
   (dodge his barrels, let him charge into the wall, then stomp him while he's dizzy).
+- World 3 Frosty Peaks: 3-1 Snowy Slopes (slippy ice, sliding penguin-bots, snowball-throwing snowmen, swooping ice bats),
+  3-2 Avalanche! (the screen moves on its own – keep ahead of the snow), 3-3 Cable Cars (ride the gondolas over the chasms)
+  and 3-4 Yeti-Bot (dodge snowballs and the ground-pound, then stomp him while he's dizzy). World 3 enemies were made with Sprixen.
 - Power-ups from ⚡ blocks: shield, rocket boots (big double jump and a hover), battery magnet and speed boost.
 - Artwork comes from the art library (`pip/` folder); everything is in the one `pip.html` file.
 

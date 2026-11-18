@@ -26,7 +26,7 @@ A Mario-style platformer starring Pip the robot: **https://jimmywilson1979-arch.
   let her dive-bomb the floor, then stomp her while she's dizzy). Worlds 3-5 characters were made with Sprixen.
 - 🏠 button (top right) goes back to the level menu at any time.
 - Power-ups from ⚡ blocks: shield, rocket boots (big double jump and a hover), battery magnet and speed boost.
-- Artwork comes from the art library (`pip/` folder); everything is in the one `pip.html` file.
+- Artwork comes from the art library (`pip/` folders). World 1 is built into `pip.html`; Worlds 2-5 art lives in `pip-art/` and loads when you start a level from that world.
 
 ## Getting it on the TV
 Step-by-step guides for each kind of TV (Chromecast, HDMI, Samsung, LG, Fire TV, Xbox, Apple TV, Android, Roku, Sky Glass):

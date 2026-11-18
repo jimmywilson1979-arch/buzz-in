@@ -19,6 +19,9 @@ A Mario-style platformer starring Pip the robot: **https://jimmywilson1979-arch.
 - World 3 Frosty Peaks: 3-1 Snowy Slopes (slippy ice, sliding penguin-bots, snowball-throwing snowmen, swooping ice bats),
   3-2 Avalanche! (the screen moves on its own – keep ahead of the snow), 3-3 Cable Cars (ride the gondolas over the chasms)
   and 3-4 Yeti-Bot (dodge snowballs and the ground-pound, then stomp him while he's dizzy). World 3 enemies were made with Sprixen.
+- World 4 Junkyard Factory: 4-1 Conveyor Chaos (moving belts and crushers), 4-2 Laser Lab (timed laser beams and zapping spark drones),
+  4-3 Magnet Mill (ceiling magnets lift Pip over the gaps) and 4-4 Scrap King (escape his magnet pull, dodge the fist slam, stomp him while he overheats).
+- 🏠 button (top right) goes back to the level menu at any time.
 - Power-ups from ⚡ blocks: shield, rocket boots (big double jump and a hover), battery magnet and speed boost.
 - Artwork comes from the art library (`pip/` folder); everything is in the one `pip.html` file.
 

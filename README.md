@@ -9,8 +9,14 @@ A Mario-style platformer starring Pip the robot: **https://jimmywilson1979-arch.
 
 - **Play** on its own with the keyboard, a game controller or on-screen touch buttons (phone or tablet).
 - **📱 Co-op**: put it on the TV, press Co-op, and up to 4 players scan the QR code – their phone becomes the controller
-  (◀ ▶ and JUMP). Anyone can join or rejoin mid-game with the 📱 Join QR button; the TV keyboard/controller can play too.
-- World 1: 1-1 Sunny Springs and 1-2 Crystal Caves (falling stalactites, crumbling slabs) ending with the King Gloop boss.
+  (thumb joystick and JUMP). Anyone can join or rejoin mid-game with the 📱 Join QR button; the TV keyboard/controller can play too.
+- Level select on the title screen: ◀ ▶ picks a level, ▲ ▼ picks a world. Finishing a level unlocks the next one.
+- World 1: 1-1 Sunny Springs, 1-2 Lights Out (night-time, Pip's light and lamp posts) and 1-3 Crystal Caves
+  (falling stalactites, crumbling slabs) ending with the King Gloop boss.
+- World 2 Sandy Shores: 2-1 Tide Pools (the sea rises and falls), 2-2 Barrel Bay (floating barrels sink when you stand on them),
+  2-3 Bubble Dive (swim under the sea past jellyfish and urchins) and 2-4 Captain Clank, the pirate crab boss
+  (dodge his barrels, let him charge into the wall, then stomp him while he's dizzy).
+- Power-ups from ⚡ blocks: shield, rocket boots (big double jump and a hover), battery magnet and speed boost.
 - Artwork comes from the art library (`pip/` folder); everything is in the one `pip.html` file.
 
 ## Getting it on the TV

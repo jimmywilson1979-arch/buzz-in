@@ -21,6 +21,9 @@ A Mario-style platformer starring Pip the robot: **https://jimmywilson1979-arch.
   and 3-4 Yeti-Bot (dodge snowballs and the ground-pound, then stomp him while he's dizzy). World 3 enemies were made with Sprixen.
 - World 4 Junkyard Factory: 4-1 Conveyor Chaos (moving belts and crushers), 4-2 Laser Lab (timed laser beams and zapping spark drones),
   4-3 Magnet Mill (ceiling magnets lift Pip over the gaps) and 4-4 Scrap King (escape his magnet pull, dodge the fist slam, stomp him while he overheats).
+- World 5 Cloud Kingdom: 5-1 Breezy Heights (wind gusts, bouncy clouds, balloon-bots you can stomp for a super bounce), 5-2 Beat Bridge
+  (pink and blue blocks swap on the beat), 5-3 Stormy Skies (storm clouds drop lightning) and 5-4 Queen Buzz (dodge her stingers,
+  let her dive-bomb the floor, then stomp her while she's dizzy). Worlds 3-5 characters were made with Sprixen.
 - 🏠 button (top right) goes back to the level menu at any time.
 - Power-ups from ⚡ blocks: shield, rocket boots (big double jump and a hover), battery magnet and speed boost.
 - Artwork comes from the art library (`pip/` folder); everything is in the one `pip.html` file.

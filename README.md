@@ -4,6 +4,15 @@ Family quiz night. The TV shows the questions and everyone's phone is their buzz
 
 **Play:** https://jimmywilson1979-arch.github.io/buzz-in/
 
+## Pip (platform game)
+A Mario-style platformer starring Pip the robot: **https://jimmywilson1979-arch.github.io/buzz-in/pip.html**
+
+- **Play** on its own with the keyboard, a game controller or on-screen touch buttons (phone or tablet).
+- **📱 Co-op**: put it on the TV, press Co-op, and up to 4 players scan the QR code – their phone becomes the controller
+  (◀ ▶ and JUMP). Anyone can join or rejoin mid-game with the 📱 Join QR button; the TV keyboard/controller can play too.
+- World 1: 1-1 Sunny Springs and 1-2 Crystal Caves (falling stalactites, crumbling slabs) ending with the King Gloop boss.
+- Artwork comes from the art library (`pip/` folder); everything is in the one `pip.html` file.
+
 ## Getting it on the TV
 Step-by-step guides for each kind of TV (Chromecast, HDMI, Samsung, LG, Fire TV, Xbox, Apple TV, Android, Roku, Sky Glass):
 https://jimmywilson1979-arch.github.io/buzz-in/?tvhelp

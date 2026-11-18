@@ -386,7 +386,8 @@ function home() {
     <button class="btn big ${phone ? "" : "gold"}" id="tvb">📺 This is the TV screen</button>
     <p class="muted" style="font-size:.9rem">Open on the laptop you cast from or plug into the TV, the same as Buzz In.</p>
     <div style="display:flex;gap:.6em"><input id="code" maxlength="4" placeholder="Code" autocapitalize="characters" style="text-transform:uppercase;font-size:1.3rem;letter-spacing:.15em">
-    <button class="btn ${phone ? "gold" : ""}" id="jb" style="flex:none">Join</button></div></div>`;
+    <button class="btn ${phone ? "gold" : ""}" id="jb" style="flex:none">Join</button></div>
+    <a href="pip.html${LOCAL ? "?local=1" : ""}" style="display:block;color:inherit;text-decoration:none;border:2px solid rgba(255,255,255,.25);border-radius:18px;padding:.9em 1em;background:rgba(255,255,255,.08)"><b style="font-size:1.15rem">🤖 Pip – platform game ›</b><div class="muted" style="font-size:.95rem">Run, jump and stomp through World 1. Play solo, or co-op on the TV with up to 4 phones as controllers.</div></a></div>`;
   $("#tvb").onclick = () => { location.search = "?tv" + (LOCAL ? "&local=1" : ""); };
   const go = () => { const c = $("#code").value.trim().toUpperCase(); if (c.length === 4) location.search = "?join=" + c + (LOCAL ? "&local=1" : ""); };
   $("#jb").onclick = go; $("#code").onkeydown = e => { if (e.key === "Enter") go(); };

@@ -29,7 +29,7 @@
   #tjump{position:absolute;right:26px;bottom:26px;width:118px;height:118px;border-radius:50%;background:#FFD54Fcc;border:4px solid #fff;pointer-events:auto;touch-action:none;color:#7a4a00;font-weight:700;font-size:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 0 #0004}
   #tjump.on{transform:translateY(4px) scale(.95);box-shadow:0 2px 0 #0004}
   /* pause menu */
-  #pause,#joinpop{position:fixed;inset:0;background:#0b1630cc;z-index:30;display:flex;align-items:center;justify-content:center}
+  #pause,#joinpop,#codepop{position:fixed;inset:0;background:#0b1630cc;z-index:30;display:flex;align-items:center;justify-content:center}
   .card{background:#fff;border:5px solid #01579B;border-radius:26px;padding:22px 26px;text-align:center;color:#0d2b52;max-width:92vw;max-height:92vh;overflow:auto;box-sizing:border-box}
   .card h2{margin:0 0 12px;font-size:34px}
   .card button{display:block;width:240px;margin:10px auto;padding:12px;border-radius:16px;border:3px solid #01579B;background:#4FC3F7;color:#fff;font:700 20px Fredoka,sans-serif;text-shadow:0 2px 0 #01579B;cursor:pointer}
@@ -98,6 +98,15 @@
     <div>or open the game and type <span class="code" id="joincode"></span></div>
     <div class="help">Dropped out? Join with the same name to get your Pip back.</div>
     <button id="joinclose">Close</button>
+  </div>
+</div>
+<div id="codepop" class="hidden">
+  <div class="card">
+    <h2>🔑 Join a co-op game</h2>
+    <div class="help">Type the 4-letter code shown on the TV</div>
+    <input id="codein" maxlength="4" autocapitalize="characters" autocomplete="off" placeholder="CODE" style="font:700 40px Fredoka,sans-serif;letter-spacing:.2em;text-transform:uppercase;width:200px;text-align:center;padding:8px;border-radius:14px;border:3px solid #01579B;margin:10px auto;display:block">
+    <button id="codego">Join</button>
+    <button id="codeclose" class="alt">Cancel</button>
   </div>
 </div>
 <div id="rotate"><div>📱↻<br><br>Turn your phone sideways to play Pip</div></div>
@@ -838,9 +847,10 @@ class Title extends Phaser.Scene {
       c.add([g, this.add.text(0, 0, label, TXT(22, '#fff', '#01579B', 6)).setOrigin(0.5)]);
       c.setSize(200, 54).setInteractive({ useHandCursor: true }).on('pointerdown', fn); return c;
     };
-    btn(160, 330, '▶ Play', 0x4FC3F7, () => this.go('solo'));
-    btn(380, 330, '📱 Co-op', 0x66BB6A, () => this.go('coop'));
-    this.add.text(270, 378, IS_TOUCH ? 'Co-op: put this on the TV, everyone uses their phone' : '◀ ▶ pick a level · SPACE play · C co-op (phones as controllers)', TXT(15, '#ffffff', '#01579B', 4)).setOrigin(0.5);
+    btn(160, 322, '▶ Play', 0x4FC3F7, () => this.go('solo'));
+    btn(380, 322, '📺 Co-op (TV)', 0x66BB6A, () => this.go('coop'));
+    btn(270, 404, '🔑 Join with a code', 0xFFB300, () => showCodePop());
+    this.add.text(270, 362, IS_TOUCH ? 'Co-op: press Co-op on the TV screen, then Join on each phone' : '◀ ▶ pick a level · SPACE play · C co-op on this screen · J join', TXT(15, '#ffffff', '#01579B', 4)).setOrigin(0.5);
     // QR to open on another device
     const url = gameUrl(), cv = qrCanvas(url, 5);
     if (cv) {
@@ -856,6 +866,7 @@ class Title extends Phaser.Scene {
       if (e.code === 'ArrowRight' || e.code === 'KeyD') { this.sel = (this.sel + 1) % LEVELS.length; this.drawCards(); Sound.init(); Sound.sfx.select(); }
       if (['Space', 'Enter', 'KeyZ', 'ArrowUp'].includes(e.code)) this.go('solo');
       if (e.code === 'KeyC') this.go('coop');
+      if (e.code === 'KeyJ') showCodePop();
     });
     if (this.input.gamepad) this.input.gamepad.on('down', (pad, button) => {
       const i = button.index;
@@ -909,7 +920,7 @@ class Lobby extends Phaser.Scene {
     const g = this.add.graphics(); g.fillStyle(0xffffff, 0.97); g.fillRoundedRect(40, 70, 330, 400, 24); g.lineStyle(5, 0x01579B); g.strokeRoundedRect(40, 70, 330, 400, 24);
     this.qrImg = null;
     this.codeTxt = this.add.text(205, 380, '····', TXT(48, '#01579B')).setOrigin(0.5);
-    this.add.text(205, 420, 'Scan with your phone,\nor go to the game and type the code', { ...TXT(15, '#455a64'), align: 'center' }).setOrigin(0.5);
+    this.add.text(205, 420, 'Scan with each phone, or open Pip on\nthe phone, tap Join with a code and type', { ...TXT(15, '#455a64'), align: 'center' }).setOrigin(0.5);
     this.status = this.add.text(205, 210, 'Connecting…', { ...TXT(18, '#01579B'), align: 'center', wordWrap: { width: 290 } }).setOrigin(0.5);
     // slots
     this.slots = [0, 1, 2, 3].map(i => {
@@ -1777,6 +1788,13 @@ function showJoinQR() {
   if (!Net.room) return;
   const box = document.getElementById('joinqr'); box.innerHTML = ''; const cv = qrCanvas(Net.joinUrl(), 6); if (cv) box.appendChild(cv);
   document.getElementById('joincode').textContent = Net.room; document.getElementById('joinpop').classList.remove('hidden');
+}
+function showCodePop() {
+  const $ = id => document.getElementById(id);
+  $('codepop').classList.remove('hidden'); $('codein').value = ''; setTimeout(() => $('codein').focus(), 50);
+  const go = () => { const c = $('codein').value.trim().toUpperCase().replace(/[^A-Z]/g, ''); if (c.length === 4) location.search = '?join=' + c + (LOCAL ? '&local=1' : ''); };
+  $('codego').onclick = go; $('codein').onkeydown = e => { e.stopPropagation(); if (e.key === 'Enter') go(); };
+  $('codeclose').onclick = () => $('codepop').classList.add('hidden');
 }
 function setupDom() {
   setupTouch();

@@ -1329,6 +1329,17 @@ function makeSpecialArt(scene) {
     rr(c, 12, 14, 32, 74, 14); c.fillStyle = '#1a0f3d'; c.fill();
     c.fillStyle = '#FFD54F'; c.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 6 : 13; c.lineTo(28 + Math.cos(a) * r, 40 + Math.sin(a) * r); } c.closePath(); c.fill();
   });
+  canvasTex(scene, 'sparkOrb', 52, 52, c => {
+    const g = c.createRadialGradient(26, 22, 3, 26, 26, 24); g.addColorStop(0, '#ffffff'); g.addColorStop(0.35, '#FFF59D'); g.addColorStop(0.8, '#FFC107'); g.addColorStop(1, '#FF8F00');
+    c.beginPath(); c.arc(26, 26, 22, 0, 7); c.fillStyle = g; c.fill(); c.strokeStyle = '#4A148C'; c.lineWidth = 4; c.stroke();
+    c.beginPath(); c.moveTo(29, 9); c.lineTo(16, 29); c.lineTo(25, 29); c.lineTo(21, 44); c.lineTo(36, 22); c.lineTo(27, 22); c.lineTo(31, 9); c.closePath();
+    c.fillStyle = '#ffffff'; c.fill(); c.strokeStyle = '#4A148C'; c.lineWidth = 2.5; c.lineJoin = 'round'; c.stroke();
+  });
+  canvasTex(scene, 'sparkShot', 34, 34, c => {
+    const g = c.createRadialGradient(17, 17, 2, 17, 17, 16); g.addColorStop(0, '#ffffff'); g.addColorStop(0.5, '#FFF59D'); g.addColorStop(1, 'rgba(255,193,7,0)');
+    c.fillStyle = g; c.fillRect(0, 0, 34, 34); c.strokeStyle = '#FFFFFF'; c.lineWidth = 3; c.lineCap = 'round';
+    for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2; c.beginPath(); c.moveTo(17 + Math.cos(a) * 6, 17 + Math.sin(a) * 6); c.lineTo(17 + Math.cos(a) * 15, 17 + Math.sin(a) * 15); c.stroke(); }
+  });
   canvasTex(scene, 'switchUp', 48, 22, c => { rr(c, 2, 12, 44, 10, 4); c.fillStyle = '#455a64'; c.fill(); rr(c, 10, 2, 28, 14, 6); c.fillStyle = '#ff5252'; c.fill(); c.strokeStyle = '#b71c1c'; c.lineWidth = 3; c.stroke(); });
   canvasTex(scene, 'switchDown', 48, 22, c => { rr(c, 2, 12, 44, 10, 4); c.fillStyle = '#455a64'; c.fill(); rr(c, 10, 10, 28, 8, 4); c.fillStyle = '#69f0ae'; c.fill(); c.strokeStyle = '#1b5e20'; c.lineWidth = 3; c.stroke(); });
   canvasTex(scene, 'gate', 48, 144, c => {
@@ -1704,7 +1715,7 @@ class Game extends Phaser.Scene {
   create() {
     window.__scene = this;
     // start every level clean: nothing from the previous level (night darkness, boss bar, tide sign...) may carry over
-    this.arenaLocked = undefined; this.avalanche = undefined; this.barrels = undefined; this.batteriesG = undefined; this.beatG = undefined; this.beatOn = undefined; this.beats = undefined; this.belts = undefined; this.bg = undefined; this.boss = undefined; this.bossBar = undefined; this.bossDone = undefined; this.bossName = undefined; this.bouncers = undefined; this.cars = undefined; this.cave = undefined; this.checkpoints = undefined; this.cmags = undefined; this.crumbles = undefined; this.crushG = undefined; this.crushers = undefined; this.darkRT = undefined; this.doorBusy = undefined; this.doors = undefined; this.drops = undefined; this.enemies = undefined; this.finished = undefined; this.flies = undefined; this.floodWait = undefined; this.fxChunk = undefined; this.fxConfetti = undefined; this.fxDust = undefined; this.fxFlame = undefined; this.fxGoo = undefined; this.fxRing = undefined; this.fxRock = undefined; this.fxSpark = undefined; this.gateG = undefined; this.gates = undefined; this.goQueued = undefined; this.goals = undefined; this.hudBat = undefined; this.hudCode = undefined; this.hudRows = undefined; this.hudTime = undefined; this.inRoom = undefined; this.lamps = undefined; this.lasers = undefined; this.lightImg = undefined; this.magG = undefined; this.movers = undefined; this.orbs = undefined; this.over = undefined; this.panel = undefined; this.panelAt = undefined; this.panelFn = undefined; this.planks = undefined; this.powerCells = undefined; this.prevLocalJump = undefined; this.prevStart = undefined; this.respawnPt = undefined; this.rollers = undefined; this.scrollWait = undefined; this.scrollX = undefined; this.shocks = undefined; this.shots = undefined; this.snowFx = undefined; this.spikes = undefined; this.springs = undefined; this.stals = undefined; this.switches = undefined; this.tideSign = undefined; this.tideWarned = undefined; this.water = undefined; this.waterY = undefined; this.windFx = undefined; this.windSign = undefined;
+    this.arenaLocked = undefined; this.avalanche = undefined; this.barrels = undefined; this.batteriesG = undefined; this.beatG = undefined; this.beatOn = undefined; this.beats = undefined; this.belts = undefined; this.bg = undefined; this.boss = undefined; this.bossBar = undefined; this.bossDone = undefined; this.bossName = undefined; this.bouncers = undefined; this.cars = undefined; this.cave = undefined; this.checkpoints = undefined; this.cmags = undefined; this.crumbles = undefined; this.crushG = undefined; this.crushers = undefined; this.darkRT = undefined; this.doorBusy = undefined; this.doors = undefined; this.drops = undefined; this.enemies = undefined; this.finished = undefined; this.flies = undefined; this.floodWait = undefined; this.fxChunk = undefined; this.fxConfetti = undefined; this.fxDust = undefined; this.fxFlame = undefined; this.fxGoo = undefined; this.fxRing = undefined; this.fxRock = undefined; this.fxSpark = undefined; this.gateG = undefined; this.gates = undefined; this.goQueued = undefined; this.goals = undefined; this.hudBat = undefined; this.hudCode = undefined; this.hudRows = undefined; this.hudTime = undefined; this.inRoom = undefined; this.lamps = undefined; this.lasers = undefined; this.lightImg = undefined; this.magG = undefined; this.movers = undefined; this.orbs = undefined; this.over = undefined; this.panel = undefined; this.panelAt = undefined; this.panelFn = undefined; this.planks = undefined; this.powerCells = undefined; this.prevLocalJump = undefined; this.prevStart = undefined; this.respawnPt = undefined; this.rollers = undefined; this.scrollWait = undefined; this.scrollX = undefined; this.shocks = undefined; this.shots = undefined; this.snowFx = undefined; this.spikes = undefined; this.springs = undefined; this.stals = undefined; this.switches = undefined; this.tideSign = undefined; this.tideWarned = undefined; this.water = undefined; this.waterY = undefined; this.windFx = undefined; this.windSign = undefined; this.sparks = undefined; this.zaps = undefined; this.sparkT = undefined; this.sparkTip = undefined; this.doorTip = undefined;
     this.needWorlds.forEach(n => { WorldArt.make[n](this); WorldArt.done.add(n); });
     makeHurtAnims(this);
     const LV = this.LV = LEVELS[Session.level];
@@ -2366,6 +2377,7 @@ class Game extends Phaser.Scene {
     if (B.inv > 0) { B.inv -= dt; s.setTint(Math.floor(this.time.now / 80) % 2 ? 0xff6666 : 0xffffff); } else s.clearTint();
     B.t -= dt;
     if (B.hurtSpr && B.hurtSpr.active) B.hurtSpr.setPosition(s.x, b.bottom);
+    this.updateSparks(dt, B);
     const target = this.nearest(s.x) || this.players[0];
     const face = target ? Math.sign(target.body.x - s.x) || 1 : -1;
     const onGround = b.blocked.down;
@@ -2549,8 +2561,19 @@ class Game extends Phaser.Scene {
     const alive = this.alivePlayers();
     this.doors.forEach(d => {
       const on = alive.find(P => { const b = P.body.body; return Math.abs(b.center.x - (d.x * T + 24)) < 24 && Math.abs(b.bottom - (d.y + 1) * T) < 8 && b.blocked.down && Math.abs(b.velocity.x) < 60; });
-      d.t = on ? d.t + dt : 0; d.img.setScale(1 + Math.min(d.t, 0.6) * 0.2).setTint(d.t > 0 ? 0xfff59d : 0xffffff);
-      if (d.t > 0.6 && !this.doorBusy) { d.t = 0; this.useDoor(d); }
+      d.t = on ? d.t + dt : 0; d.img.setScale(1 + Math.min(d.t, 0.5) * 0.2).setTint(d.t > 0 ? 0xfff59d : 0xffffff);
+      const dx = d.x * T + 24, dby = (d.y + 1) * T, near = alive.some(P => { const b = P.body.body; return Math.abs(b.center.x - dx) < 130 && Math.abs(b.bottom - dby) < 110; });
+      if (!d.hint) {
+        d.hint = this.add.text(dx, dby - 112, d.room ? '★ Secret room!\nStand still on the door' : 'Stand still on the door\nto go back', { ...TXT(17, '#fff', '#4527a0', 6), align: 'center' }).setOrigin(0.5, 1).setDepth(9).setAlpha(0);
+        d.ring = this.add.graphics().setDepth(9);
+      }
+      { const wv = this.cameras.main.worldView, bob = Math.sin(this.time.now * 0.005) * 4, nb = alive[0] && alive[0].body.body;
+        if (dby - 112 - d.hint.height < wv.y + 110) { const left = nb && nb.center.x > dx; d.hint.setOrigin(left ? 1 : 0, 0.5).setPosition(dx + (left ? -44 : 44), dby - 50 + bob); }
+        else d.hint.setOrigin(0.5, 1).setPosition(dx, dby - 112 + bob); }
+      d.hint.setAlpha(approach(d.hint.alpha, near && d.t === 0 && !this.doorBusy ? 1 : 0, dt * 5));
+      d.img.setAlpha(0.85 + 0.15 * Math.sin(this.time.now * 0.006));
+      d.ring.clear(); if (d.t > 0) { d.ring.lineStyle(7, 0x1a0f3d, 0.7).beginPath().arc(dx, dby - 44, 54, -Math.PI / 2, Math.PI * 1.5).strokePath(); d.ring.lineStyle(5, 0xFFD54F, 1).beginPath().arc(dx, dby - 44, 54, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, d.t / 0.5)).strokePath(); }
+      if (d.t > 0.5 && !this.doorBusy) { d.t = 0; d.ring.clear(); this.useDoor(d); }
     });
     if (this.gates.length) {
       const latchT = this.coop ? 3.5 : 7;
@@ -2774,6 +2797,8 @@ class Game extends Phaser.Scene {
     s.setCollideWorldBounds(false);
     this.physics.add.collider(s, this.layer);
     this.physics.add.overlap(this.pbodies, s, (a, b2) => { const pb = a.P ? a : b2; if (pb && pb.P) this.touchBoss(pb.P); });
+    this.sparks = this.physics.add.group({ allowGravity: false }); this.zaps = this.physics.add.group({ allowGravity: false }); this.sparkT = 3.5;
+    this.physics.add.overlap(this.pbodies, this.sparks, (a, b2) => { const pb = a.P ? a : b2, o = a.P ? b2 : a; if (pb && pb.P) this.grabSpark(pb.P, o); });
     const crown = type !== 'gloop' ? null : this.add.image(s.x, s.y, 'crown').setOrigin(0.5, 1).setDepth(9).setScale(0.9);
     this.boss = { type, spr: s, crown, hp: max, max, state: 'intro', t: 0, inv: 0, sq: 1, name: ({ crab: 'CAPTAIN CLANK', yeti: 'YETI-BOT', king: 'SCRAP KING', queen: 'QUEEN BUZZ' })[type] || 'KING GLOOP' };
     Sound.stopMusic(); Sound.setTheme('boss'); this.time.delayedCall(700, () => Sound.startMusic());
@@ -2797,20 +2822,75 @@ class Game extends Phaser.Scene {
     for (const d of [-1, 1]) { const w = this.shocks.create(s.x + d * 40, s.body.bottom - 16, 'shock').setDepth(7); w.body.setSize(46, 22).setOffset(12, 12); w.setVelocityX(d * 400); w.life = 2.2; w.setFlipX(d < 0); }
     this.alivePlayers().forEach(P => { const b = P.body.body; if (b.blocked.down) Net.buzz(P.slot, 60); });
   }
+  stompOK(pb, bb) {
+    // forgiving: coming down (or level) and feet were above the boss's top part last frame, even on slow devices
+    const down = pb.velocity.y > -30 || pb.y > pb.prev.y, prevBottom = pb.prev.y + pb.height;
+    return down && (pb.bottom <= bb.top + 40 || prevBottom <= bb.top + 52 || pb.center.y < bb.top + 8);
+  }
+  // ---------- Spark orbs: grab one and Pip zaps the boss automatically
+  updateSparks(dt, B) {
+    if (!this.sparks) return;
+    const A = this.L.arena, live = B && B.state !== 'intro' && B.state !== 'dying', H = this.L.H;
+    if (live) {
+      this.sparkT -= dt;
+      if (this.sparkT <= 0 && this.sparks.countActive() < (this.coop ? 2 : 1)) {
+        let x = null;
+        for (let k = 0; k < 14 && x == null; k++) {
+          const tx = Phaser.Math.Between(A.x0 + 2, A.x1 - 2), solid = (yy) => { const t = this.map.getTileAt(tx, yy); return !!(t && t.collides); };
+          if (solid(H - 2) && !solid(H - 3) && !solid(H - 4) && (Math.abs(tx * T + 24 - B.spr.x) > 200 || k > 10)) x = tx * T + 24;
+        }
+        if (x != null) {
+          this.sparkT = this.coop ? 4 : 5;
+          const y = (H - 2) * T - 60, o = this.sparks.create(x, y, 'sparkOrb').setDepth(8).setScale(0.2);
+          o.body.setCircle(24, 2, 2); o.y0 = y; o.life = 12; this.tweens.add({ targets: o, scale: 1, duration: 300, ease: 'Back.easeOut' });
+          this.fxSpark.explode(10, x, y); Sound.sfx.select();
+          if (!this.sparkTip) { this.sparkTip = true; const t = this.add.text(VW / 2, 150, '⚡ Grab the sparks to zap the boss! ⚡', TXT(26, '#FFF59D', '#4A148C', 8)).setOrigin(0.5).setScrollFactor(0).setDepth(this.H0 || 100);
+            this.tweens.add({ targets: t, alpha: 0, delay: 3200, duration: 500, onComplete: () => t.destroy() }); }
+        } else this.sparkT = 0.5;
+      }
+    }
+    this.sparks.getChildren().slice().forEach(o => {
+      o.life -= dt; o.y = o.y0 + Math.sin(this.time.now * 0.005 + o.x) * 7; o.angle = Math.sin(this.time.now * 0.004) * 12;
+      if (o.life < 2.5) o.setAlpha(Math.floor(this.time.now / 110) % 2 ? 0.35 : 1);
+      if (o.life <= 0 || !live) o.destroy();
+    });
+    this.zaps.getChildren().slice().forEach(z => {
+      z.life -= dt; z.angle += dt * 720;
+      if (!this.boss || z.life <= 0) { this.fxSpark.explode(6, z.x, z.y); z.destroy(); return; }
+      const tb = this.boss.spr.body, ang = Math.atan2(tb.center.y - z.y, tb.center.x - z.x);
+      z.body.setVelocity(Math.cos(ang) * 820, Math.sin(ang) * 820);
+      if (Math.random() < 0.6) this.fxSpark.explode(1, z.x, z.y);
+      if (Math.hypot(tb.center.x - z.x, tb.center.y - z.y) < Math.max(40, Math.min(tb.width, tb.height) / 2)) this.zapHit(z);
+    });
+  }
+  grabSpark(P, o) {
+    if (!o.active || P.out || P.respawning || !this.boss) return;
+    const pb = P.body.body; o.destroy(); Sound.sfx.power(); this.fxSpark.explode(14, pb.center.x, pb.center.y); Net.buzz(P.slot, 50);
+    const z = this.zaps.create(pb.center.x, pb.center.y - 14, 'sparkShot').setDepth(9); z.isZap = true; z.life = 2.5; z.body.setCircle(16, 1, 1);
+    const t = this.add.text(pb.center.x, pb.top - 10, 'ZAP!', TXT(28, '#FFF59D', '#4A148C', 7)).setOrigin(0.5, 1).setDepth(9);
+    this.tweens.add({ targets: t, y: t.y - 50, alpha: 0, duration: 700, onComplete: () => t.destroy() });
+  }
+  zapHit(z) {
+    if (!z.active) return; const B = this.boss; this.fxSpark.explode(24, z.x, z.y); z.destroy();
+    if (!B || B.state === 'intro' || B.state === 'dying') return;
+    if (B.inv > 0) { Sound.sfx.bump(); return; }
+    const wasDizzy = B.state === 'dizzy'; this.bossHit(B);
+    if (B.hp > 0 && wasDizzy) { if (B.type === 'queen') { B.state = 'rise'; B.spr.play('queen-fly'); } else if (B.type !== 'gloop') { B.state = 'walk'; B.t = 0.9; } }
+  }
   touchBoss(P) {
     const B = this.boss; if (!B || P.out || B.state === 'intro' || B.state === 'dying') return;
     const pb = P.body.body, bb = B.spr.body;
     if (B.type === 'crab' || B.type === 'yeti' || B.type === 'king' || B.type === 'queen') {
-      if (pb.velocity.y > 40 && pb.bottom <= bb.top + 34) {
-        pb.setVelocityY(-760); P.jumps = 1; P.cut = true; P.sx = 0.8; P.sy = 1.2;
+      if (this.stompOK(pb, bb)) {
+        pb.setVelocityY(-760); P.invuln = Math.max(P.invuln, 0.35); P.jumps = 1; P.cut = true; P.sx = 0.8; P.sy = 1.2;
         if (B.state === 'dizzy' && B.inv <= 0) { this.bossHit(B); if (B.hp > 0) { if (B.type === 'queen') { B.state = 'rise'; B.spr.play('queen-fly'); } else { B.state = 'walk'; B.t = 0.9; } } } else Sound.sfx.bump();
         return;
       }
       if (B.state !== 'dizzy' && B.inv <= 0.9) this.hurt(P, B.spr.x);
       return;
     }
-    if (pb.velocity.y > 40 && pb.bottom <= bb.top + 34) {
-      pb.setVelocityY(-880); P.jumps = 1; P.cut = true; P.sx = 0.8; P.sy = 1.2;
+    if (this.stompOK(pb, bb)) {
+      pb.setVelocityY(-880); P.invuln = Math.max(P.invuln, 0.35); P.jumps = 1; P.cut = true; P.sx = 0.8; P.sy = 1.2;
       if (B.inv > 0) return;
       this.showHurt(B);
       B.hp--; B.inv = 1.3; this.drawBossBar(); Sound.sfx.stomp(); Sound.sfx.hurt(); this.shake(0.012, 200); this.fxGoo.explode(20, B.spr.x, bb.top); B.sq = 0.6; this.kills++;
@@ -2820,7 +2900,7 @@ class Game extends Phaser.Scene {
   }
   bossDefeated() {
     const B = this.boss, s = B.spr; B.state = 'dying'; s.setVelocity(0, 0); Sound.stopMusic();
-    this.shocks.clear(true, true);
+    this.shocks.clear(true, true); if (this.sparks) { this.sparks.clear(true, true); this.zaps.clear(true, true); }
     this.enemies.getChildren().forEach(e => { if (!e.dead && e.mini) this.knockOut(e); });
     if (B.crown) this.tweens.add({ targets: B.crown, y: B.crown.y - 140, angle: 400, duration: 900, ease: 'Quad.easeOut', onComplete: () => this.tweens.add({ targets: B.crown, y: this.worldH - 2 * T, duration: 600, ease: 'Bounce.easeOut' }) });
     this.rollers.clear(true, true); this.drops.clear(true, true); this.shots.clear(true, true);

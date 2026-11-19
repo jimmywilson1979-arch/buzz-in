@@ -28,6 +28,8 @@ A Mario-style platformer starring Pip the robot: **https://jimmywilson1979-arch.
   gates; switches stay down for a few seconds so you can do it alone, or split up with friends in co-op).
 - Secret bonus rooms: a purple ★ door is hidden in 2-2, 3-1, 4-3, 5-1 and S-2. Stand still on it to go in, grab the batteries, and use the door at the end to come back.
 - Music: each world has its own track (plus a boss track), made with Sprixen and stored in `pip-art/music/`; the old beep tunes play while a track loads.
+- Two players: nobody gets dragged off a ledge any more. If one player gets left behind off-screen, they float over to their partner (no heart lost).
+- Pictures load as WebP, with PNG copies for older tablets and TVs that can't show WebP. If something ever goes wrong, a small red message appears in the bottom-left corner (handy for a screenshot).
 - 🛠 Level Maker (title screen, or press L): pick a tool from the bottom bar and tap/drag on the map to build a level. Choose the
   look (Sunny, Night, Cave, Beach, Snow, Factory, Clouds; some add their own pieces like ice, conveyor belts or bouncy clouds), the
   length, and one of 3 save slots (it saves by itself). ▶ Play or 📺 Co-op play to try it, and 📱 Share shows a QR code/link that

@@ -100,7 +100,7 @@ window.__errs = 0; window.addEventListener('error', function (e) {
     <button id="pTitle" class="alt">Back to title</button>
     <button id="pQR" class="alt">Show QR code</button>
     <div id="qrbox" class="hidden"></div>
-    <div class="help">Move: ◀ ▶ / A D / D-pad · Jump: Space / ↑ / Z / A button<br>Press jump again in the air to double jump · Hold jump to jump higher</div>
+    <div class="help">Move: ◀ ▶ / A D / D-pad · Jump: Space / ↑ / Z / A button<br>Press jump again in the air to double jump · Hold jump to jump higher<br>Co-op: another controller can join any time by pressing A</div>
   </div>
 </div>
 <div id="joinpop" class="hidden">
@@ -1426,7 +1426,8 @@ function addSheetFrames(scene, META) {
 const POWER = { P: 'shield', U: 'rocket', N: 'magnet', Z: 'speed' };
 const POWER_TEX = { shield: 'orb', rocket: 'pu_rocket', magnet: 'pu_magnet', speed: 'pu_speed' };
 const store = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
-const Session = { mode: 'solo', level: 0, localSlot: 0 };
+const Session = { mode: 'solo', level: 0, localSlot: 0, pads: {} };   // pads: controller number -> player slot (co-op)
+const padSlots = () => Object.values(Session.pads);
 const Hooks = { phase: () => 'title', onPlayersChanged() {}, phoneStart() {}, phoneGo() {} };
 function fmtTime(s) { s = Math.floor(s); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
 function approach(v, target, amt) { return v < target ? Math.min(v + amt, target) : Math.max(v - amt, target); }
@@ -1472,7 +1473,7 @@ const Net = {
   sendTo(p, m) { if (!p) return; if (p.dc && p.dc.readyState === 'open') { try { p.dc.send(JSON.stringify(m)); return; } catch (e) {} } p.ch && p.ch.send(m); },
   list() { return Object.values(this.phones); },
   pub() { return { phase: Hooks.phase(), level: LEVELS[Session.level].id, players: this.list().map(p => ({ id: p.id, slot: p.slot, name: p.name })) }; },
-  usedSlots() { const s = new Set(this.list().map(p => p.slot)); if (Session.localSlot != null) s.add(Session.localSlot); return s; },
+  usedSlots() { const s = new Set(this.list().map(p => p.slot)); if (Session.localSlot != null) s.add(Session.localSlot); padSlots().forEach(x => s.add(x)); return s; },
   freeSlot() { const u = this.usedSlots(); for (let i = 0; i < 4; i++) if (!u.has(i)) return i; return -1; },
   onMain(m) { if (m && m.t === 'join' && m.id) this.addPhone(m); },
   async addPhone(m) {
@@ -1620,7 +1621,7 @@ class Title extends Phaser.Scene {
     this.cameras.main.fadeOut(250, 255, 255, 255);
     this.time.delayedCall(260, () => {
       if (mode === 'coop') this.scene.start('Lobby');
-      else { Session.localSlot = 0; Sound.setTheme(musicFor(Session.level)); Sound.startMusic(); this.scene.start('Game'); }
+      else { Session.localSlot = 0; Session.pads = {}; Sound.setTheme(musicFor(Session.level)); Sound.startMusic(); this.scene.start('Game'); }
     });
   }
   update(time, delta) {
@@ -1637,7 +1638,7 @@ class Lobby extends Phaser.Scene {
   create() {
     this.starting = false;
     document.body.classList.remove('playing', 'solo'); document.body.classList.add('coop');
-    Session.localSlot = null;
+    Session.localSlot = null; Session.pads = {};
     Hooks.phase = () => 'lobby';
     Hooks.onPlayersChanged = () => this.refresh();
     Hooks.phoneStart = () => this.start();
@@ -1664,12 +1665,19 @@ class Lobby extends Phaser.Scene {
       if (e.code === 'Enter') { if (Session.localSlot == null) this.addLocal(); else this.start(); return; }
       if (['Space', 'KeyZ', 'ArrowUp'].includes(e.code)) { if (Session.localSlot == null) this.addLocal(); }
     });
-    if (this.input.gamepad) this.input.gamepad.on('down', (pad, b) => { if (b.index === 9) { if (Session.localSlot == null) this.addLocal(); this.start(); } else if (b.index === 0 && Session.localSlot == null) this.addLocal(); });
+    // every controller is its own player: A (or B) joins, START begins
+    if (this.input.gamepad) this.input.gamepad.on('down', (pad, b) => {
+      const has = Session.pads[pad.index] != null;
+      if (b.index === 9) { if (!has) this.addPad(pad.index); this.start(); }
+      else if ((b.index === 0 || b.index === 1) && !has) this.addPad(pad.index);
+      else if (b.index === 8 && has) { delete Session.pads[pad.index]; this.refresh(); }   // SELECT / BACK leaves
+    });
     this.refresh();
     Net.host().then(() => this.refresh());
     this.events.once('shutdown', () => { Hooks.onPlayersChanged = () => {}; });
   }
   addLocal() { const s = Net.freeSlot(); if (s < 0) return; Session.localSlot = s; Sound.init(); Sound.sfx.check(); this.refresh(); }
+  addPad(i) { const s = Net.freeSlot(); if (s < 0) return; Session.pads[i] = s; Sound.init(); Sound.sfx.check(); this.refresh(); }
   refresh() {
     if (!this.sys || !this.sys.isActive()) return;
     if (Net.status === 'ready') {
@@ -1677,18 +1685,18 @@ class Lobby extends Phaser.Scene {
       if (!this.qrImg) { const cv = qrCanvas(Net.joinUrl(), 6); if (cv) { if (this.textures.exists('joinqr')) this.textures.remove('joinqr'); this.textures.addCanvas('joinqr', cv); this.qrImg = this.add.image(205, 215, 'joinqr').setDisplaySize(250, 250); } }
       this.status.setVisible(false);
     } else if (Net.status === 'error') { this.status.setText("Couldn't connect for phones.\nCheck the internet, or open Pip from\njimmywilson1979-arch.github.io/buzz-in/pip.html"); this.codeTxt.setText(''); }
-    const taken = {}; Net.list().forEach(p => taken[p.slot] = p.name); if (Session.localSlot != null) taken[Session.localSlot] = 'This screen';
+    const taken = {}; Net.list().forEach(p => taken[p.slot] = p.name); if (Session.localSlot != null) taken[Session.localSlot] = 'This screen'; for (const i in Session.pads) taken[Session.pads[i]] = '🎮 Pad ' + (+i + 1);
     this.slots.forEach((c, i) => {
       const on = taken[i] != null;
       c.name.setText(on ? taken[i] : 'Waiting…'); c.spr.setAlpha(on ? 1 : 0.25);
       if (on) { c.spr.clearTint(); if (!c.spr.anims.isPlaying) c.spr.play(PIP_COLORS[i].key + '-idle'); } else { c.spr.setTint(0x222244); c.spr.anims.stop(); }
     });
     const n = Object.keys(taken).length;
-    this.hint.setText(n ? `${n} player${n > 1 ? 's' : ''} ready · press START on a phone (or ENTER) to begin` : 'Keyboard or controller on this screen? Press SPACE / A to play too');
+    this.hint.setText(n ? `${n} player${n > 1 ? 's' : ''} ready · more controllers press A · START (or ENTER) to begin` : 'Controllers: each press A to join · keyboard: press SPACE');
   }
   start() {
     if (this.starting) return;
-    const n = Net.list().length + (Session.localSlot != null ? 1 : 0); if (!n) return;
+    const n = Net.list().length + (Session.localSlot != null ? 1 : 0) + padSlots().length; if (!n) return;
     this.starting = true; Sound.sfx.select(); Sound.setTheme(musicFor(Session.level)); Sound.startMusic();
     this.cameras.main.fadeOut(250, 255, 255, 255); this.time.delayedCall(260, () => this.scene.start('Game'));
   }
@@ -1929,6 +1937,11 @@ class Game extends Phaser.Scene {
       if (e.code === 'KeyT' && this.panel) toTitle();
     });
     this.input.on('pointerdown', () => { if (this.panel) this.goQueued = true; });
+    // co-op: a new controller can drop in mid-level by pressing A
+    if (this.input.gamepad) this.input.gamepad.on('down', (pad, b) => {
+      if (!this.coop || Session.pads[pad.index] != null || (b.index !== 0 && b.index !== 1)) return;
+      const s = Net.freeSlot(); if (s < 0) return; Session.pads[pad.index] = s; this.syncPlayers();
+    });
     Ctl.queued = false;
     this.events.on('postupdate', this.afterPhysics, this);
     this.events.once('shutdown', () => { this.events.off('postupdate', this.afterPhysics, this); Hooks.onPlayersChanged = () => {}; Hooks.phoneGo = () => {}; });
@@ -1939,6 +1952,7 @@ class Game extends Phaser.Scene {
   wantedSlots() {
     if (!this.coop) return [{ slot: 0, src: 'local', name: '' }];
     const out = []; if (Session.localSlot != null) out.push({ slot: Session.localSlot, src: 'local', name: 'TV' });
+    for (const i in Session.pads) out.push({ slot: Session.pads[i], src: 'pad', pad: +i, name: 'Pad ' + (+i + 1) });
     Net.list().forEach(p => out.push({ slot: p.slot, src: 'phone', name: p.name }));
     return out.sort((a, b) => a.slot - b.slot);
   }
@@ -1959,7 +1973,7 @@ class Game extends Phaser.Scene {
     const body = this.physics.add.sprite(at.x, at.y, 'blank').setVisible(false);
     body.body.setSize(30, 56).setCollideWorldBounds(true).setMaxVelocity(1200, 1400);
     this.pbodies.add(body);
-    const P = { slot: w.slot, src: w.src, name: w.name, tex: col.key, col, body, hearts: 3, shield: false, invuln: 1, knock: 0, coyote: 0, buffer: 0, jumps: 0, cut: true,
+    const P = { slot: w.slot, src: w.src, pad: w.pad, name: w.name, tex: col.key, col, body, hearts: 3, shield: false, invuln: 1, knock: 0, coyote: 0, buffer: 0, jumps: 0, cut: true,
       facing: 1, wasGround: true, prevUp: false, prevJump: false, lastVy: 0, sx: 1, sy: 1, landT: 0, spinning: false, out: false, outT: 0, respawning: false };
     body.P = P;
     P.vis = this.add.sprite(at.x, at.y, col.key, 'idle1').setOrigin(PIP_ORIGIN[0], PIP_ORIGIN[1]).setDepth(10 + w.slot * 0.1).play(col.key + '-idle');
@@ -2096,21 +2110,30 @@ class Game extends Phaser.Scene {
 
   // ---------- input
   pad() { const gp = this.input.gamepad; if (!gp || !gp.total) return null; return gp.getAll()[0] || null; }
+  pads() { const gp = this.input.gamepad; return gp && gp.total ? gp.getAll().filter(Boolean) : []; }
+  padState(pad) {
+    const sx = pad.leftStick ? pad.leftStick.x : 0;
+    return { left: !!(pad.left || sx < -0.35), right: !!(pad.right || sx > 0.35), jump: !!(pad.A || pad.B), start: !!(pad.buttons[9] && pad.buttons[9].pressed) };
+  }
   readLocal() {
-    const k = this.keys, pad = this.pad();
+    const k = this.keys, mine = this.pads().filter(p => !this.coop || Session.pads[p.index] == null);   // in co-op, joined controllers drive their own Pip
     let left = k.left.isDown || k.a.isDown || Ctl.touchL, right = k.right.isDown || k.d.isDown || Ctl.touchR;
     let jump = k.space.isDown || k.up.isDown || k.w.isDown || k.z.isDown || Ctl.touchJ, start = false;
-    if (pad) {
-      const sx = pad.leftStick ? pad.leftStick.x : 0;
-      left = left || pad.left || sx < -0.35; right = right || pad.right || sx > 0.35; jump = jump || pad.A || pad.B;
-      start = pad.buttons[9] && pad.buttons[9].pressed;
-    }
+    mine.forEach(pad => { const q = this.padState(pad); left = left || q.left; right = right || q.right; jump = jump || q.jump; });
+    this.pads().forEach(pad => { start = start || this.padState(pad).start; });   // START on any controller pauses
     const pressed = Ctl.queued || (jump && !this.prevLocalJump); Ctl.queued = false; this.prevLocalJump = jump;
     const startPressed = start && !this.prevStart; this.prevStart = start;
     return { left, right, jump, pressed, startPressed, ax: (Ctl.touchL || Ctl.touchR) ? Ctl.ax : null };
   }
+  readPad(P) {
+    const gp = this.input.gamepad, pad = gp && gp.total ? gp.getAll().find(p => p && p.index === P.pad) : null;
+    const q = pad ? this.padState(pad) : { left: false, right: false, jump: false };
+    const pressed = q.jump && !P.prevJump; P.prevJump = q.jump;
+    return { left: q.left, right: q.right, jump: q.jump, pressed, ax: null };
+  }
   readFor(P, local) {
     if (P.src === 'local') return local;
+    if (P.src === 'pad') return this.readPad(P);
     const r = Net.read(P.slot);
     const pressed = r.q || (r.jump && !P.prevJump); P.prevJump = r.jump;
     return { left: r.left, right: r.right, jump: r.jump, pressed, ax: r.ax };

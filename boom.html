@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Boom Arena</title>
+<meta name="theme-color" content="#2a1306">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap">
+<script>
+window.__webpOK = null; (function () { var i = new Image(); i.onload = function () { window.__webpOK = i.width === 1; }; i.onerror = function () { window.__webpOK = false; }; i.src = 'data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA=='; })();
+window.__errs = 0; window.addEventListener('error', function (e) {
+  if (window.__errs++ > 2) return; var d = document.getElementById('errbox');
+  if (!d) { d = document.createElement('div'); d.id = 'errbox'; d.style.cssText = 'position:fixed;left:8px;bottom:8px;max-width:70vw;z-index:9999;background:rgba(183,28,28,.92);color:#fff;font:13px/1.35 sans-serif;padding:8px 12px;border-radius:10px;pointer-events:none'; document.body.appendChild(d); }
+  d.innerHTML += '⚠ ' + String(e.message || e.error || 'error').slice(0, 160) + (e.lineno ? ' (line ' + e.lineno + ')' : '') + '<br>';
+});
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<style>
+  html,body{margin:0;height:100%;background:#2a1306;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;font-family:Fredoka,system-ui,sans-serif;color:#fff}
+  #game{position:fixed;inset:0}
+  #game canvas{display:block}
+  .hidden{display:none!important}
+  button{font-family:inherit}
+  #topbtns{position:fixed;top:10px;right:10px;display:flex;gap:8px;z-index:40}
+  #topbtns button{width:44px;height:44px;border-radius:14px;border:3px solid #6d2a00;background:#ffffffdd;font-size:20px;line-height:1;cursor:pointer;color:#6d2a00;font-weight:700}
+  body:not(.playing) #btnPause,body:not(.playing) #btnHome{display:none}
+  body.phone #topbtns{display:none}
+  #joinbtn{position:fixed;left:10px;top:10px;z-index:40;font:700 16px Fredoka,sans-serif;padding:8px 14px;border-radius:99px;border:2px solid #ffffff88;background:#2a1306bb;color:#fff;cursor:pointer;display:none}
+  body.party.playing #joinbtn{display:block}
+  /* touch controls */
+  #touch{position:fixed;inset:0;pointer-events:none;z-index:10;display:none}
+  body.touch.playing.solo #touch{display:block}
+  #tpad{position:absolute;left:0;bottom:0;width:40%;height:75%;pointer-events:auto;touch-action:none}
+  .base,.knob{position:absolute;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%)}
+  .base{width:150px;height:150px;border:3px solid #ffffffaa;background:#ffffff1a}
+  .knob{width:68px;height:68px;background:#FFD54F;border:3px solid #fff;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+  .base.idle{opacity:.5} .knob.idle{opacity:.65}
+  #tbomb{position:absolute;right:26px;bottom:26px;width:130px;height:130px;border-radius:50%;background:#ff7043;border:5px solid #fff;pointer-events:auto;touch-action:none;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:24px;box-shadow:0 7px 0 #0006;opacity:.9}
+  #tbomb.on{transform:translateY(5px);box-shadow:0 2px 0 #0006}
+  /* menus */
+  #menu{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;pointer-events:none}
+  .scr{pointer-events:auto;box-sizing:border-box;max-width:96vw;max-height:94vh;overflow:auto}
+  .logo{font-size:min(13vw,124px);line-height:.9;font-weight:700;text-align:center;color:#FFD54F;text-shadow:0 .06em 0 #e64a19,0 .1em 0 #4e1d00,0 .14em .2em #0008;transform:rotate(-3deg);margin-bottom:.3em}
+  .logo span{display:block;color:#fff;font-size:.62em}
+  .bigbtns{display:flex;flex-direction:column;gap:12px;align-items:center}
+  .bb{min-width:min(78vw,420px);padding:14px 22px;border-radius:20px;border:4px solid #fff;background:#FFD54F;color:#4a2a00;font-size:min(5.4vw,26px);font-weight:700;cursor:pointer;box-shadow:0 6px 0 #0006}
+  .bb:active{transform:translateY(4px);box-shadow:0 2px 0 #0006}
+  .bb.alt{background:#ffffffe6;color:#6d2a00}
+  .bb.hot{background:#ff7043;color:#fff}
+  .bb.sm{min-width:0;font-size:18px;padding:10px 16px;border-width:3px;border-radius:14px}
+  .panel{background:#2a1306e8;border:4px solid #ffffff55;border-radius:26px;padding:16px 18px;box-shadow:0 10px 40px #0008}
+  #scrSetup{width:min(1200px,96vw)}
+  .setgrid{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}
+  @media (max-aspect-ratio:1/1){.setgrid{grid-template-columns:1fr}}
+  h2{margin:0 0 10px;font-size:26px}
+  h3{margin:9px 0 5px;font-size:17px;opacity:.85}
+  .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .fcard{position:relative;border-radius:18px;border:4px solid #ffffff33;background:linear-gradient(#ffffff22,#ffffff08);padding:6px 6px 8px;text-align:center;cursor:pointer}
+  .fcard canvas{width:100%;height:90px;object-fit:contain;display:block}
+  .fcard b{display:block;font-size:18px}
+  .fcard.sel{border-color:#FFD54F;background:linear-gradient(#ffd54f55,#ffd54f11)}
+  .fcard .tags{position:absolute;top:4px;left:4px;display:flex;gap:3px}
+  .tag{font-size:12px;font-weight:700;padding:2px 7px;border-radius:99px;color:#fff;border:2px solid #fff}
+  .plist{display:flex;flex-direction:column;gap:5px}
+  .prow{display:flex;align-items:center;gap:10px;background:#ffffff14;border-radius:14px;padding:3px 10px;font-size:17px}
+  .prow .dot{width:20px;height:20px;border-radius:50%;border:3px solid #fff;flex:none}
+  .prow canvas{width:42px;height:36px;object-fit:contain}
+  .prow .who{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .prow button{border:0;border-radius:10px;padding:6px 10px;font-weight:700;font-size:15px;cursor:pointer;background:#ffffffdd;color:#6d2a00}
+  .seg{display:flex;gap:6px;flex-wrap:wrap}
+  .seg button{flex:1;padding:6px 10px;border-radius:12px;border:3px solid #ffffff55;background:#ffffff14;color:#fff;font-weight:700;font-size:16px;cursor:pointer}
+  .seg button.on{background:#FFD54F;color:#4a2a00;border-color:#fff}
+  .arenas{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .arena{height:58px;border-radius:12px;border:3px solid #ffffff44;position:relative;cursor:pointer;display:flex;align-items:flex-end;justify-content:center;font-weight:700;font-size:13px;text-shadow:0 2px 3px #000;padding-bottom:3px;box-sizing:border-box;background-size:58px;background-color:#4e1d00}
+  .arena.on{border-color:#FFD54F;box-shadow:0 0 0 3px #FFD54F}
+  .joinbox{display:flex;gap:18px;align-items:center;background:#fff;color:#2a1306;border-radius:18px;padding:12px 16px;margin-top:12px}
+  .joinbox canvas{width:170px;height:170px;image-rendering:pixelated}
+  .joinbox .code{font-size:40px;letter-spacing:.18em;font-weight:700;color:#e64a19}
+  .note{opacity:.8;font-size:15px;line-height:1.4}
+  #scrHelp{max-width:760px;font-size:18px;line-height:1.5}
+  #scrHelp img{width:34px;height:34px;vertical-align:middle;margin-right:6px}
+  #scrResults{width:min(640px,94vw);text-align:center}
+  #resTitle{font-size:44px;font-weight:700;margin:0;text-shadow:0 4px 0 #0007}
+  .rrow{display:flex;justify-content:space-between;gap:10px;padding:4px 10px;font-size:18px;border-radius:10px}
+  .rrow:nth-child(odd){background:#ffffff10}
+  #resBtns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+  #pause,#joinpop,#codepop{position:fixed;inset:0;background:#160800cc;z-index:60;display:flex;align-items:center;justify-content:center}
+  .card{background:#fff;border:5px solid #6d2a00;border-radius:26px;padding:22px 26px;text-align:center;color:#2a1306;max-width:92vw;max-height:92vh;overflow:auto;box-sizing:border-box}
+  .card h2{font-size:32px}
+  .card button{display:block;width:250px;margin:10px auto;padding:12px;border-radius:16px;border:3px solid #6d2a00;background:#ff7043;color:#fff;font:700 20px Fredoka,sans-serif;cursor:pointer}
+  .card button.alt{background:#fff;color:#6d2a00}
+  #joinqr canvas{width:260px;height:260px;image-rendering:pixelated;border:8px solid #fff;border-radius:8px}
+  .code{font-size:42px;letter-spacing:.2em;font-weight:700;color:#e64a19}
+  #rotate{position:fixed;inset:0;z-index:90;background:#2a1306;color:#fff;display:none;align-items:center;justify-content:center;text-align:center;font-size:24px;padding:30px;box-sizing:border-box}
+  @media (orientation:portrait){ body.touch:not(.phone) #rotate{display:flex} }
+  #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px}
+  /* phone controller */
+  #phone{position:fixed;inset:0;background:radial-gradient(circle at 50% 25%,#6d2a00,#1e0a02);color:#fff;display:flex;flex-direction:column}
+  #phJoin{margin:auto;text-align:center;padding:24px;max-width:420px}
+  #phJoin h1{font-size:58px;margin:0;line-height:.95;color:#FFD54F;text-shadow:0 5px 0 #e64a19}
+  #phJoin p{opacity:.85;font-size:18px}
+  #phJoin input{font:700 24px Fredoka,sans-serif;padding:12px 16px;border-radius:16px;border:3px solid #6d2a00;width:100%;box-sizing:border-box;text-align:center}
+  .phbtn{font:700 24px Fredoka,sans-serif;padding:14px 20px;border-radius:18px;border:0;background:#FFD54F;color:#4a2a00;margin-top:14px;width:100%;box-shadow:0 5px 0 #b8860b}
+  #phPick{position:absolute;inset:0;overflow:auto;padding:12px 14px 20px;box-sizing:border-box}
+  #phPick .fcard canvas{height:70px}
+  @media (orientation:landscape){ #phPick .fgrid{grid-template-columns:repeat(6,1fr)} }
+  #phPickTop{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:19px}
+  #phPad{position:absolute;inset:0;touch-action:none}
+  #phTop{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:18px;z-index:2;pointer-events:none}
+  .phDot{width:26px;height:26px;border-radius:50%;border:3px solid #fff;flex:none}
+  #phState{margin-left:auto;font-size:14px;opacity:.8}
+  #phMid{position:absolute;left:0;right:0;top:46px;text-align:center;font-size:16px;opacity:.9;pointer-events:none;z-index:2}
+  #phStick{position:absolute;left:12px;bottom:14px;width:calc(55% - 16px);height:calc(100% - 70px);border-radius:24px;background:#ffffff10;border:3px dashed #ffffff44;touch-action:none;overflow:hidden}
+  #phStick .hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:1em;color:#ffffffaa;font-size:16px;pointer-events:none;line-height:1.4}
+  #pbB{position:absolute;right:6%;bottom:50%;transform:translateY(50%);width:min(36%,62vh);aspect-ratio:1;border-radius:50%;border:6px solid #fff;background:#ff7043;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;font-size:30px;touch-action:none;box-shadow:0 8px 0 #0006}
+  #pbB.on{transform:translateY(calc(50% + 6px));box-shadow:0 2px 0 #0006}
+  #pbB img{width:46%;margin-bottom:4px;pointer-events:none}
+  #phPad.flash{animation:fl .35s}
+  @keyframes fl{0%{background:#ff525266}100%{background:transparent}}
+  #phRes{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;gap:6px}
+  #phRes h2{font-size:30px;color:#FFD54F}
+</style>
+</head>
+<body>
+<div id="loading">Loading Boom Arena…</div>
+<div id="game"></div>
+<div id="topbtns">
+  <button id="btnHome" title="Back to set-up">🏠</button>
+  <button id="btnPause" title="Pause (P)">II</button>
+  <button id="btnMute" title="Sound (M)">♪</button>
+  <button id="btnFull" title="Fullscreen">⛶</button>
+</div>
+<button id="joinbtn">📱 Join QR</button>
+<div id="touch">
+  <div id="tpad"><div class="base idle" style="left:110px;top:calc(100% - 110px)"></div><div class="knob idle" style="left:110px;top:calc(100% - 110px)"></div></div>
+  <div id="tbomb">💣 BOMB</div>
+</div>
+<div id="menu">
+  <div id="scrTitle" class="scr hidden">
+    <div class="logo">BOOM<span>ARENA!</span></div>
+    <div class="bigbtns">
+      <button class="bb" id="mSolo">🎮 Play vs computer</button>
+      <button class="bb hot" id="mParty">📺 Party on the TV (phones)</button>
+      <button class="bb alt" id="mCode">🔑 Join with a code</button>
+      <button class="bb alt" id="mHelp">❓ How to play</button>
+    </div>
+  </div>
+  <div id="scrSetup" class="scr panel hidden">
+    <div class="setgrid">
+      <div>
+        <h2 id="pickTitle">Pick your bomber</h2>
+        <div class="fgrid" id="fgrid"></div>
+        <div class="note" id="pickNote" style="margin-top:8px"></div>
+        <div class="joinbox hidden" id="joinBox"><div id="joinQrSmall"></div><div><div style="font-weight:700">📱 Scan to join</div><div class="note" style="color:#6d2a00">or open the game and type</div><div class="code" id="joinCodeSmall">····</div></div></div>
+      </div>
+      <div>
+        <h3 style="margin-top:0">Players</h3>
+        <div class="plist" id="plist"></div>
+        <div style="display:flex;gap:8px;margin-top:8px"><button class="bb sm alt" id="addCpu">+ Add computer</button><button class="bb sm alt" id="shuffleCpu">🎲 Mix up computers</button></div>
+        <h3>Computer skill</h3>
+        <div class="seg" id="diffSeg"><button data-v="easy">😊 Easy</button><button data-v="normal">😎 Normal</button><button data-v="hard">😈 Hard</button></div>
+        <h3>Arena</h3>
+        <div class="arenas" id="arenaPick"></div>
+        <h3>Rounds to win</h3>
+        <div class="seg" id="winsSeg"><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button></div>
+        <div style="display:flex;gap:10px;margin-top:14px"><button class="bb sm alt" id="setBack">◀ Back</button><button class="bb hot" style="flex:1;min-width:0" id="setGo">BOOM! ▶</button></div>
+        <div class="note" id="setMsg" style="margin-top:6px;text-align:center"></div>
+      </div>
+    </div>
+  </div>
+  <div id="scrHelp" class="scr panel hidden">
+    <h2>❓ How to play</h2>
+    <div>Drop bombs to blast the crates and trap the other bombers. A bomb goes off after a couple of seconds, shooting flames in a <b>+</b> shape. Flames break crates, set off other bombs, and knock out anyone they touch – including you! Last bomber standing wins the round.</div>
+    <div style="margin:8px 0"><b>Move:</b> joystick / arrow keys / WASD / D-pad &nbsp; <b>Bomb:</b> BOMB button / Space / J / controller A</div>
+    <div><b>Power-ups</b> hide inside crates:</div>
+    <div style="margin:6px 0"><img src="boom-art/pu-bomb.png"> <b>Extra bomb</b> – drop one more at a time<br><img src="boom-art/pu-fire.png"> <b>Bigger blast</b> – your flames reach further<br><img src="boom-art/pu-speed.png"> <b>Speed boots</b> – run faster<br><img src="boom-art/pu-kick.png"> <b>Bomb kick</b> – walk into a bomb to send it sliding<br><img src="boom-art/pu-shield.png"> <b>Shield</b> – survives one blast</div>
+    <div class="note">After 2 minutes the arena starts closing in, so keep moving! In Party mode, phones join by scanning the QR code on the TV.</div>
+    <div style="text-align:center;margin-top:12px"><button class="bb sm" id="helpBack">Got it!</button></div>
+  </div>
+  <div id="scrResults" class="scr panel hidden">
+    <div id="resTitle">🏆</div>
+    <div class="note" id="resSub"></div>
+    <div id="resList" style="margin-top:8px"></div>
+    <div id="resBtns"></div>
+  </div>
+</div>
+<div id="pause" class="hidden">
+  <div class="card">
+    <h2>Paused</h2>
+    <button id="pResume">Resume</button>
+    <button id="pRestart" class="alt">Restart the match</button>
+    <button id="pChange" class="alt">Change players</button>
+    <button id="pTitle" class="alt">Main menu</button>
+  </div>
+</div>
+<div id="joinpop" class="hidden">
+  <div class="card">
+    <h2>📱 Scan to join or get back in</h2>
+    <div id="joinqr"></div>
+    <div>or open the game and type <span class="code" id="joincode"></span></div>
+    <div class="note" style="color:#6d2a00">Dropped out? Join with the same name to get your bomber back.<br>New players join the next match.</div>
+    <button id="joinclose">Close</button>
+  </div>
+</div>
+<div id="codepop" class="hidden">
+  <div class="card">
+    <h2>🔑 Join a party game</h2>
+    <div class="note" style="color:#6d2a00">Type the 4-letter code shown on the TV</div>
+    <input id="codein" maxlength="4" autocapitalize="characters" autocomplete="off" placeholder="CODE" style="font:700 40px Fredoka,sans-serif;letter-spacing:.2em;text-transform:uppercase;width:200px;text-align:center;padding:8px;border-radius:14px;border:3px solid #6d2a00;margin:10px auto;display:block">
+    <button id="codego">Join</button>
+    <button id="codeclose" class="alt">Cancel</button>
+  </div>
+</div>
+<div id="rotate"><div>📱↻<br><br>Turn your device sideways to play Boom Arena</div></div>
+<div id="phone" class="hidden">
+  <div id="phJoin">
+    <h1>BOOM<br>ARENA</h1>
+    <p>Your phone is the controller.<br>Game <b id="phCode"></b></p>
+    <input id="phName" maxlength="12" placeholder="Your name" autocomplete="off">
+    <button class="phbtn" id="phGo">Join the game</button>
+    <p id="phMsg"></p>
+  </div>
+  <div id="phPick" class="hidden">
+    <div id="phPickTop"><span class="phDot" id="phDot1"></span><b id="phWho1">Player</b><span style="margin-left:auto;font-size:14px;opacity:.8" id="phState1">Connecting…</span></div>
+    <div style="font-size:22px;font-weight:700;margin-bottom:8px" id="phPickH">Pick your bomber</div>
+    <div class="fgrid" id="phGrid"></div>
+    <button class="phbtn" id="phStart">▶ Start the match</button>
+    <div class="note" id="phPickNote" style="text-align:center;margin-top:8px"></div>
+  </div>
+  <div id="phPad" class="hidden">
+    <div id="phTop"><span class="phDot" id="phDot"></span><b id="phWho">Player</b><span id="phState">Connecting…</span></div>
+    <div id="phMid"></div>
+    <div id="phStick"><div class="hint">Put your thumb anywhere here<br>and slide to move</div><div class="base hidden"></div><div class="knob hidden"></div></div>
+    <div id="pbB"><img src="boom-art/bomb0.png">BOMB</div>
+  </div>
+  <div id="phRes" class="hidden">
+    <h2 id="phResT">🏆</h2>
+    <div id="phResS" style="font-size:18px;opacity:.9"></div>
+    <button class="phbtn" id="phAgain" style="max-width:340px">🔁 Play again</button>
+    <button class="phbtn" id="phRepick" style="max-width:340px;background:#fff;color:#6d2a00;box-shadow:0 5px 0 #999">👥 Change bomber</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+// =====================================================================
+//  BOOM ARENA – a bomb-dropping party game with the Bounce Brawl fighters.
+//  Code by Claude, art by ChatGPT. 1-4 players: this device, game controllers,
+//  phones (party) and computer bombers.
+// =====================================================================
+const GAME_URL = 'https://jimmywilson1979-arch.github.io/buzz-in/boom.html';
+const PHASER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.min.js';
+const VW = 1280, VH = 720;
+const COLS = 15, ROWS = 11, T = 56, BX = (VW - COLS * T) / 2, BY = 78;
+const QS = new URLSearchParams(location.search);
+const LOCAL = QS.has('local');
+const IS_TOUCH = (window.matchMedia && matchMedia('(pointer: coarse)').matches) || navigator.maxTouchPoints > 0;
+if (IS_TOUCH) document.body.classList.add('touch');
+const store = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+const code4 = () => { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; let s = ''; for (let i = 0; i < 4; i++) s += A[Math.floor(Math.random() * A.length)]; return s; };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+function loadScript(src) { return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
+const $ = id => document.getElementById(id);
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+const META = {"pip":{"idle":[0,132,155,78,153],"run":[136,133,150,83,148],"jump":[273,131,142,71,140],"punch":[408,156,143,67,141],"dash":[568,122,128,65,126],"slam":[694,138,142,80,140],"hurt":[836,145,133,89,131],"win":[985,125,150,66,148],"run0":[1118,139,154,73,154],"run1":[1261,134,150,72,150],"run2":[1399,139,145,71,154],"run3":[1542,134,153,71,153],"run4":[1680,135,149,72,149],"run5":[1819,141,142,71,156]},"boulder":{"idle":[0,215,200,114,198],"run":[219,224,195,118,193],"jump":[447,198,184,89,182],"punch":[649,240,187,98,185],"dash":[893,210,168,81,166],"slam":[1107,245,178,135,176],"hurt":[1356,225,182,124,180],"win":[1585,204,212,96,210],"run0":[1797,219,199,110,199],"run1":[2020,207,192,102,191],"run2":[2231,222,184,113,201],"run3":[2457,224,201,112,200],"run4":[2685,217,195,108,195],"run5":[2906,226,195,114,208]},"bonk":{"idle":[0,187,206,95,204],"run":[191,204,196,100,194],"jump":[399,198,189,88,187],"punch":[601,225,194,86,192],"dash":[830,221,161,86,159],"slam":[1055,220,180,125,178],"hurt":[1279,217,188,129,186],"win":[1500,217,212,115,210],"run0":[1725,197,199,106,198],"run1":[1926,190,189,104,189],"run2":[2120,188,190,99,208],"run3":[2312,206,201,110,201],"run4":[2522,198,190,106,189],"run5":[2724,196,196,103,211]},"zippa":{"idle":[0,119,140,61,138],"run":[123,146,136,76,134],"jump":[273,146,136,76,134],"punch":[423,156,138,53,136],"dash":[583,150,111,60,109],"slam":[737,138,118,81,116],"hurt":[879,141,121,85,119],"win":[1024,126,129,60,127],"cling":[1154,109,142,74,140],"run0":[1271,122,142,64,142],"run1":[1397,126,133,69,133],"run2":[1527,124,136,68,146],"run3":[1655,134,143,67,143],"run4":[1793,125,134,68,134],"run5":[1922,131,136,69,150]},"gloop":{"idle":[0,135,96,68,94],"run":[139,143,88,70,86],"jump":[286,119,105,46,103],"punch":[409,190,91,69,89],"dash":[603,160,75,83,73],"slam":[767,165,80,82,78],"hurt":[936,117,96,54,94],"win":[1057,128,102,63,100],"puddle":[1189,158,41,79,39],"fist":[1351,118,64,29,62],"run0":[1477,126,100,64,99],"run1":[1607,135,96,78,96],"run2":[1746,161,87,100,87],"run3":[1911,167,82,108,82],"run4":[2082,152,88,94,88],"run5":[2238,130,97,63,98]},"frostbite":{"idle":[0,148,140,85,138],"run":[152,148,139,78,137],"jump":[304,165,136,82,134],"punch":[473,173,132,71,130],"dash":[650,159,120,72,118],"slam":[813,174,133,95,131],"hurt":[991,183,130,105,128],"win":[1178,164,144,96,142],"run0":[1350,130,139,70,139],"run1":[1484,124,135,70,135],"run2":[1612,134,138,70,140],"run3":[1750,134,143,70,142],"run4":[1888,127,142,71,141],"run5":[2019,133,138,72,147]}};
+const FIGHTERS = {
+  pip: { name: 'PIP', h: 70 }, boulder: { name: 'BOULDER', h: 76 }, bonk: { name: 'BONK', h: 78 },
+  zippa: { name: 'ZIPPA', h: 68 }, gloop: { name: 'GLOOP', h: 50 }, frostbite: { name: 'FROSTBITE', h: 66 },
+};
+const FKEYS = Object.keys(FIGHTERS);
+const SLOT_COL = ['#ff3b3b', '#2f8cff', '#2fd25a', '#ffc21a'];
+const SLOT_HEX = [0xff3b3b, 0x2f8cff, 0x2fd25a, 0xffc21a];
+const ARENAS = {
+  sky: { name: 'Sky Island', tiles: 'sky', music: 'sunny', bg: 0x4fa8e0 },
+  ice: { name: 'Frozen Dojo', tiles: 'ice', music: 'snow', bg: 0x6b74b8 },
+  lava: { name: 'Lava Quarry', tiles: 'lava', music: 'boss', bg: 0x3a1208 },
+};
+const AKEYS = Object.keys(ARENAS);
+const MUSIC_FILES = { sunny: 'pip-art/music/sunny.mp3', snow: 'pip-art/music/snow.mp3', boss: 'pip-art/music/boss.mp3', cloud: 'pip-art/music/cloud.mp3' };
+const ITEMS = ['bomb', 'fire', 'speed', 'kick', 'shield'];
+const ITEM_W = { bomb: 4, fire: 4, speed: 2.5, kick: 1.3, shield: 1.2 };
+const RULES = { fuse: 2.4, flame: 0.55, baseSpeed: 3.3, speedUp: 0.55, maxSpeed: 6, crates: 0.6, dropChance: 0.36, roundTime: 120, kickSpeed: 9 };
+
+const Sound = (() => {
+  let ctx = null, master, sfxGain, noiseBuf, muted = store.get('boom_muted', false);
+  const TR = {}; let want = null, playing = null, trackGain = null, srcs = [], timer = null;
+  function init() {
+    if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
+    try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ctx = null; return; }
+    master = ctx.createGain(); master.gain.value = muted ? 0 : 0.7; master.connect(ctx.destination);
+    sfxGain = ctx.createGain(); sfxGain.gain.value = 0.55; sfxGain.connect(master);
+    noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 0.5, ctx.sampleRate);
+    const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    if (want) music(want);
+  }
+  function tone(f, dur, o = {}) {
+    if (!ctx) return; const t = ctx.currentTime + (o.when || 0), osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = o.type || 'square'; osc.frequency.setValueAtTime(f, t); if (o.slideTo) osc.frequency.exponentialRampToValueAtTime(o.slideTo, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(o.vol || 0.3, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(g); g.connect(sfxGain); osc.start(t); osc.stop(t + dur + 0.03);
+  }
+  function noise(dur, vol = 0.2, o = {}) {
+    if (!ctx) return; const t = ctx.currentTime + (o.when || 0), src = ctx.createBufferSource(); src.buffer = noiseBuf;
+    const f = ctx.createBiquadFilter(); f.type = o.hp ? 'highpass' : 'lowpass'; f.frequency.value = o.freq || 1800;
+    const g = ctx.createGain(); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(f); f.connect(g); g.connect(sfxGain); src.start(t); src.stop(t + dur + 0.02);
+  }
+  const sfx = {
+    jump() { tone(330, 0.14, { slideTo: 700, vol: 0.18 }); },
+    dbl() { tone(520, 0.15, { type: 'triangle', slideTo: 1200, vol: 0.32 }); },
+    swing() { noise(0.09, 0.18, { hp: true, freq: 2200 }); },
+    hit(k) { const s = clamp(k / 1000, 0.2, 1.3); tone(220 - s * 80, 0.12 + s * 0.08, { type: 'triangle', slideTo: 60, vol: 0.35 + s * 0.25 }); noise(0.08 + s * 0.06, 0.25 + s * 0.2, { freq: 1400 }); },
+    big() { tone(120, 0.5, { type: 'sawtooth', slideTo: 40, vol: 0.4 }); noise(0.4, 0.5, { freq: 900 }); },
+    ko() { tone(900, 0.6, { type: 'sawtooth', slideTo: 90, vol: 0.3 }); noise(0.6, 0.5, { freq: 2500 }); tone(70, 0.6, { type: 'sine', vol: 0.6 }); },
+    land() { noise(0.05, 0.12, { freq: 900 }); },
+    quake() { tone(70, 0.5, { type: 'sawtooth', slideTo: 35, vol: 0.5 }); noise(0.5, 0.45, { freq: 500 }); },
+    spring() { tone(170, 0.35, { type: 'sine', slideTo: 1150, vol: 0.4 }); },
+    whip() { [0, .1, .2].forEach(w => noise(0.08, 0.2, { hp: true, freq: 3000, when: w })); },
+    goo() { tone(300, 0.25, { type: 'sine', slideTo: 90, vol: 0.4 }); },
+    ice() { tone(1400, 0.3, { type: 'triangle', slideTo: 2600, vol: 0.15 }); noise(0.3, 0.15, { hp: true, freq: 5000 }); },
+    count() { tone(660, 0.18, { vol: 0.25 }); },
+    go() { [523, 784, 1047].forEach((f, i) => tone(f, 0.22, { vol: 0.25, when: i * 0.07 })); },
+    win() { [523, 659, 784, 1047, 0, 784, 1047, 1319].forEach((f, i) => f && tone(f, 0.22, { vol: 0.2, when: i * 0.11 })); },
+    select() { tone(660, 0.07, { vol: 0.18 }); tone(990, 0.1, { vol: 0.18, when: 0.05 }); },
+    join() { [659, 880, 1175].forEach((f, i) => tone(f, 0.14, { type: 'triangle', vol: 0.35, when: i * 0.08 })); },
+  };
+  function load(k) {
+    if (!ctx || TR[k] !== undefined || !MUSIC_FILES[k]) return; TR[k] = 'loading';
+    fetch(MUSIC_FILES[k]).then(r => r.arrayBuffer()).then(b => new Promise((res, rej) => ctx.decodeAudioData(b, res, rej)))
+      .then(buf => { TR[k] = buf; if (want === k && playing !== k) play(k); }).catch(() => { TR[k] = null; });
+  }
+  function stop() { if (timer) { clearInterval(timer); timer = null; } srcs.forEach(s => { try { s.stop(); } catch (e) {} }); srcs = []; playing = null; }
+  function play(k) {
+    stop(); const buf = TR[k]; if (!(buf instanceof AudioBuffer)) return; playing = k;
+    if (!trackGain) { trackGain = ctx.createGain(); trackGain.gain.value = 0.38; trackGain.connect(master); }
+    let next = ctx.currentTime + 0.05; const xf = 1;
+    const one = at => { const s = ctx.createBufferSource(), g = ctx.createGain(); s.buffer = buf; s.connect(g); g.connect(trackGain);
+      g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(1, at + xf); g.gain.setValueAtTime(1, at + buf.duration - xf); g.gain.linearRampToValueAtTime(0, at + buf.duration);
+      s.start(at); s.stop(at + buf.duration + 0.05); srcs.push(s); s.onended = () => { srcs = srcs.filter(x => x !== s); }; };
+    const sched = () => { while (next < ctx.currentTime + 2) { one(next); next += buf.duration - xf; } };
+    sched(); timer = setInterval(sched, 400);
+  }
+  function music(k) { want = k; if (!ctx) return; if (!k) { stop(); return; } if (playing === k) return; if (TR[k] instanceof AudioBuffer) play(k); else { stop(); load(k); } }
+  function setMuted(m) { muted = m; store.set('boom_muted', m); if (master) master.gain.value = m ? 0 : 0.7; }
+  return { init, sfx, music, setMuted, tone, noise, get muted() { return muted; } };
+})();
+
+// extra sounds for Boom Arena
+const tone = (...a) => Sound.tone(...a), noise = (...a) => Sound.noise(...a);
+Object.assign(Sound.sfx, {
+  drop() { tone(180, 0.1, { type: 'triangle', slideTo: 90, vol: 0.4 }); },
+  boom() { noise(0.45, 0.55, { freq: 700 }); tone(90, 0.4, { type: 'sawtooth', slideTo: 35, vol: 0.35 }); },
+  pickup() { [784, 988, 1319].forEach((f, i) => tone(f, 0.1, { vol: 0.2, when: i * 0.05 })); },
+  kick() { tone(240, 0.12, { type: 'square', slideTo: 520, vol: 0.25 }); },
+  shield() { tone(900, 0.3, { type: 'sine', slideTo: 200, vol: 0.35 }); },
+  die() { [494, 415, 349, 262].forEach((f, i) => tone(f, 0.2, { type: 'triangle', vol: 0.4, when: i * 0.13 })); },
+  thud() { tone(70, 0.18, { type: 'triangle', vol: 0.5 }); noise(0.1, 0.25, { freq: 500 }); },
+  crate() { noise(0.18, 0.3, { freq: 1500 }); },
+});
+
+const SUPA_URL = 'https://uqwlmegbelyqtbegxqlz.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxd2xtZWdiZWx5cXRiZWd4cWx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3NTYzNzAsImV4cCI6MjEwNzMzMjM3MH0.bSeF8_kwKqSrEj3n8Ku2OeSU8E5nMqJj0hcfgXb8cW0';
+const ICE = [{ urls: 'stun:stun.l.google.com:19302' }];
+let sb = null;
+async function chan(name, onMsg) {
+  if (LOCAL) { const bc = new BroadcastChannel(name); bc.onmessage = e => onMsg(e.data); return { send: m => bc.postMessage(m), close: () => bc.close() }; }
+  if (!window.supabase) await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js');
+  if (!sb) sb = window.supabase.createClient(SUPA_URL, SUPA_KEY, { realtime: { params: { eventsPerSecond: 30 } } });
+  const ch = sb.channel(name, { config: { broadcast: { self: false } } });
+  ch.on('broadcast', { event: 'm' }, ({ payload }) => onMsg(payload));
+  await new Promise((res, rej) => {
+    let done = false; const t = setTimeout(() => { if (!done) { done = true; rej(new Error('timeout')); } }, 12000);
+    ch.subscribe(st => { if (done) return; if (st === 'SUBSCRIBED') { done = true; clearTimeout(t); res(); } else if (st === 'CHANNEL_ERROR' || st === 'TIMED_OUT' || st === 'CLOSED') { done = true; clearTimeout(t); rej(new Error(st)); } });
+  });
+  return { send: m => ch.send({ type: 'broadcast', event: 'm', payload: m }), close: () => sb.removeChannel(ch) };
+}
+function iceDone(pc) { return new Promise(res => { if (pc.iceGatheringState === 'complete') return res(); const t = setTimeout(res, 2500); pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete') { clearTimeout(t); res(); } }); }); }
+
+// =====================================================================
+//  INPUT: keyboard + touch (this device), game controllers, phones
+// =====================================================================
+const Keys = { down: new Set(), q: 0 };
+addEventListener('keydown', e => {
+  if (e.target && e.target.tagName === 'INPUT') return;
+  const k = e.key.toLowerCase(); if (Keys.down.has(k)) return; Keys.down.add(k);
+  if ([' ', 'j', 'x', 'enter'].includes(k) && App.screen === 'play') Keys.q++;
+  if (k === 'p' || k === 'escape') { if (App.screen === 'play') togglePause(); }
+  if (k === 'm') toggleMute();
+  if (k === 'enter' && App.screen === 'setup') App.go();
+  if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) e.preventDefault();
+});
+addEventListener('keyup', e => Keys.down.delete(e.key.toLowerCase()));
+addEventListener('blur', () => Keys.down.clear());
+const Touch = { x: 0, y: 0, q: 0 };
+function localInput() {
+  const d = Keys.down, has = (...a) => a.some(k => d.has(k));
+  let x = (has('d', 'arrowright') ? 1 : 0) - (has('a', 'arrowleft') ? 1 : 0), y = (has('s', 'arrowdown') ? 1 : 0) - (has('w', 'arrowup') ? 1 : 0);
+  if (Touch.x || Touch.y) { x = Touch.x; y = Touch.y; }
+  const r = { x, y, bomb: Keys.q + Touch.q > 0 }; Keys.q = 0; Touch.q = 0; return r;
+}
+const Pads = { prev: {} };
+function padInput(i) {
+  const gp = navigator.getGamepads ? navigator.getGamepads()[i] : null; if (!gp || !gp.connected) return { x: 0, y: 0, bomb: false };
+  const b = n => !!(gp.buttons[n] && gp.buttons[n].pressed), pr = Pads.prev[i] || {};
+  let x = gp.axes[0] || 0, y = gp.axes[1] || 0; if (Math.abs(x) < 0.35) x = 0; if (Math.abs(y) < 0.35) y = 0;
+  if (b(14)) x = -1; if (b(15)) x = 1; if (b(12)) y = -1; if (b(13)) y = 1;
+  const now = { b: b(0) || b(2) || b(1), st: b(9) }; Pads.prev[i] = now;
+  return { x, y, bomb: now.b && !pr.b, startP: now.st && !pr.st, anyP: (now.b && !pr.b) || (now.st && !pr.st) };
+}
+
+// =====================================================================
+//  NETWORK – phones join the TV (same set-up as Bounce Brawl)
+// =====================================================================
+const Net = {
+  room: null, main: null, phones: {}, status: '',
+  async host() {
+    if (this.room) return;
+    this.room = (QS.get('tv') || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4) || code4();
+    try { this.main = await chan('boom-' + this.room, m => this.onMain(m)); this.status = 'ready'; } catch (e) { this.status = 'error'; App.refresh(); return; }
+    setInterval(() => this.bcast({ t: 'state', st: this.pub() }), 2000);
+    App.refresh();
+  },
+  joinUrl() { const base = /^https?:/.test(location.href) && !/claudeusercontent|sandbox/.test(location.host) ? location.origin + location.pathname : GAME_URL; return base + '?join=' + this.room + (LOCAL ? '&local=1' : ''); },
+  bcast(m) { this.main && this.main.send(m); },
+  sendTo(p, m) { if (!p) return; if (p.dc && p.dc.readyState === 'open') { try { p.dc.send(JSON.stringify(m)); return; } catch (e) {} } p.ch && p.ch.send(m); },
+  list() { return Object.values(this.phones); },
+  pub() { return { phase: App.phase, msg: App.lastMsg || '', players: this.list().map(p => ({ id: p.id, slot: p.slot, name: p.name, f: p.f })) }; },
+  onMain(m) { if (m && m.t === 'join' && m.id) this.addPhone(m); },
+  async addPhone(m) {
+    let p = this.phones[m.id];
+    if (!p) {
+      const n = String(m.name || '').trim().toLowerCase();
+      const old = this.list().find(q => n && q.name.toLowerCase() === n && Date.now() - q.seen > 6000);
+      if (old) { delete this.phones[old.id]; p = old; p.id = m.id; p.ch = null; p.pc = null; p.dc = null; p.pending = null; this.phones[m.id] = p; }
+    }
+    if (!p) {
+      const slot = App.freeSlot(); if (slot < 0) { this.bcast({ t: 'full', id: m.id }); return; }
+      p = this.phones[m.id] = { id: m.id, slot, f: App.unusedFighter(), inp: { x: 0, y: 0 }, cnt: -1, q: 0, seen: Date.now(), ch: null, pc: null, dc: null, pending: null, waiting: App.screen === 'play' };
+      App.dropCpuForSlot(slot); Sound.sfx.join && Sound.sfx.join();
+    }
+    p.name = String(m.name || 'Player').slice(0, 12); p.seen = Date.now();
+    if (!p.ch && !p.pending) p.pending = chan('boom-' + this.room + '-' + m.id, msg => this.onPad(p, msg)).then(ch => { p.ch = ch; p.pending = null; }).catch(() => { p.pending = null; });
+    if (p.pending) await p.pending;
+    this.welcome(p); App.refresh();
+  },
+  welcome(p) { if (p && p.ch) p.ch.send({ t: 'welcome', slot: p.slot, color: SLOT_COL[p.slot], f: p.f, phase: App.phase, waiting: !!p.waiting, msg: App.lastMsg || '' }); },
+  async answer(p, sdp) {
+    try { p.pc && p.pc.close(); } catch (e) {}
+    const pc = p.pc = new RTCPeerConnection({ iceServers: ICE });
+    pc.ondatachannel = e => { const dc = e.channel; p.dc = dc; dc.onmessage = ev => { let m; try { m = JSON.parse(ev.data); } catch (_) { return; } this.onPad(p, m); }; dc.onclose = () => { if (p.dc === dc) p.dc = null; }; };
+    try { await pc.setRemoteDescription({ type: 'offer', sdp }); await pc.setLocalDescription(await pc.createAnswer()); await iceDone(pc); if (p.pc === pc) p.ch.send({ t: 'answer', sdp: pc.localDescription.sdp }); } catch (e) {}
+  },
+  onPad(p, m) {
+    if (!m || !m.t) return; p.seen = Date.now();
+    if (m.t === 'offer') return this.answer(p, m.sdp);
+    if (m.t === 'in') { p.inp = { x: clamp(+m.x || 0, -1, 1), y: clamp(+m.y || 0, -1, 1) }; if (typeof m.nb === 'number') { if (p.cnt >= 0 && m.nb !== p.cnt) p.q++; p.cnt = m.nb; } return; }
+    if (m.t === 'pick' && FIGHTERS[m.f]) { p.f = m.f; App.refresh(); this.welcome(p); return; }
+    if (m.t === 'start') App.phoneStart(p);
+  },
+  bySlot(slot) { return this.list().find(q => q.slot === slot) || null; },
+  read(slot) { const p = this.bySlot(slot); if (!p) return { x: 0, y: 0, bomb: false }; const fresh = Date.now() - p.seen < 2500, q = p.q; p.q = 0; return { x: fresh ? p.inp.x : 0, y: fresh ? p.inp.y : 0, bomb: q > 0 }; },
+  online(slot) { const p = this.bySlot(slot); return !!p && Date.now() - p.seen < 6000; },
+  buzz(slot, ms) { const p = this.bySlot(slot); if (p) this.sendTo(p, { t: 'buzz', ms }); },
+  phaseAll() { this.list().forEach(p => { if (p.ch) this.welcome(p); }); this.bcast({ t: 'state', st: this.pub() }); },
+};
+
+// =====================================================================
+//  APP: menus, players, settings
+// =====================================================================
+const App = {
+  mode: 'solo', screen: 'title', phase: 'title', lastMsg: '',
+  me: { f: store.get('boom_me', 'pip') }, pads: [], cpus: [],
+  diff: store.get('boom_diff', 'normal'), arena: store.get('boom_arena', 'sky'), wins: store.get('boom_wins', 3), match: null,
+  humans() {
+    const out = [];
+    if (this.mode === 'solo') out.push({ kind: 'me', slot: 0, f: this.me.f, name: 'You' });
+    this.pads.forEach(p => out.push({ kind: 'pad', slot: p.slot, f: p.f, name: '🎮 Controller ' + (p.i + 1), i: p.i }));
+    if (this.mode === 'party') Net.list().forEach(p => out.push({ kind: 'phone', slot: p.slot, f: p.f, name: p.name, waiting: p.waiting, online: Net.online(p.slot) }));
+    return out;
+  },
+  roster() { return this.humans().concat(this.cpus.map(c => ({ kind: 'cpu', slot: c.slot, f: c.f, name: 'CPU' }))).sort((a, b) => a.slot - b.slot); },
+  usedSlots() { return new Set(this.roster().map(r => r.slot)); },
+  freeSlot() { const u = new Set(this.humans().map(h => h.slot)); for (let i = 0; i < 4; i++) if (!u.has(i)) return i; return -1; },
+  freeCpuSlot() { const u = this.usedSlots(); for (let i = 0; i < 4; i++) if (!u.has(i)) return i; return -1; },
+  unusedFighter() { const used = new Set(this.roster().map(r => r.f)); const free = FKEYS.filter(k => !used.has(k)); return pick(free.length ? free : FKEYS); },
+  dropCpuForSlot(slot) { const c = this.cpus.find(c => c.slot === slot); if (!c) return; const u = this.usedSlots(); u.add(slot); let f = -1; for (let i = 0; i < 4; i++) if (!u.has(i)) { f = i; break; } if (f >= 0) c.slot = f; else this.cpus = this.cpus.filter(x => x !== c); },
+  addCpu() { const s = this.freeCpuSlot(); if (s < 0) return; this.cpus.push({ slot: s, f: this.unusedFighter() }); this.refresh(); },
+  title() { this.mode = 'solo'; this.screen = 'title'; this.phase = 'title'; document.body.classList.remove('party', 'solo', 'playing'); show('scrTitle'); Scenes.backdrop(); Sound.music('cloud'); Net.phaseAll(); },
+  setup(mode) {
+    if (mode) {
+      this.mode = mode; this.pads = [];
+      if (mode === 'solo' && !this.cpus.length) { this.cpus = [{ slot: 1, f: this.unusedFighter() }, { slot: 2, f: this.unusedFighter() }, { slot: 3, f: this.unusedFighter() }]; }
+      if (mode === 'party') { this.cpus = this.cpus.filter(c => c.slot !== 0); Net.host(); }
+    }
+    document.body.classList.toggle('party', this.mode === 'party'); document.body.classList.toggle('solo', this.mode !== 'party'); document.body.classList.remove('playing');
+    this.screen = 'setup'; this.phase = 'lobby'; Net.list().forEach(p => p.waiting = false);
+    show('scrSetup'); Scenes.backdrop(); Sound.music('cloud'); this.refresh(); Net.phaseAll();
+  },
+  refresh() {
+    if (this.screen !== 'setup') return;
+    const party = this.mode === 'party', ros = this.roster();
+    $('pickTitle').textContent = party ? 'The bombers' : 'Pick your bomber';
+    $('pickNote').textContent = party ? 'Everyone picks their bomber on their own phone. Tap a computer player on the right to change it.' : 'Tap a bomber to choose. Tap a computer player on the right to change it.';
+    const g = $('fgrid'); if (!g.children.length) FKEYS.forEach(k => {
+      const d = document.createElement('div'); d.className = 'fcard'; d.dataset.f = k; d.innerHTML = '<div class="tags"></div>';
+      d.appendChild(portrait(k, 150, 100)); d.insertAdjacentHTML('beforeend', `<b>${FIGHTERS[k].name}</b>`);
+      d.onclick = () => { if (this.mode === 'solo') { this.me.f = k; store.set('boom_me', k); Sound.init(); Sound.sfx.select(); this.refresh(); } };
+      g.appendChild(d);
+    });
+    [...g.children].forEach(d => { const k = d.dataset.f; d.classList.toggle('sel', !party && this.me.f === k); d.querySelector('.tags').innerHTML = ros.filter(r => r.f === k).map(r => `<span class="tag" style="background:${SLOT_COL[r.slot]}">${r.kind === 'cpu' ? 'CPU' : 'P' + (r.slot + 1)}</span>`).join(''); });
+    const pl = $('plist'); pl.innerHTML = '';
+    if (!ros.length) pl.innerHTML = '<div class="note">Waiting for players… scan the QR code with a phone to join.</div>';
+    ros.forEach(r => {
+      const row = document.createElement('div'); row.className = 'prow';
+      const label = r.kind === 'cpu' ? '🤖 Computer' : r.kind === 'me' ? '👆 You' : r.kind === 'phone' ? `📱 ${esc(r.name)}${r.online === false ? ' (offline)' : ''}` : r.name;
+      row.innerHTML = `<span class="dot" style="background:${SLOT_COL[r.slot]}"></span>`; row.appendChild(portrait(r.f, 60, 50));
+      row.insertAdjacentHTML('beforeend', `<span class="who"><b>P${r.slot + 1}</b> ${label} · ${FIGHTERS[r.f].name}</span>`);
+      if (r.kind === 'cpu') { const c = this.cpus.find(c => c.slot === r.slot); row.style.cursor = 'pointer'; row.onclick = e => { if (e.target.tagName === 'BUTTON') return; c.f = FKEYS[(FKEYS.indexOf(c.f) + 1) % FKEYS.length]; Sound.sfx.select(); this.refresh(); }; const b = document.createElement('button'); b.textContent = '✕'; b.onclick = () => { this.cpus = this.cpus.filter(x => x !== c); this.refresh(); }; row.appendChild(b); }
+      if (r.kind === 'pad') { const b = document.createElement('button'); b.textContent = '✕'; b.onclick = () => { this.pads = this.pads.filter(x => x.i !== r.i); this.refresh(); }; row.appendChild(b); }
+      if (r.kind === 'phone') { const b = document.createElement('button'); b.textContent = '✕'; b.onclick = () => { const p = Net.bySlot(r.slot); if (p) { delete Net.phones[p.id]; Net.bcast({ t: 'kick', id: p.id }); } this.refresh(); }; row.appendChild(b); }
+      pl.appendChild(row);
+    });
+    $('addCpu').disabled = this.freeCpuSlot() < 0; $('addCpu').style.opacity = this.freeCpuSlot() < 0 ? .4 : 1;
+    [...$('diffSeg').children].forEach(b => b.classList.toggle('on', b.dataset.v === this.diff));
+    [...$('winsSeg').children].forEach(b => b.classList.toggle('on', +b.dataset.v === this.wins));
+    const ap = $('arenaPick'); if (!ap.children.length) AKEYS.concat(['random']).forEach(k => {
+      const d = document.createElement('div'); d.className = 'arena'; d.dataset.a = k;
+      if (k === 'random') { d.textContent = '🎲 Random'; d.style.background = 'linear-gradient(135deg,#ff7043,#ffb300)'; d.style.alignItems = 'center'; d.style.fontSize = '16px'; }
+      else { d.style.backgroundImage = `url(boom-art/${k}-crate.png),url(boom-art/${k}-floor.png)`; d.style.backgroundPosition = 'left center, right center'; d.style.backgroundRepeat = 'no-repeat, repeat'; d.textContent = ARENAS[k].name; }
+      d.onclick = () => { this.arena = k; store.set('boom_arena', k); Sound.sfx.select(); this.refresh(); }; ap.appendChild(d);
+    });
+    [...ap.children].forEach(d => d.classList.toggle('on', d.dataset.a === this.arena));
+    $('joinBox').classList.toggle('hidden', !party);
+    if (party) { $('joinCodeSmall').textContent = Net.status === 'error' ? 'offline' : (Net.room || '····'); const box = $('joinQrSmall'); if (Net.room && box.dataset.room !== Net.room) { box.innerHTML = ''; const cv = qrCanvas(Net.joinUrl(), 4); if (cv) box.appendChild(cv); box.dataset.room = Net.room; } }
+    const n = ros.filter(r => !r.waiting).length;
+    $('setGo').disabled = n < 2; $('setGo').style.opacity = n < 2 ? .5 : 1;
+    $('setMsg').textContent = n < 2 ? (party ? 'You need at least 2 bombers – join with a phone, or add a computer player.' : 'Add a computer player to play against.') : (n + ' bombers ready!' + (party ? ' Any phone can press Start too.' : ''));
+  },
+  go() {
+    const ros = this.roster().filter(r => !r.waiting); if (ros.length < 2) return;
+    Sound.init(); Net.list().forEach(p => p.waiting = false);
+    this.match = { roster: ros, wins: {}, round: 0, arena: this.arena, diff: this.diff, need: this.wins, kos: {} };
+    ros.forEach(r => { this.match.wins[r.slot] = 0; this.match.kos[r.slot] = 0; });
+    this.nextRound();
+  },
+  nextRound() {
+    const m = this.match; m.round++;
+    const arena = m.arena === 'random' ? pick(AKEYS) : m.arena;
+    this.screen = 'play'; this.phase = 'play'; hideScreens(); document.body.classList.add('playing');
+    Scenes.round({ arena, roster: m.roster, diff: m.diff, round: m.round, match: m });
+    Net.phaseAll();
+  },
+  phoneStart() { if (this.screen === 'setup') this.go(); else if (this.screen === 'results' && this.again) this.again(); },
+  roundOver(winner) {
+    const m = this.match;
+    if (winner) m.wins[winner.slot]++;
+    const champ = m.roster.find(r => m.wins[r.slot] >= m.need);
+    this.lastMsg = winner ? FIGHTERS[winner.f].name + ' won round ' + m.round : 'Draw!';
+    if (!champ) { this.phase = 'between'; Net.phaseAll(); setTimeout(() => { if (App.match === m && App.screen === 'play') App.nextRound(); }, 3200 / +(QS.get('fast') || 1)); return; }
+    // match over
+    this.screen = 'results'; this.phase = 'results'; this.lastMsg = (champ.kind === 'cpu' ? 'CPU ' : '') + FIGHTERS[champ.f].name + ' wins!';
+    document.body.classList.remove('playing');
+    const name = r => r.kind === 'cpu' ? 'CPU' : r.kind === 'me' ? 'You' : r.name;
+    $('resTitle').innerHTML = '🏆 ' + FIGHTERS[champ.f].name + ' WINS!'; $('resTitle').style.color = SLOT_COL[champ.slot];
+    $('resSub').textContent = champ.kind === 'cpu' ? 'The computer won this time!' : name(champ) + ' is the Boom Arena champion!';
+    $('resList').innerHTML = m.roster.slice().sort((a, b) => m.wins[b.slot] - m.wins[a.slot] || m.kos[b.slot] - m.kos[a.slot]).map((r, i) => `<div class="rrow"><span>${['🥇', '🥈', '🥉', '4th'][i]} <b style="color:${SLOT_COL[r.slot]}">${esc(name(r))}</b> · ${FIGHTERS[r.f].name}</span><span>${'★'.repeat(m.wins[r.slot]) || '–'} · ${m.kos[r.slot]} KO${m.kos[r.slot] === 1 ? '' : 's'}</span></div>`).join('');
+    const bb = $('resBtns'); bb.innerHTML = '';
+    this.again = () => App.go();
+    [['🔁 Play again', () => App.go(), 'hot'], ['👥 Change players', () => App.setup(), 'alt'], ['🏠 Main menu', () => App.title(), 'alt']].forEach(([l, fn, c]) => { const b = document.createElement('button'); b.className = 'bb sm ' + c; b.textContent = l; b.onclick = () => { Sound.init(); Sound.sfx.select(); fn(); }; bb.appendChild(b); });
+    show('scrResults'); Net.phaseAll();
+  },
+};
+function show(id) { hideScreens(); $(id).classList.remove('hidden'); }
+function hideScreens() { ['scrTitle', 'scrSetup', 'scrHelp', 'scrResults'].forEach(s => $(s).classList.add('hidden')); }
+
+const webp = () => window.__webpOK !== false;
+function artUrl(name, fallback) { return 'brawl-art/' + name + '.' + (webp() ? 'webp' : (fallback || 'png')); }
+const SheetImg = {};
+function sheetImg(f) { if (!SheetImg[f]) { const im = new Image(); im.src = artUrl(f); SheetImg[f] = im; } return SheetImg[f]; }
+function portrait(f, w, h, pose = 'idle') {
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const c = cv.getContext('2d'), im = sheetImg(f);
+  const draw = () => { const m = META[f][pose], s = Math.min(w / m[1], h / m[2]); c.clearRect(0, 0, w, h); c.drawImage(im, m[0], 0, m[1], m[2], (w - m[1] * s) / 2, h - m[2] * s, m[1] * s, m[2] * s); };
+  if (im.complete && im.naturalWidth) draw(); else im.addEventListener('load', draw);
+  return cv;
+}
+function qrCanvas(url, scale = 6) {
+  if (!url || typeof qrcode === 'undefined') return null;
+  const qr = qrcode(0, 'M'); qr.addData(url); qr.make();
+  const n = qr.getModuleCount(), q = 2, size = (n + q * 2) * scale;
+  const cv = document.createElement('canvas'); cv.width = cv.height = size; const c = cv.getContext('2d');
+  c.fillStyle = '#fff'; c.fillRect(0, 0, size, size); c.fillStyle = '#1a1036';
+  for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) if (qr.isDark(r, k)) c.fillRect((k + q) * scale, (r + q) * scale, scale, scale);
+  return cv;
+}
+
+
+// =====================================================================
+//  THE ARENA
+// =====================================================================
+const EMPTY = 0, SOLID = 1, CRATE = 2;
+const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+const SPAWNS = [[1, 1], [COLS - 2, ROWS - 2], [COLS - 2, 1], [1, ROWS - 2]];   // 2 players start in opposite corners
+const px = c => BX + c * T + T / 2, py = r => BY + r * T + T / 2;
+const key = (c, r) => c + r * COLS;
+function pickItem() { let tot = 0; for (const k of ITEMS) tot += ITEM_W[k]; let x = Math.random() * tot; for (const k of ITEMS) { if ((x -= ITEM_W[k]) <= 0) return k; } return 'bomb'; }
+
+class Bomber {
+  constructor(sc, r, i) {
+    Object.assign(this, { sc, slot: r.slot, f: r.f, kind: r.kind, name: r.name, padI: r.i, alive: true, maxBombs: 1, fire: 2, speed: 0, kick: false, shield: 0, inv: 0, face: 1, moving: false, anim: 0, deathT: 0 });
+    const [c, rr] = SPAWNS[i]; this.x = c; this.y = rr;
+    const m = META[this.f].idle; this.scale = FIGHTERS[this.f].h / m[2];
+    this.shadow = sc.add.ellipse(0, 0, T * 0.7, T * 0.22, 0x000000, 0.3);
+    this.spr = sc.add.image(0, 0, this.f, 'idle');
+    this.ring = sc.add.graphics();
+    this.tag = sc.add.text(0, 0, r.kind === 'cpu' ? 'CPU' : 'P' + (r.slot + 1), { fontFamily: 'Fredoka, sans-serif', fontStyle: '700', fontSize: '15px', color: '#fff', stroke: SLOT_COL[r.slot], strokeThickness: 5 }).setOrigin(0.5, 1);
+    this.brain = r.kind === 'cpu' ? new Brain(this, sc.cfg.diff) : null;
+  }
+  get spd() { return Math.min(RULES.maxSpeed, RULES.baseSpeed + this.speed * RULES.speedUp); }
+  get cell() { return [Math.round(this.x), Math.round(this.y)]; }
+  bombsOut() { return this.sc.bombs.filter(b => b.owner === this && !b.dead).length; }
+  draw(time) {
+    const sx = px(this.x), sy = py(this.y) + T * 0.3;
+    if (!this.alive) {
+      const k = clamp(this.deathT / 1.1, 0, 1); this.spr.setFrame('hurt'); this.setOrigin('hurt');
+      this.spr.setPosition(sx, sy - k * 30).setAlpha(1 - k).setRotation(k * 6 * this.face).setScale(this.scale * (1 + k * 0.3));
+      this.shadow.setVisible(false); this.tag.setVisible(false); this.ring.clear(); this.spr.setDepth(sy + 1000);
+      if (k >= 1) this.spr.setVisible(false); return;
+    }
+    let pose = 'idle', oy = 0;
+    if (this.moving) { pose = META[this.f].run0 ? 'run' + (Math.floor(this.anim) % 6) : 'run'; }
+    else oy = 0;
+    this.spr.setFrame(pose); this.setOrigin(pose);
+    this.spr.setPosition(sx, sy + oy).setScale(this.scale * (this.moving ? 1 : 1 + Math.sin(time * 0.005 + this.slot) * 0.015), this.scale).setRotation(0);
+    this.spr.setAlpha(this.inv > 0 && Math.floor(time / 80) % 2 ? 0.45 : 1).setDepth(sy);
+    this.shadow.setPosition(sx, sy - 2).setDepth(sy - 2);
+    this.tag.setPosition(sx, sy - FIGHTERS[this.f].h - 4).setDepth(5000);
+    this.ring.clear().setDepth(sy + 1);
+    if (this.shield > 0) { this.ring.lineStyle(4, 0x4dd0e1, 0.8).strokeCircle(sx, sy - FIGHTERS[this.f].h * 0.45, FIGHTERS[this.f].h * 0.62); this.ring.fillStyle(0x80deea, 0.15).fillCircle(sx, sy - FIGHTERS[this.f].h * 0.45, FIGHTERS[this.f].h * 0.62); }
+  }
+  setOrigin(pose) { const m = META[this.f][pose]; this.spr.setFlipX(this.face < 0).setOrigin(this.face > 0 ? m[3] / m[1] : 1 - m[3] / m[1], m[4] / m[2]); }
+}
+
+class Round extends Phaser.Scene {
+  constructor() { super('Round'); }
+  init(cfg) { this.cfg = cfg; }
+  create() {
+    const cfg = this.cfg, A = this.A = ARENAS[cfg.arena], tk = A.tiles;
+    this.paused = false; this.over = false; this.done = false; this.started = false; this.acc = 0; this.time0 = 0; this.clock = RULES.roundTime; this.sdT = 0; this.sdI = 0;
+    this.cameras.main.setBackgroundColor(A.bg);
+    // grid
+    const g = this.grid = []; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      let v = EMPTY; if (r === 0 || c === 0 || r === ROWS - 1 || c === COLS - 1 || (r % 2 === 0 && c % 2 === 0)) v = SOLID; else if (Math.random() < RULES.crates) v = CRATE; g.push(v);
+    }
+    for (const [c, r] of SPAWNS) for (const [dc, dr] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1], [2, 0], [-2, 0], [0, 2], [0, -2]]) { const cc = c + dc, rr = r + dr; if (cc > 0 && rr > 0 && cc < COLS - 1 && rr < ROWS - 1 && g[key(cc, rr)] === CRATE && (Math.abs(dc) + Math.abs(dr) < 2)) g[key(cc, rr)] = EMPTY; }
+    this.loot = {}; for (let i = 0; i < g.length; i++) if (g[i] === CRATE && Math.random() < RULES.dropChance) this.loot[i] = pickItem();
+    // frame + floor
+    const fr = this.add.graphics().setDepth(-10); fr.fillStyle(0x000000, 0.35).fillRoundedRect(BX - 10, BY - 10, COLS * T + 20, ROWS * T + 20, 18);
+    this.floor = []; this.tiles = [];
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      const f = this.add.image(px(c), py(r), tk + '-floor').setDisplaySize(T + 1, T + 1).setDepth(-5); if ((c + r) % 2) f.setTint(0xe6e6e6);
+      this.floor.push(f); this.tiles.push(null); this.drawTile(c, r);
+    }
+    this.items = {}; this.bombs = []; this.flames = {}; this.fx = this.add.graphics().setDepth(4000); this.puffs = []; this.pending = [];
+    this.players = cfg.roster.map((r, i) => new Bomber(this, r, i));
+    this.hud = new Hud(this);
+    this.big = this.add.text(VW / 2, VH * 0.45, '', { fontFamily: 'Fredoka, sans-serif', fontStyle: '700', fontSize: '120px', color: '#FFD54F', stroke: '#4e1d00', strokeThickness: 16 }).setOrigin(0.5).setDepth(9000);
+    this.countN = 4; this.countT = 0.3;
+    Sound.music(A.music);
+    this.sdOrder = spiralOrder();
+    window.__round = this;
+  }
+  drawTile(c, r) {
+    const i = key(c, r), v = this.grid[i], tk = this.A.tiles; if (this.tiles[i]) { this.tiles[i].destroy(); this.tiles[i] = null; }
+    if (v === SOLID) this.tiles[i] = this.add.image(px(c), py(r), tk + '-solid').setDisplaySize(T + 1, T + 1).setDepth(py(r) + T / 2 - 1);
+    if (v === CRATE) this.tiles[i] = this.add.image(px(c), py(r), tk + '-crate').setDisplaySize(T - 2, T - 2).setDepth(py(r) + T / 2 - 1);
+  }
+  cellAt(c, r) { if (c < 0 || r < 0 || c >= COLS || r >= ROWS) return SOLID; return this.grid[key(c, r)]; }
+  bombAt(c, r) { return this.bombs.find(b => !b.dead && b.c === c && b.r === r); }
+  blocked(c, r, p) { const v = this.cellAt(c, r); if (v !== EMPTY) return true; const b = this.bombAt(c, r); return !!(b && !b.pass.has(p)); }
+  inputFor(p) {
+    if (p.brain) return p.brain.think();
+    if (p.kind === 'me') return localInput();
+    if (p.kind === 'pad') return padInput(p.padI);
+    if (p.kind === 'phone') return Net.read(p.slot);
+    return { x: 0, y: 0, bomb: false };
+  }
+  update(time, delta) {
+    if (this.paused || this.done) return;
+    const dt = Math.min(delta / 1000, 0.05);
+    if (!this.started) {
+      this.countT -= dt;
+      if (this.countT <= 0) { this.countN--; this.countT = 0.7; this.big.setScale(1.4); this.tweens.add({ targets: this.big, scale: 1, duration: 260, ease: 'Back.Out' });
+        if (this.countN === 3) { this.big.setFontSize(84).setText('ROUND ' + this.cfg.round); Sound.sfx.select(); this.countT = 1.0; }
+        else if (this.countN > 0) { this.big.setFontSize(130).setText(String(this.countN)); Sound.sfx.count && Sound.sfx.count(); }
+        else { this.big.setText('GO!'); Sound.sfx.go && Sound.sfx.go(); this.started = true; this.time.delayedCall(600, () => { if (!this.over) this.big.setText(''); }); } }
+      this.players.forEach(p => { p.moving = false; p.draw(time); }); this.drawWorld(time); this.hud.update(); return;
+    }
+    const FAST = +(QS.get('fast') || 1);   // testing only
+    this.acc += dt * FAST; let n = 0; while (this.acc >= 1 / 60 && n < 4 * FAST) { this.step(1 / 60); this.acc -= 1 / 60; n++; }
+    this.players.forEach(p => p.draw(time)); this.drawWorld(time); this.hud.update();
+  }
+  // ---------------------------------------------------------------- one tick
+  step(dt) {
+    if (!this.over) { this.clock -= dt; if (this.clock <= 0) this.suddenDeath(dt); }
+    for (const p of this.players) {
+      if (!p.alive) { p.deathT += dt; continue; }
+      p.inv = Math.max(0, p.inv - dt);
+      const inp = this.inputFor(p);
+      this.movePlayer(p, inp, dt);
+      if (inp.bomb) this.placeBomb(p);
+      const [c, r] = p.cell, it = this.items[key(c, r)];
+      if (it) this.pickup(p, it, c, r);
+    }
+    // bombs stop letting you walk through once you've stepped off them
+    for (const b of this.bombs) for (const p of [...b.pass]) if (!p.alive || Math.abs(p.x - b.c) >= 0.98 || Math.abs(p.y - b.r) >= 0.98) b.pass.delete(p);
+    // kicked bombs slide
+    for (const b of this.bombs) if (!b.dead && (b.vx || b.vy)) {
+      b.prog += RULES.kickSpeed * dt;
+      while (b.prog >= 1 && (b.vx || b.vy)) {
+        b.prog -= 1; b.c += b.vx; b.r += b.vy;
+        const nc = b.c + b.vx, nr = b.r + b.vy;
+        if (this.cellAt(nc, nr) !== EMPTY || this.bombAt(nc, nr) || this.players.some(p => p.alive && Math.round(p.x) === nc && Math.round(p.y) === nr) || this.items[key(nc, nr)]) { b.vx = b.vy = 0; b.prog = 0; }
+      }
+    }
+    for (const b of this.bombs) if (!b.dead) { b.t -= dt; if (b.t <= 0) this.explode(b); }
+    this.bombs = this.bombs.filter(b => !b.dead);
+    for (const k in this.flames) { const f = this.flames[k]; f.t -= dt; if (f.t <= 0) delete this.flames[k]; }
+    for (const q of this.pending) { q.t -= dt; if (q.t <= 0 && this.grid[key(q.c, q.r)] === EMPTY) this.items[key(q.c, q.r)] = q.item; }
+    this.pending = this.pending.filter(q => q.t > 0);
+    // flames hurt
+    for (const p of this.players) {
+      if (!p.alive) continue; const [c, r] = p.cell, f = this.flames[key(c, r)];
+      if (f && p.inv <= 0) {
+        if (p.shield > 0) { p.shield = 0; p.inv = 1.4; Sound.sfx.shield(); this.puff(px(c), py(r), 0x80deea, 8); }
+        else this.kill(p, f.owner);
+      }
+    }
+    // round over?
+    if (!this.over) { const alive = this.players.filter(p => p.alive); if (alive.length <= 1) { this.over = true; this.endT = 1.3; } }
+    else { this.endT -= dt; if (this.endT <= 0 && !this.done) this.finish(); }
+  }
+  movePlayer(p, inp, dt) {
+    let x = inp.x || 0, y = inp.y || 0; p.moving = false;
+    if (Math.abs(x) < 0.3) x = 0; if (Math.abs(y) < 0.3) y = 0;
+    if (!x && !y) return;
+    let dist = p.spd * dt;
+    // try the stronger direction first, then the other one
+    const order = Math.abs(x) >= Math.abs(y) ? [[Math.sign(x), 0], [0, Math.sign(y)]] : [[0, Math.sign(y)], [Math.sign(x), 0]];
+    for (const [dx, dy] of order) { if (!dx && !dy) continue; if (this.tryMove(p, dx, dy, dist)) { p.moving = true; p.anim += dist * 4.2; if (dx) p.face = dx; return; } }
+  }
+  // grid movement with corner help: if you're slightly off a lane, you're slid onto it
+  tryMove(p, dx, dy, dist) {
+    const along = dx ? 'x' : 'y', across = dx ? 'y' : 'x', d = dx || dy;
+    const lane = Math.round(p[across]), off = p[across] - lane, here = Math.round(p[along]);
+    const free = (a, b) => dx ? !this.blocked(a, b, p) : !this.blocked(b, a, p);   // (along, across)
+    if (Math.abs(off) > 0.02) {
+      if (free(here + d, lane) || (d > 0 ? p[along] < here - 0.02 : p[along] > here + 0.02)) { const s = Math.min(dist, Math.abs(off)); p[across] -= Math.sign(off) * s; if (dist - s > 0.001 && Math.abs(p[across] - lane) <= 0.02) { p[across] = lane; } return true; }
+      const lane2 = lane + Math.sign(off);
+      if (free(here + d, lane2) && free(here, lane2)) { p[across] += Math.sign(off) * Math.min(dist, 1 - Math.abs(off)); return true; }
+      return false;
+    }
+    p[across] = lane;
+    const next = p[along] + d * dist;
+    if ((d > 0 ? next > here : next < here) && !free(here + d, lane)) {
+      // walking into a bomb you can kick?
+      const bc = dx ? here + d : lane, br = dx ? lane : here + d, b = this.bombAt(bc, br);
+      if (b && p.kick && !b.vx && !b.vy && Math.abs(p[along] - here) < 0.08) { const nc = bc + dx, nr = br + dy; if (this.cellAt(nc, nr) === EMPTY && !this.bombAt(nc, nr)) { b.vx = dx; b.vy = dy; b.prog = 0; Sound.sfx.kick(); } }
+      if (Math.abs(p[along] - here) > 0.001) { p[along] = here; return true; }
+      return false;
+    }
+    p[along] = next; return true;
+  }
+  placeBomb(p) {
+    const [c, r] = p.cell; if (p.bombsOut() >= p.maxBombs || this.bombAt(c, r) || this.cellAt(c, r) !== EMPTY) return;
+    const b = { c, r, t: RULES.fuse, range: p.fire, owner: p, pass: new Set(), dead: false, vx: 0, vy: 0, prog: 0, id: Math.random() };
+    for (const q of this.players) if (q.alive && Math.abs(q.x - c) < 0.98 && Math.abs(q.y - r) < 0.98) b.pass.add(q);
+    this.bombs.push(b); Sound.sfx.drop();
+  }
+  pickup(p, it, c, r) {
+    delete this.items[key(c, r)]; Sound.sfx.pickup(); this.puff(px(c), py(r), 0xffffff, 6);
+    if (it === 'bomb') p.maxBombs = Math.min(8, p.maxBombs + 1);
+    if (it === 'fire') p.fire = Math.min(10, p.fire + 1);
+    if (it === 'speed') p.speed = Math.min(5, p.speed + 1);
+    if (it === 'kick') p.kick = true;
+    if (it === 'shield') p.shield = 1;
+    this.hud.pop(p, it);
+  }
+  explode(b) {
+    if (b.dead) return; b.dead = true; Sound.sfx.boom(); this.cameras.main.shake(140, 0.004);
+    this.flame(b.c, b.r, 'center', 0, b.owner);
+    for (const [dx, dy] of DIRS) {
+      for (let i = 1; i <= b.range; i++) {
+        const c = b.c + dx * i, r = b.r + dy * i, v = this.cellAt(c, r);
+        if (v === SOLID) break;
+        const rot = dx ? (dx > 0 ? 0 : Math.PI) : (dy > 0 ? Math.PI / 2 : -Math.PI / 2);
+        if (v === CRATE) { this.breakCrate(c, r); this.flame(c, r, 'end', rot, b.owner); break; }
+        const ob = this.bombAt(c, r); if (ob) { ob.t = Math.min(ob.t, 0.06); this.flame(c, r, 'end', rot, b.owner); break; }
+        const k = key(c, r); if (this.items[k]) { delete this.items[k]; this.flame(c, r, 'end', rot, b.owner); this.puff(px(c), py(r), 0xffcc80, 5); break; }
+        this.flame(c, r, i === b.range ? 'end' : 'mid', rot, b.owner);
+      }
+    }
+  }
+  flame(c, r, kind, rot, owner) { const k = key(c, r), old = this.flames[k]; if (old && old.kind === 'center' && kind !== 'center') { old.t = RULES.flame; return; } this.flames[k] = { c, r, kind, rot, t: RULES.flame, owner }; }
+  breakCrate(c, r) {
+    const i = key(c, r); this.grid[i] = EMPTY; this.drawTile(c, r); Sound.sfx.crate();
+    for (let k = 0; k < 7; k++) this.puffs.push({ x: px(c) + rnd(-14, 14), y: py(r) + rnd(-14, 14), vx: rnd(-160, 160), vy: rnd(-260, -60), r: rnd(5, 10), col: this.A.tiles === 'ice' ? 0xbfefff : this.A.tiles === 'lava' ? 0xc8693a : 0xc98a3c, t: 0, life: 0.6, chip: true });
+    if (this.loot[i]) { this.pending.push({ c, r, item: this.loot[i], t: RULES.flame }); delete this.loot[i]; }
+  }
+  kill(p, by) {
+    p.alive = false; p.deathT = 0; Sound.sfx.die(); this.puff(px(p.x), py(p.y), SLOT_HEX[p.slot], 12);
+    if (by && by !== p) this.cfg.match.kos[by.slot] = (this.cfg.match.kos[by.slot] || 0) + 1;
+    if (p.kind === 'phone') Net.buzz(p.slot, 300);
+  }
+  suddenDeath(dt) {
+    if (!this.sdOn) { this.sdOn = true; this.big.setFontSize(80).setText('HURRY UP!'); this.big.setScale(1.3); this.tweens.add({ targets: this.big, scale: 1, duration: 300 }); this.time.delayedCall(1400, () => { if (!this.over) this.big.setText(''); }); }
+    this.sdT -= dt; if (this.sdT > 0) return; this.sdT = 0.28;
+    while (this.sdI < this.sdOrder.length) {
+      const [c, r] = this.sdOrder[this.sdI++], i = key(c, r); if (this.grid[i] === SOLID) continue;
+      this.grid[i] = SOLID; delete this.items[i]; delete this.loot[i]; const b = this.bombAt(c, r); if (b) b.dead = true; this.drawTile(c, r);
+      const t = this.tiles[i]; t.y -= 260; this.tweens.add({ targets: t, y: py(r), duration: 220, ease: 'Quad.In' });
+      this.time.delayedCall(220, () => { Sound.sfx.thud(); this.cameras.main.shake(60, 0.003); });
+      for (const p of this.players) if (p.alive && Math.round(p.x) === c && Math.round(p.y) === r) this.kill(p, null);
+      break;
+    }
+  }
+  puff(x, y, col, n) { for (let k = 0; k < n; k++) this.puffs.push({ x: x + rnd(-10, 10), y: y + rnd(-10, 10), vx: rnd(-120, 120), vy: rnd(-160, 40), r: rnd(6, 12), col, t: 0, life: 0.45 }); }
+  drawWorld(time) {
+    const g = this.fx; g.clear();
+    // items
+    if (!this.itemSpr) this.itemSpr = {};
+    for (const k in this.itemSpr) if (!this.items[k]) { this.itemSpr[k].destroy(); delete this.itemSpr[k]; }
+    for (const k in this.items) { if (!this.itemSpr[k] || this.itemSpr[k].texture.key !== 'pu-' + this.items[k]) { if (this.itemSpr[k]) this.itemSpr[k].destroy(); this.itemSpr[k] = this.add.image(0, 0, 'pu-' + this.items[k]).setDisplaySize(T * 0.78, T * 0.78); } const c = +k % COLS, r = Math.floor(+k / COLS); this.itemSpr[k].setPosition(px(c), py(r) + Math.sin(time * 0.006 + c) * 3).setDepth(py(r) - 20); }
+    // bombs
+    if (!this.bombSpr) this.bombSpr = new Map();
+    for (const [b, s] of this.bombSpr) if (b.dead) { s.destroy(); this.bombSpr.delete(b); }
+    for (const b of this.bombs) {
+      let s = this.bombSpr.get(b); if (!s) { s = this.add.image(0, 0, 'bomb0'); this.bombSpr.set(b, s); }
+      const f = Math.floor(time / 110) % 3, fast = b.t < 0.8; s.setTexture('bomb' + (fast ? (Math.floor(time / 60) % 3) : f));
+      const x = px(b.c + b.vx * b.prog), y = py(b.r + b.vy * b.prog), pulse = 1 + Math.sin((RULES.fuse - b.t) * (fast ? 30 : 10)) * 0.06;
+      s.setScale(T * 0.92 / 88 * pulse).setPosition(x, y + T * 0.32).setOrigin(0.5, 1).setDepth(y + T * 0.32 - 1).setTint(fast && Math.floor(time / 70) % 2 ? 0xff8a80 : 0xffffff);
+    }
+    // flames
+    if (!this.flameSpr) this.flameSpr = {};
+    for (const k in this.flameSpr) if (!this.flames[k]) { this.flameSpr[k].destroy(); delete this.flameSpr[k]; }
+    for (const k in this.flames) {
+      const f = this.flames[k]; let s = this.flameSpr[k];
+      if (!s || s.kindK !== f.kind) { if (s) s.destroy(); s = this.flameSpr[k] = this.add.image(0, 0, 'blast-' + f.kind); s.kindK = f.kind; }
+      const life = f.t / RULES.flame, grow = life > 0.85 ? (1 - life) / 0.15 : 1, sc = (f.kind === 'center' ? T * 1.25 / 120 : T * 1.05 / (f.kind === 'mid' ? 112 : 104)) * (0.6 + 0.4 * grow);
+      s.setPosition(px(f.c), py(f.r)).setRotation(f.kind === 'center' ? Math.sin(time * 0.02) * 0.1 : f.rot).setScale(sc, f.kind === 'center' ? sc : sc * (0.85 + Math.sin(time * 0.04 + f.c) * 0.15)).setAlpha(Math.min(1, life * 3)).setDepth(py(f.r) + T);
+    }
+    // puffs and crate chips
+    this.puffs = this.puffs.filter(q => (q.t += 1 / 60) < q.life);
+    for (const q of this.puffs) { q.x += q.vx / 60; q.y += q.vy / 60; if (q.chip) q.vy += 900 / 60; const k = q.t / q.life; if (q.chip) { g.fillStyle(q.col, 1 - k).fillRect(q.x - q.r / 2, q.y - q.r / 2, q.r, q.r); g.lineStyle(2, 0x3e2110, 1 - k).strokeRect(q.x - q.r / 2, q.y - q.r / 2, q.r, q.r); } else g.fillStyle(q.col, 0.8 * (1 - k)).fillCircle(q.x, q.y, q.r * (1 + k)); }
+  }
+  finish() {
+    this.done = true; const alive = this.players.filter(p => p.alive), w = alive.length === 1 ? alive[0] : null;
+    this.big.setFontSize(w ? 70 : 90).setColor(w ? SLOT_COL[w.slot] : '#fff').setText(w ? FIGHTERS[w.f].name + ' WINS\nTHE ROUND!' : 'DRAW!').setAlign('center');
+    this.big.setScale(1.4); this.tweens.add({ targets: this.big, scale: 1, duration: 350, ease: 'Back.Out' });
+    if (w) { Sound.sfx.win && Sound.sfx.win(); this.tweens.add({ targets: w.spr, y: w.spr.y - 24, yoyo: true, repeat: -1, duration: 260 }); w.spr.setFrame('win'); w.setOrigin('win'); }
+    this.hud.update(true);
+    Sound.music(null);
+    App.roundOver(w ? { slot: w.slot, f: w.f, kind: w.kind } : null);
+    this.hud.update(true);
+  }
+}
+function spiralOrder() {   // the order blocks drop in during "hurry up"
+  const out = []; let x0 = 1, y0 = 1, x1 = COLS - 2, y1 = ROWS - 2;
+  while (x0 <= x1 && y0 <= y1) {
+    for (let x = x0; x <= x1; x++) out.push([x, y0]); for (let y = y0 + 1; y <= y1; y++) out.push([x1, y]);
+    if (y1 > y0) for (let x = x1 - 1; x >= x0; x--) out.push([x, y1]); if (x1 > x0) for (let y = y1 - 1; y > y0; y--) out.push([x0, y]);
+    x0++; y0++; x1--; y1--;
+  }
+  return out;
+}
+
+// HUD: a card for each player down the sides, timer on top
+class Hud {
+  constructor(sc) {
+    this.sc = sc; this.cards = [];
+    const TS = { fontFamily: 'Fredoka, sans-serif', fontStyle: '700', color: '#fff' };
+    this.clock = sc.add.text(VW / 2, 46, '2:00', Object.assign({ fontSize: '30px', stroke: '#000', strokeThickness: 6 }, TS)).setOrigin(0.5).setDepth(9000);
+    this.roundTxt = sc.add.text(VW / 2, 3, 'ROUND ' + sc.cfg.round + ' · first to ' + sc.cfg.match.need, Object.assign({ fontSize: '15px', stroke: '#000', strokeThickness: 4 }, TS)).setOrigin(0.5, 0).setDepth(9000);
+    sc.players.forEach((p, i) => {
+      const sp = SPAWNS[i], left = sp[0] < COLS / 2, x = left ? 14 : VW - 14 - 196, y = BY + (sp[1] < ROWS / 2 ? 0 : 290), c = { p };   // card on the same side as the bomber starts
+      c.bg = sc.add.graphics().setDepth(8000); c.bg.fillStyle(0x000000, 0.55).fillRoundedRect(x, y, 196, 270, 18).lineStyle(4, SLOT_HEX[p.slot], 1).strokeRoundedRect(x, y, 196, 270, 18);
+      const m = META[p.f].idle, s = Math.min(110 / m[1], 110 / m[2]);
+      c.face = sc.add.image(x + 98, y + 128, p.f, 'idle').setOrigin(0.5, 1).setScale(s).setDepth(8001);
+      c.name = sc.add.text(x + 98, y + 132, (p.kind === 'cpu' ? 'CPU' : 'P' + (p.slot + 1)) + ' ' + (p.kind === 'phone' ? p.name : FIGHTERS[p.f].name), Object.assign({ fontSize: '17px' }, TS)).setOrigin(0.5, 0).setDepth(8001);
+      c.stars = sc.add.text(x + 98, y + 154, '', Object.assign({ fontSize: '24px', color: '#FFD54F', stroke: '#000', strokeThickness: 4 }, TS)).setOrigin(0.5, 0).setDepth(8001);
+      c.icons = {}; ['bomb', 'fire', 'speed'].forEach((k, j) => { c.icons[k] = { img: sc.add.image(x + 30 + j * 62, y + 210, 'pu-' + k).setDisplaySize(36, 36).setDepth(8001), n: sc.add.text(x + 50 + j * 62, y + 218, '', Object.assign({ fontSize: '18px', stroke: '#000', strokeThickness: 4 }, TS)).setDepth(8002) }; });
+      ['kick', 'shield'].forEach((k, j) => { c.icons[k] = { img: sc.add.image(x + 61 + j * 62, y + 248, 'pu-' + k).setDisplaySize(32, 32).setDepth(8001) }; });
+      c.out = sc.add.text(x + 98, y + 70, '', Object.assign({ fontSize: '40px', color: '#ff5252', stroke: '#000', strokeThickness: 6 }, TS)).setOrigin(0.5).setDepth(8003).setRotation(-0.2);
+      this.cards.push(c);
+    });
+  }
+  pop(p, it) { const c = this.cards.find(c => c.p === p), ic = c && c.icons[it]; if (ic) { ic.img.setScale(ic.img.scaleX * 1.5); this.sc.tweens.add({ targets: ic.img, scale: ic.img.scaleX / 1.5, duration: 260 }); } }
+  update() {
+    const t = Math.max(0, Math.ceil(this.sc.clock)); this.clock.setText(this.sc.clock <= 0 ? 'HURRY!' : Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0')).setColor(this.sc.clock < 15 ? '#ff8a80' : '#fff');
+    const m = this.sc.cfg.match;
+    for (const c of this.cards) {
+      const p = c.p; c.face.setAlpha(p.alive ? 1 : 0.35); c.out.setText(p.alive ? '' : 'OUT');
+      c.stars.setText('★'.repeat(m.wins[p.slot] || 0) + '☆'.repeat(Math.max(0, m.need - (m.wins[p.slot] || 0))));
+      c.icons.bomb.n.setText('×' + p.maxBombs); c.icons.fire.n.setText('×' + p.fire); c.icons.speed.n.setText('×' + (p.speed + 1));
+      c.icons.kick.img.setAlpha(p.kick ? 1 : 0.2); c.icons.shield.img.setAlpha(p.shield ? 1 : 0.2);
+    }
+  }
+}
+
+// =====================================================================
+//  COMPUTER BOMBERS
+// =====================================================================
+const SKILL = { easy: { react: 0.32, bombChance: 0.35, wander: 0.25, chase: 0.25, safe: 0.5 }, normal: { react: 0.14, bombChance: 0.7, wander: 0.08, chase: 0.6, safe: 0.35 }, hard: { react: 0.05, bombChance: 0.95, wander: 0.02, chase: 0.9, safe: 0.25 } };
+class Brain {
+  constructor(me, diff) { this.me = me; this.S = SKILL[diff] || SKILL.normal; this.t = rnd(0, 0.3); this.goal = null; this.wantBomb = false; this.out = { x: 0, y: 0, bomb: false }; }
+  // when each cell will next be on fire (Infinity = safe)
+  danger(extra) {
+    const sc = this.me.sc, D = new Array(COLS * ROWS).fill(Infinity), bombs = sc.bombs.filter(b => !b.dead).map(b => ({ c: b.c, r: b.r, t: b.t, range: b.range }));
+    if (extra) bombs.push(extra);
+    for (const k in sc.flames) D[k] = 0;
+    for (let pass = 0; pass < 3; pass++) for (const b of bombs) {   // chains: a bomb in another's blast goes off with it
+      const cells = blastCells(sc, b.c, b.r, b.range);
+      for (const k of cells) { D[k] = Math.min(D[k], b.t); for (const o of bombs) if (key(o.c, o.r) === k && o.t > b.t) o.t = b.t; }
+    }
+    return D;
+  }
+  passable(c, r) { const sc = this.me.sc; if (sc.cellAt(c, r) !== EMPTY) return false; const b = sc.bombAt(c, r); return !b || b.pass.has(this.me); }
+  canEscape(c, r) {   // if I drop a bomb here, can I get somewhere safe in time?
+    const D2 = this.danger({ c, r, t: RULES.fuse, range: this.me.fire }), r2 = this.bfs(D2, [c, r]);
+    let esc = -1, bd = Infinity; for (let k = 0; k < r2.dist.length; k++) if (r2.dist[k] >= 0 && D2[k] === Infinity && r2.dist[k] < bd) { bd = r2.dist[k]; esc = k; }
+    return esc >= 0 && bd <= 5 ? { esc, prev: r2.prev } : null;
+  }
+  bfs(D, start) {
+    const sc = this.me.sc, dist = new Array(COLS * ROWS).fill(-1), prev = new Array(COLS * ROWS).fill(-1), q = [key(...start)]; dist[q[0]] = 0;
+    const stepT = 1 / this.me.spd;
+    for (let h = 0; h < q.length; h++) {
+      const k = q[h], c = k % COLS, r = Math.floor(k / COLS);
+      for (const [dx, dy] of DIRS) {
+        const nc = c + dx, nr = r + dy, nk = key(nc, nr); if (dist[nk] >= 0 || !this.passable(nc, nr)) continue;
+        const arrive = (dist[k] + 1) * stepT * 1.25 + 0.1; if (D[nk] !== Infinity && D[nk] < arrive + RULES.flame + 0.25 && D[nk] > arrive - RULES.flame - 0.3) continue;   // would be on fire when we get there
+        if (D[nk] === 0) continue;
+        dist[nk] = dist[k] + 1; prev[nk] = k; q.push(nk);
+      }
+    }
+    return { dist, prev };
+  }
+  firstStep(prev, startK, goalK) { let k = goalK; while (prev[k] !== startK && prev[k] >= 0) k = prev[k]; return k; }
+  think() {
+    const me = this.me, sc = me.sc, S = this.S, o = this.out; o.bomb = false;
+    const cur = me.cell, ck = key(...cur);
+    this.t -= 1 / 60;
+    if (this.t <= 0 || !this.goal) {
+      this.t = S.react * rnd(0.7, 1.3);
+      const D = this.danger(), { dist, prev } = this.bfs(D, cur);
+      const inDanger = D[ck] < Infinity;
+      let goal = null;
+      if (inDanger) {   // run to the nearest safe square
+        let best = Infinity; for (let k = 0; k < dist.length; k++) if (dist[k] >= 0 && D[k] === Infinity && dist[k] < best) { best = dist[k]; goal = k; }
+      } else {
+        // drop a bomb here if it would hit something AND we can get away
+        const hits = this.bombValue(cur);
+        if (hits > 0 && me.bombsOut() < me.maxBombs && !sc.bombAt(...cur) && Math.random() < S.bombChance) {
+          const e = this.canEscape(cur[0], cur[1]);
+          if (e) { o.bomb = true; this.goal = e.esc; this.prev = e.prev; this.t = 0.25; return this.steer(e.prev, ck); }
+        }
+        // otherwise go somewhere useful: power-ups, then spots to bomb crates or other players
+        let bestS = -Infinity; const cands = [];
+        for (let k = 0; k < dist.length; k++) {
+          if (dist[k] < 0 || D[k] < Infinity) continue; const c = k % COLS, r = Math.floor(k / COLS);
+          let s = 0; if (sc.items[k]) s += 9;
+          const v = me.bombsOut() < me.maxBombs ? this.bombValue([c, r]) : 0; s += v * 3;
+          if (Math.random() < S.wander) s += rnd(0, 4);
+          s -= dist[k] * 1.1; if (k === ck && !sc.items[k]) s -= 1.5;
+          cands.push([s, k, v]);
+        }
+        cands.sort((a, b) => b[0] - a[0]);
+        let checks = 0;
+        for (const [s, k, v] of cands) {   // best spot that is actually safe to bomb from
+          if (v > 0 && !sc.items[k]) { if (checks++ > 10) continue; if (!this.canEscape(k % COLS, Math.floor(k / COLS))) continue; }
+          bestS = s; goal = k; break;
+        }
+        if (bestS < 0.5 && Math.random() < S.chase) {   // nothing nearby: head for the nearest opponent
+          const foe = sc.players.filter(p => p !== me && p.alive).sort((a, b) => Math.abs(a.x - me.x) + Math.abs(a.y - me.y) - Math.abs(b.x - me.x) - Math.abs(b.y - me.y))[0];
+          if (foe) { let bd = Infinity; for (let k = 0; k < dist.length; k++) { if (dist[k] < 0 || D[k] < Infinity) continue; const d = Math.abs(k % COLS - foe.x) + Math.abs(Math.floor(k / COLS) - foe.y); if (d < bd) { bd = d; goal = k; } } }
+        }
+      }
+      this.goal = goal; this.prev = prev;
+      if (goal == null) { o.x = o.y = 0; return o; }
+    }
+    return this.steer(this.prev, ck);
+  }
+  bombValue([c, r]) {   // how much a bomb here would hit
+    const sc = this.me.sc; let v = 0;
+    for (const [dx, dy] of DIRS) for (let i = 1; i <= this.me.fire; i++) {
+      const cc = c + dx * i, rr = r + dy * i, t = sc.cellAt(cc, rr); if (t === SOLID) break; if (t === CRATE) { v += 1; break; }
+      if (sc.players.some(p => p !== this.me && p.alive && Math.round(p.x) === cc && Math.round(p.y) === rr)) v += 2.5 * this.S.chase;
+      if (sc.items[key(cc, rr)]) { v -= 2; break; }
+    }
+    return v;
+  }
+  steer(prev, ck) {
+    const o = this.out, me = this.me; o.x = o.y = 0;
+    if (this.goal == null || !prev) return o;
+    let target = this.goal === ck ? ck : this.firstStep(prev, ck, this.goal);
+    if (target < 0) { this.goal = null; return o; }
+    const tc = target % COLS, tr = Math.floor(target / COLS);
+    const dx = tc - me.x, dy = tr - me.y;
+    if (this.goal === ck && Math.abs(dx) < 0.08 && Math.abs(dy) < 0.08) { this.goal = null; this.t = Math.min(this.t, 0.02); return o; }
+    if (Math.abs(dx) > Math.abs(dy)) o.x = Math.sign(dx); else o.y = Math.sign(dy);
+    if (Math.abs(dx) > 0.05 && Math.abs(dy) > 0.05) { if (Math.abs(dx) < Math.abs(dy)) o.x = Math.sign(dx) * 0.5; else o.y = Math.sign(dy) * 0.5; }
+    return o;
+  }
+}
+function blastCells(sc, c, r, range) {
+  const out = [key(c, r)];
+  for (const [dx, dy] of DIRS) for (let i = 1; i <= range; i++) { const cc = c + dx * i, rr = r + dy * i, t = sc.cellAt(cc, rr); if (t === SOLID) break; out.push(key(cc, rr)); if (t === CRATE) break; }
+  return out;
+}
+
+// =====================================================================
+//  SCENES
+// =====================================================================
+const Scenes = {
+  switchTo(k, data) { const g = window.__game; if (!g) return; g.scene.getScenes(true).forEach(s => { if (s.scene.key !== k) g.scene.stop(s.scene.key); }); if (g.scene.isActive(k) || g.scene.isPaused(k)) g.scene.getScene(k).scene.restart(data); else g.scene.start(k, data); },
+  backdrop() { this.switchTo('Backdrop'); },
+  round(cfg) { this.switchTo('Round', cfg); },
+};
+class Boot extends Phaser.Scene {
+  constructor() { super('Boot'); }
+  preload() {
+    FKEYS.forEach(f => this.load.image(f, artUrl(f)));
+    for (const k of AKEYS) for (const t of ['floor', 'solid', 'crate']) this.load.image(k + '-' + t, 'boom-art/' + ARENAS[k].tiles + '-' + t + '.png');
+    for (const k of ITEMS) this.load.image('pu-' + k, 'boom-art/pu-' + k + '.png');
+    for (let i = 0; i < 3; i++) this.load.image('bomb' + i, 'boom-art/bomb' + i + '.png');
+    for (const k of ['center', 'mid', 'end']) this.load.image('blast-' + k, 'boom-art/blast-' + k + '.png');
+    const bar = this.add.rectangle(VW / 2 - 200, VH / 2, 4, 16, 0xffd54f).setOrigin(0, 0.5); this.load.on('progress', v => bar.width = 400 * v);
+  }
+  create() {
+    FKEYS.forEach(f => { const tx = this.textures.get(f); for (const n in META[f]) { const m = META[f][n]; tx.add(n, 0, m[0], 0, m[1], m[2]); } });
+    const lp = $('loading'); if (lp) lp.remove();
+    if (QS.get('auto')) { // testing: computer-only match
+      App.mode = 'solo'; App.humans = () => []; App.arena = QS.get('arena') || 'sky'; App.diff = QS.get('diff') || 'hard'; App.wins = +(QS.get('wins') || 2);
+      App.cpus = [0, 1, 2, 3].slice(0, +(QS.get('n') || 4)).map(i => ({ slot: i, f: FKEYS[i] }));
+      document.body.classList.add('solo'); App.go(); return;
+    }
+    if (QS.get('tv')) App.setup('party'); else App.title();
+  }
+}
+class Backdrop extends Phaser.Scene {
+  constructor() { super('Backdrop'); }
+  create() {
+    for (let r = 0; r < 14; r++) for (let c = 0; c < 24; c++) { const t = (c + r) % 7 === 0 ? 'sky-crate' : (c * 3 + r) % 11 === 0 ? 'sky-solid' : 'sky-floor'; this.add.image(c * 56 + 28, r * 56 + 28, t).setDisplaySize(57, 57).setTint((c + r) % 2 ? 0x9a9a9a : 0xb0b0b0); }
+    this.add.rectangle(VW / 2, VH / 2, VW, VH, 0x2a1306, 0.45);
+    this.figs = ['boulder', 'zippa', 'pip', 'gloop', 'frostbite', 'bonk'].map((f, i) => { const m = META[f].idle; return this.add.image(110 + i * 212, VH - 12, f, 'idle').setOrigin(m[3] / m[1], m[4] / m[2]).setScale(0.6); });
+    this.bombs = [0, 1, 2].map(i => this.add.image(200 + i * 440, -60, 'bomb0').setScale(0.9));
+  }
+  update(t) {
+    this.figs.forEach((im, i) => { im.y = VH - 12 - Math.abs(Math.sin(t * 0.003 + i * 0.9)) * 16; });
+    this.bombs.forEach((b, i) => { b.y = ((t * 0.08 + i * 260) % (VH + 200)) - 100; b.rotation = Math.sin(t * 0.003 + i) * 0.3; b.setTexture('bomb' + (Math.floor(t / 120) % 3)); });
+  }
+}
+
+// =====================================================================
+//  PHONE CONTROLLER (?join=CODE)
+// =====================================================================
+async function phoneMain(codeRaw) {
+  document.body.className = 'phone'; const lp = $('loading'); if (lp) lp.remove();
+  $('phone').classList.remove('hidden');
+  const room = String(codeRaw || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
+  $('phCode').textContent = room;
+  const id = store.get('boom_id', null) || uid(); store.set('boom_id', id);
+  $('phName').value = store.get('boom_name', '') || store.get('brawl_name', '') || '';
+  let own = null, mainCh = null, pc = null, dc = null, welcomed = false, phase = 'lobby', myF = store.get('boom_me', 'pip'), waiting = false, joinT = null, lastSent = '', msg = '', nb = 0;
+  const st = { x: 0, y: 0 };
+  const dcOpen = () => dc && dc.readyState === 'open';
+  function send(m) { m.id = id; if (dcOpen()) { try { dc.send(JSON.stringify(m)); return; } catch (e) {} } own && own.send(m); }
+  const join = () => mainCh && mainCh.send({ t: 'join', id, name: $('phName').value.trim() || 'Player' });
+  function sendIn(force) { const m = { t: 'in', x: st.x, y: st.y, nb }; const k = JSON.stringify(m); if (force || k !== lastSent) { lastSent = k; send(m); } }
+  function vib(ms) { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} }
+  const grid = $('phGrid');
+  FKEYS.forEach(k => { const d = document.createElement('div'); d.className = 'fcard'; d.dataset.f = k; d.appendChild(portrait(k, 120, 84)); d.insertAdjacentHTML('beforeend', `<b>${FIGHTERS[k].name}</b>`); d.onclick = () => { myF = k; store.set('boom_me', k); send({ t: 'pick', f: k }); vib(15); ui(); }; grid.appendChild(d); });
+  function ui() {
+    const conn = !welcomed ? 'Connecting…' : (dcOpen() ? '⚡ Direct' : '● Online'); $('phState').textContent = conn; $('phState1').textContent = conn;
+    [...grid.children].forEach(d => d.classList.toggle('sel', d.dataset.f === myF));
+    const show = welcomed ? (waiting ? 'pick' : (phase === 'play' || phase === 'between') ? 'pad' : phase === 'results' ? 'res' : 'pick') : 'join';
+    $('phJoin').classList.toggle('hidden', show !== 'join'); $('phPick').classList.toggle('hidden', show !== 'pick'); $('phPad').classList.toggle('hidden', show !== 'pad'); $('phRes').classList.toggle('hidden', show !== 'res');
+    $('phPickH').textContent = waiting ? "You're in the next match! Pick your bomber" : 'Pick your bomber';
+    $('phStart').classList.toggle('hidden', waiting);
+    $('phPickNote').textContent = phase === 'title' ? 'Waiting for the TV to open Party mode…' : 'When everyone is ready, press Start here or on the TV.';
+    const nm = $('phName').value.trim() || 'Player'; $('phWho').textContent = nm + ' · ' + FIGHTERS[myF].name; $('phWho1').textContent = nm;
+    $('phMid').textContent = phase === 'between' ? msg : '';
+    $('phResT').textContent = '🏆 ' + (msg || 'Match over'); $('phResS').textContent = 'Play again, or change your bomber';
+  }
+  async function startDirect() {
+    if (pc || QS.has('nodirect') || LOCAL) return;
+    pc = new RTCPeerConnection({ iceServers: ICE }); const my = pc;
+    dc = pc.createDataChannel('pad', { ordered: false, maxRetransmits: 0 });
+    dc.onmessage = ev => { let m; try { m = JSON.parse(ev.data); } catch (_) { return; } onPrivate(m); };
+    dc.onopen = () => ui(); dc.onclose = () => { if (my === pc) stopDirect(); };
+    pc.onconnectionstatechange = () => { if (my === pc && ['failed', 'closed'].includes(pc.connectionState)) stopDirect(); };
+    try { await pc.setLocalDescription(await pc.createOffer()); await iceDone(pc); if (my === pc) own.send({ t: 'offer', id, sdp: pc.localDescription.sdp }); } catch (e) { stopDirect(); }
+    setTimeout(() => { if (my === pc && !dcOpen()) stopDirect(); }, 10000);
+  }
+  function stopDirect() { try { pc && pc.close(); } catch (e) {} pc = null; dc = null; ui(); }
+  function onPrivate(m) {
+    if (!m) return;
+    if (m.t === 'welcome') { if (!welcomed) vib(40); welcomed = true; phase = m.phase || phase; waiting = !!m.waiting; msg = m.msg || ''; if (m.f) myF = m.f; [$('phDot'), $('phDot1')].forEach(d => d.style.background = m.color); document.querySelectorAll('#phStick .knob').forEach(k => k.style.background = m.color); if (!pc) startDirect(); ui(); }
+    if (m.t === 'answer' && pc && pc.signalingState === 'have-local-offer') pc.setRemoteDescription({ type: 'answer', sdp: m.sdp }).catch(() => {});
+    if (m.t === 'buzz') { vib(m.ms || 60); const p = $('phPad'); p.classList.remove('flash'); void p.offsetWidth; p.classList.add('flash'); }
+  }
+  function onMain(m) {
+    if (!m) return;
+    if (m.t === 'state') { const was = phase; phase = m.st.phase; msg = m.st.msg || ''; const me = m.st.players.find(p => p.id === id); if (welcomed && !me) { welcomed = false; join(); } if (me && me.f) myF = me.f; if (was !== phase && phase === 'lobby') waiting = false; ui(); }
+    if (m.t === 'full' && m.id === id) $('phMsg').textContent = 'Sorry, the game is full (4 players).';
+    if (m.t === 'kick' && m.id === id) { welcomed = false; ui(); $('phMsg').textContent = 'You were removed from the game. Tap Join to come back.'; $('phGo').disabled = false; clearInterval(joinT); }
+  }
+  bindStick($('phStick'), (x, y) => { st.x = x; st.y = y; sendIn(); }, () => $('phStick').querySelector('.hint').classList.add('hidden'));
+  const bb = $('pbB');
+  bb.addEventListener('pointerdown', e => { e.preventDefault(); try { bb.setPointerCapture(e.pointerId); } catch (x) {} nb++; bb.classList.add('on'); vib(15); sendIn(); });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => bb.addEventListener(ev, () => bb.classList.remove('on')));
+  $('phStart').onclick = () => { send({ t: 'start' }); vib(30); };
+  $('phAgain').onclick = () => { send({ t: 'start' }); vib(30); };
+  $('phRepick').onclick = () => { phase = 'lobby'; ui(); };
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  async function go() {
+    const name = $('phName').value.trim(); if (!name) { $('phName').focus(); return; }
+    store.set('boom_name', name); $('phMsg').textContent = 'Connecting…'; $('phGo').disabled = true;
+    try { own = own || await chan('boom-' + room + '-' + id, onPrivate); mainCh = mainCh || await chan('boom-' + room, onMain); }
+    catch (e) { $('phMsg').textContent = "Couldn't connect – check your internet and try again."; $('phGo').disabled = false; return; }
+    join(); clearInterval(joinT); joinT = setInterval(() => { if (!welcomed) join(); }, 2000);
+    setInterval(() => sendIn(true), 160);
+    setTimeout(() => { if (welcomed) send({ t: 'pick', f: myF }); }, 1500);
+    try { navigator.wakeLock && navigator.wakeLock.request('screen').catch(() => {}); } catch (e) {}
+  }
+  $('phGo').onclick = go; $('phName').onkeydown = e => { if (e.key === 'Enter') go(); };
+  if ($('phName').value && store.get('boom_room', '') === room) go();
+  store.set('boom_room', room);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && mainCh && !welcomed) join(); });
+  ui();
+}
+
+// =====================================================================
+//  DOM: touch, pause, mute, fullscreen, join QR
+// =====================================================================
+function bindStick(area, onXY, onStart) {
+  const base = area.querySelector('.base'), knob = area.querySelector('.knob'), RAD = 70; let cx = 0, cy = 0, pid = null, home = null, last = '';
+  if (base.classList.contains('idle')) home = { l: base.style.left, t: base.style.top };
+  const put = (el, x, y) => { el.style.left = x + 'px'; el.style.top = y + 'px'; };
+  area.addEventListener('pointerdown', e => {
+    e.preventDefault(); if (pid != null) return; pid = e.pointerId; try { area.setPointerCapture(pid); } catch (x) {}
+    const r = area.getBoundingClientRect(); cx = e.clientX - r.left; cy = e.clientY - r.top;
+    put(base, cx, cy); put(knob, cx, cy); base.classList.remove('hidden', 'idle'); knob.classList.remove('hidden', 'idle'); onStart && onStart(); Sound.init();
+  });
+  area.addEventListener('pointermove', e => {
+    if (e.pointerId !== pid) return; const r = area.getBoundingClientRect();
+    let dx = e.clientX - r.left - cx, dy = e.clientY - r.top - cy; const d = Math.hypot(dx, dy); if (d > RAD) { dx *= RAD / d; dy *= RAD / d; }
+    put(knob, cx + dx, cy + dy);
+    const x = Math.round(dx / RAD * 10) / 10, y = Math.round(dy / RAD * 10) / 10, k = x + ',' + y; if (k !== last) { last = k; onXY(Math.abs(x) < 0.2 ? 0 : x, Math.abs(y) < 0.35 ? 0 : y); }
+  });
+  const end = e => {
+    if (e.pointerId !== pid) return; pid = null; last = ''; onXY(0, 0);
+    if (home) { base.style.left = knob.style.left = home.l; base.style.top = knob.style.top = home.t; base.classList.add('idle'); knob.classList.add('idle'); }
+    else { base.classList.add('hidden'); knob.classList.add('hidden'); }
+  };
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => area.addEventListener(ev, end));
+}
+function setupTouch() {
+  bindStick($('tpad'), (x, y) => { Touch.x = x; Touch.y = y; });
+  const b = $('tbomb');
+  b.addEventListener('pointerdown', e => { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (x) {} Touch.q++; b.classList.add('on'); });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => b.addEventListener(ev, () => b.classList.remove('on')));
+  document.addEventListener('contextmenu', e => e.preventDefault());
+}
+function roundScene() { return window.__game && window.__game.scene.isActive('Round') ? window.__game.scene.getScene('Round') : null; }
+function togglePause(force) {
+  const s = roundScene(); if (!s || s.done) return;
+  const p = force !== undefined ? force : !s.paused; s.paused = p; $('pause').classList.toggle('hidden', !p);
+  if (p) { s.tweens.pauseAll(); Sound.music(null); } else { s.tweens.resumeAll(); Sound.music(s.A.music); }
+}
+function toggleMute() { Sound.init(); Sound.setMuted(!Sound.muted); $('btnMute').style.opacity = Sound.muted ? 0.45 : 1; $('btnMute').textContent = Sound.muted ? '✕' : '♪'; }
+function showJoinQR() { if (!Net.room) return; const box = $('joinqr'); box.innerHTML = ''; const cv = qrCanvas(Net.joinUrl(), 6); if (cv) box.appendChild(cv); $('joincode').textContent = Net.room; $('joinpop').classList.remove('hidden'); }
+function showCodePop() {
+  $('codepop').classList.remove('hidden'); $('codein').value = ''; setTimeout(() => $('codein').focus(), 50);
+  const go = () => { const c = $('codein').value.trim().toUpperCase().replace(/[^A-Z]/g, ''); if (c.length === 4) location.search = '?join=' + c + (LOCAL ? '&local=1' : ''); };
+  $('codego').onclick = go; $('codein').onkeydown = e => { e.stopPropagation(); if (e.key === 'Enter') go(); };
+  $('codeclose').onclick = () => $('codepop').classList.add('hidden');
+}
+function setupDom() {
+  setupTouch();
+  const click = (id, fn) => { $(id).onclick = e => { Sound.init(); Sound.sfx.select(); fn(e); }; };
+  click('mSolo', () => App.setup('solo')); click('mParty', () => App.setup('party')); click('mCode', () => showCodePop()); click('mHelp', () => show('scrHelp')); click('helpBack', () => App.title());
+  click('addCpu', () => App.addCpu());
+  click('shuffleCpu', () => { const used = new Set(App.humans().map(h => h.f)); App.cpus.forEach(c => { const free = FKEYS.filter(k => !used.has(k)); c.f = pick(free.length ? free : FKEYS); used.add(c.f); }); App.refresh(); });
+  [...$('diffSeg').children].forEach(b => b.onclick = () => { App.diff = b.dataset.v; store.set('boom_diff', App.diff); Sound.sfx.select(); App.refresh(); });
+  [...$('winsSeg').children].forEach(b => b.onclick = () => { App.wins = +b.dataset.v; store.set('boom_wins', App.wins); Sound.sfx.select(); App.refresh(); });
+  click('setBack', () => App.title()); $('setGo').onclick = () => App.go();
+  click('btnHome', () => { togglePause(false); App.setup(); });
+  $('btnPause').onclick = () => togglePause(); $('btnMute').onclick = () => toggleMute();
+  if (Sound.muted) { $('btnMute').style.opacity = 0.45; $('btnMute').textContent = '✕'; }
+  $('btnFull').onclick = () => { try { const d = document.documentElement; if (!document.fullscreenElement) { const r = d.requestFullscreen && d.requestFullscreen(); if (r && r.then) r.then(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch (e) {} }).catch(() => {}); } else document.exitFullscreen(); } catch (e) {} };
+  click('pResume', () => togglePause(false)); click('pRestart', () => { togglePause(false); App.go(); }); click('pChange', () => { togglePause(false); App.setup(); }); click('pTitle', () => { togglePause(false); App.title(); });
+  $('joinbtn').onclick = () => showJoinQR(); $('joinclose').onclick = () => $('joinpop').classList.add('hidden');
+  $('joinpop').onclick = e => { if (e.target.id === 'joinpop') $('joinpop').classList.add('hidden'); };
+  addEventListener('blur', () => { if (App.mode !== 'party') togglePause(true); });
+  setInterval(() => {   // game controllers: press a button in set-up to join, ◀ ▶ changes bomber, Start begins
+    if (App.screen !== 'setup' || !navigator.getGamepads) return;
+    const gps = navigator.getGamepads(); for (let i = 0; i < gps.length; i++) {
+      if (!gps[i] || !gps[i].connected) continue; const inp = padInput(i), pad = App.pads.find(p => p.i === i);
+      if (!pad && inp.anyP) { const slot = App.freeSlot(); if (slot >= 0) { App.dropCpuForSlot(slot); App.pads.push({ i, slot, f: App.unusedFighter() }); App.refresh(); } continue; }
+      if (pad) { if (inp.x !== 0 && !pad.moved) { pad.f = FKEYS[(FKEYS.indexOf(pad.f) + (inp.x > 0 ? 1 : FKEYS.length - 1)) % FKEYS.length]; pad.moved = true; App.refresh(); } if (inp.x === 0) pad.moved = false; if (inp.startP) App.go(); }
+    }
+  }, 50);
+}
+function startGame() {
+  setupDom();
+  window.__game = new Phaser.Game({ type: Phaser.AUTO, parent: 'game', width: VW, height: VH, backgroundColor: '#2a1306', scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH }, render: { antialias: true }, scene: [Boot, Backdrop, Round] });
+}
+(async function boot() {
+  if (QS.has('join')) return phoneMain(QS.get('join'));
+  try { if (typeof Phaser === 'undefined') await loadScript(PHASER_URL); } catch (e) { $('loading').textContent = 'Could not load the game engine – check your connection.'; return; }
+  await new Promise(r => { const t0 = Date.now(); (function w() { if (window.__webpOK !== null || Date.now() - t0 > 800) r(); else setTimeout(w, 30); })(); });
+  const done = () => { if (!window.__started) { window.__started = true; startGame(); } };
+  try { document.fonts.load('700 40px Fredoka').then(done, done); } catch (e) { done(); }
+  setTimeout(done, 2500);
+})();
+</script>
+</body>
+</html>

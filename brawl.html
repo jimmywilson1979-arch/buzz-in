@@ -123,14 +123,15 @@ window.__errs = 0; window.addEventListener('error', function (e) {
   .phDot{width:26px;height:26px;border-radius:50%;border:3px solid #fff;flex:none}
   #phState{margin-left:auto;font-size:14px;opacity:.8;text-align:right}
   #phMid{position:absolute;left:0;right:0;top:46px;text-align:center;font-size:16px;opacity:.9;pointer-events:none;z-index:2}
-  #phStick{position:absolute;left:12px;bottom:14px;width:calc(52% - 16px);height:calc(100% - 70px);border-radius:24px;background:#ffffff10;border:3px dashed #ffffff44;touch-action:none;overflow:hidden}
+  #phStick{position:absolute;left:12px;bottom:14px;width:calc(48% - 16px);height:calc(100% - 70px);border-radius:24px;background:#ffffff10;border:3px dashed #ffffff44;touch-action:none;overflow:hidden}
   #phStick .hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:1em;color:#ffffffaa;font-size:16px;pointer-events:none;line-height:1.4}
-  #phBtns{position:absolute;right:10px;bottom:12px;width:calc(48% - 14px);height:calc(100% - 70px)}
-  .pb{position:absolute;border-radius:50%;border:5px solid #fff;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:700;touch-action:none;box-shadow:0 7px 0 #0006;line-height:1.05}
+  #phBtns{position:absolute;right:14px;bottom:14px;width:calc(52% - 28px);height:calc(100% - 74px)}
+  .pb{position:absolute;border-radius:50%;border:5px solid #fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:700;touch-action:none;box-shadow:0 7px 0 #0006;line-height:1.05;box-sizing:border-box}
+  .pb small{font-size:.62em;opacity:.95;margin-top:.2em}
   .pb.on{transform:translateY(5px);box-shadow:0 2px 0 #0006}
-  #pbJ{right:0;bottom:0;width:min(46%,180px);aspect-ratio:1;background:#FFD54F;color:#6a4000;font-size:24px}
-  #pbP{left:0;bottom:6%;width:min(42%,170px);aspect-ratio:1;background:#ff6b6b;color:#fff;font-size:22px}
-  #pbS{right:6%;top:0;width:min(35%,140px);aspect-ratio:1;background:#7c4dff;color:#fff;font-size:15px;padding:6px;box-sizing:border-box}
+  #pbJ{background:#FFD54F;color:#6a4000}
+  #pbP{background:#ff6b6b;color:#fff}
+  #pbS{background:#7c4dff;color:#fff}
   #pbS.cool{opacity:.45}
   #phPad.flash{animation:fl .35s}
   @keyframes fl{0%{background:#ff525266}100%{background:transparent}}
@@ -1315,7 +1316,7 @@ async function phoneMain(codeRaw) {
     $('phPickH').textContent = waiting ? "You're in the next fight! Pick your fighter" : 'Pick your fighter';
     $('phStart').classList.toggle('hidden', waiting || phase === 'fight');
     $('phPickNote').textContent = phase === 'title' ? 'Waiting for the TV to open Party mode…' : 'When everyone is ready, press Start here or on the TV.';
-    $('pbS').innerHTML = 'SPECIAL<br><small style="font-size:.75em;opacity:.9">' + FIGHTERS[myF].spName + '</small>';
+    $('pbS').innerHTML = 'SPECIAL<small>' + FIGHTERS[myF].spName + '</small>'; layoutBtns();
     const nm = ($('phName').value.trim() || 'Player'); $('phWho').textContent = nm + ' · ' + FIGHTERS[myF].name; $('phWho1').textContent = nm;
     $('phResT').textContent = winner ? '🏆 ' + winner : '🏁 Fight over'; $('phResS').textContent = 'Rematch, or change your fighter';
   }
@@ -1376,6 +1377,26 @@ async function phoneMain(codeRaw) {
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && mainCh && !welcomed) join(); });
   ui();
 }
+
+// Phone buttons: JUMP biggest (bottom right), PUNCH to its left, SPECIAL above and between them.
+// Sized from the space available, with a clear gap so they never touch.
+function layoutBtns() {
+  const area = $('phBtns'); if (!area || area.offsetParent === null) return;
+  const W = area.clientWidth, H = area.clientHeight; if (!W || !H) return;
+  const g = Math.max(24, Math.min(W, H) * 0.1);
+  let J = Math.min(W * 0.5, H * 0.62), P = J * 0.86, S = J * 0.74;
+  // PUNCH and JUMP side by side must fit the width
+  if (J + P + g > W) { const k = (W - g) / (J + P); J *= k; P *= k; S *= k; }
+  const jx = W - J / 2, jy = H - J / 2, px = jx - J / 2 - g - P / 2, py = H - P / 2;
+  // SPECIAL: centred between them, high enough to clear both
+  const sx = (jx + px) / 2, need = (cx, cy, r) => { const dx = sx - cx; const min = r + S / 2 + g; return dx * dx >= min * min ? -1e9 : cy - Math.sqrt(min * min - dx * dx); };
+  let sy = Math.min(need(jx, jy, J / 2), need(px, py, P / 2));
+  if (sy - S / 2 < 0) { const k = Math.max(0.6, (sy + S / 2) / S); S *= k; sy = Math.min(need(jx, jy, J / 2), need(px, py, P / 2)); if (sy - S / 2 < 0) sy = S / 2; }
+  const put = (id, x, y, d, fs) => { const e = $(id); Object.assign(e.style, { width: d + 'px', height: d + 'px', left: (x - d / 2) + 'px', top: (y - d / 2) + 'px', right: 'auto', bottom: 'auto', fontSize: fs + 'px' }); };
+  put('pbJ', jx, jy, J, Math.max(16, J * 0.17)); put('pbP', px, py, P, Math.max(14, P * 0.16)); put('pbS', sx, sy, S, Math.max(12, S * 0.16));
+}
+addEventListener('resize', () => setTimeout(layoutBtns, 50));
+addEventListener('orientationchange', () => setTimeout(layoutBtns, 300));
 
 // =====================================================================
 //  DOM: touch, pause, mute, fullscreen, join QR

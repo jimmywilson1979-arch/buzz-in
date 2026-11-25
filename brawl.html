@@ -1045,8 +1045,14 @@ class Brain {
 //  SCENES
 // =====================================================================
 const Scenes = {
-  backdrop() { const g = window.__game; if (!g) return; g.scene.getScenes(true).forEach(s => s.scene.stop()); g.scene.start('Backdrop'); },
-  fight(cfg) { const g = window.__game; g.scene.getScenes(true).forEach(s => s.scene.stop()); g.scene.start('Fight', cfg); },
+  // stop every other scene, then start (or restart) this one – in that order
+  switchTo(key, data) {
+    const g = window.__game; if (!g) return;
+    g.scene.getScenes(true).forEach(s => { if (s.scene.key !== key) g.scene.stop(s.scene.key); });
+    if (g.scene.isActive(key) || g.scene.isPaused(key)) g.scene.getScene(key).scene.restart(data); else g.scene.start(key, data);
+  },
+  backdrop() { this.switchTo('Backdrop'); },
+  fight(cfg) { this.switchTo('Fight', cfg); },
 };
 class Boot extends Phaser.Scene {
   constructor() { super('Boot'); }
@@ -1084,7 +1090,7 @@ class Fight extends Phaser.Scene {
   init(cfg) { this.cfg = cfg; }
   create() {
     const cfg = this.cfg, A = this.A = ARENAS[cfg.arena];
-    this.paused = false; this.over = false; this.started = false; this.acc = 0; this.slowmo = 1;
+    this.paused = false; this.over = false; this.done = false; this.started = false; this.acc = 0; this.slowmo = 1; this.hitDone = new Set();
     this.add.image(VW / 2, VH / 2, A.bg).setDisplaySize(VW, VH).setDepth(0);
     // platforms
     const mk = (p, soft) => {

@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Bounce Brawl</title>
+<meta name="theme-color" content="#1a1036">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap">
+<script>
+// can this browser show WebP pictures? (older tablets can't, so the game falls back to PNG/JPG copies)
+window.__webpOK = null; (function () { var i = new Image(); i.onload = function () { window.__webpOK = i.width === 1; }; i.onerror = function () { window.__webpOK = false; }; i.src = 'data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA=='; })();
+// show any error on screen, so a screenshot tells us what went wrong
+window.__errs = 0; window.addEventListener('error', function (e) {
+  if (window.__errs++ > 2) return; var d = document.getElementById('errbox');
+  if (!d) { d = document.createElement('div'); d.id = 'errbox'; d.style.cssText = 'position:fixed;left:8px;bottom:8px;max-width:70vw;z-index:9999;background:rgba(183,28,28,.92);color:#fff;font:13px/1.35 sans-serif;padding:8px 12px;border-radius:10px;pointer-events:none'; document.body.appendChild(d); }
+  d.innerHTML += '⚠ ' + String(e.message || e.error || 'error').slice(0, 160) + (e.lineno ? ' (line ' + e.lineno + ')' : '') + '<br>';
+});
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<style>
+  html,body{margin:0;height:100%;background:#1a1036;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;font-family:Fredoka,system-ui,sans-serif;color:#fff}
+  #game{position:fixed;inset:0}
+  #game canvas{display:block}
+  .hidden{display:none!important}
+  button{font-family:inherit}
+  /* top buttons */
+  #topbtns{position:fixed;top:10px;right:10px;display:flex;gap:8px;z-index:40}
+  #topbtns button{width:44px;height:44px;border-radius:14px;border:3px solid #3b1f73;background:#ffffffdd;font-size:20px;line-height:1;cursor:pointer;color:#3b1f73;font-weight:700}
+  body:not(.fighting) #btnPause,body:not(.fighting) #btnHome{display:none}
+  body.phone #topbtns{display:none}
+  #joinbtn{position:fixed;left:10px;top:10px;z-index:40;font:700 16px Fredoka,sans-serif;padding:8px 14px;border-radius:99px;border:2px solid #ffffff88;background:#1a1036bb;color:#fff;cursor:pointer;display:none}
+  body.party.fighting #joinbtn{display:block}
+  /* touch controls (solo on a phone/tablet) */
+  #touch{position:fixed;inset:0;pointer-events:none;z-index:10;display:none}
+  body.touch.fighting.solo #touch{display:block}
+  #tpad{position:absolute;left:0;bottom:0;width:42%;height:62%;pointer-events:auto;touch-action:none}
+  .base,.knob{position:absolute;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%)}
+  .base{width:150px;height:150px;border:3px solid #ffffffaa;background:#ffffff1a}
+  .knob{width:68px;height:68px;background:#FFD54F;border:3px solid #fff;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+  .base.idle{opacity:.5} .knob.idle{opacity:.65}
+  .tbtn{position:absolute;border-radius:50%;pointer-events:auto;touch-action:none;display:flex;align-items:center;justify-content:center;font-weight:700;border:4px solid #fff;box-shadow:0 6px 0 #0005;opacity:.88;text-align:center;line-height:1}
+  .tbtn.on{transform:translateY(4px) scale(.95);box-shadow:0 2px 0 #0005}
+  #tjump{right:24px;bottom:24px;width:112px;height:112px;background:#FFD54F;color:#6a4000;font-size:21px}
+  #tpunch{right:150px;bottom:30px;width:96px;height:96px;background:#ff6b6b;color:#fff;font-size:19px}
+  #tspec{right:40px;bottom:152px;width:90px;height:90px;background:#7c4dff;color:#fff;font-size:15px}
+  /* menus */
+  #menu{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;pointer-events:none}
+  .scr{pointer-events:auto;box-sizing:border-box;max-width:96vw;max-height:94vh;overflow:auto}
+  .logo{font-size:min(13vw,120px);line-height:.9;font-weight:700;text-align:center;color:#FFD54F;text-shadow:0 .06em 0 #c2185b,0 .1em 0 #3b1f73,0 .14em .2em #0008;letter-spacing:.02em;transform:rotate(-3deg);margin-bottom:.25em}
+  .logo span{display:block;color:#fff;font-size:.62em}
+  .bigbtns{display:flex;flex-direction:column;gap:12px;align-items:center}
+  .bb{min-width:min(78vw,420px);padding:14px 22px;border-radius:20px;border:4px solid #fff;background:#FFD54F;color:#4a2a00;font-size:min(5.4vw,26px);font-weight:700;cursor:pointer;box-shadow:0 6px 0 #0006}
+  .bb:active{transform:translateY(4px);box-shadow:0 2px 0 #0006}
+  .bb.alt{background:#ffffffe6;color:#3b1f73}
+  .bb.pink{background:#ff4f9a;color:#fff}
+  .bb.sm{min-width:0;font-size:18px;padding:10px 16px;border-width:3px;border-radius:14px}
+  .panel{background:#1a1036e6;border:4px solid #ffffff55;border-radius:26px;padding:16px 18px;box-shadow:0 10px 40px #0008}
+  #scrSetup{width:min(1200px,96vw)}
+  .setgrid{display:grid;grid-template-columns:1.25fr 1fr;gap:16px}
+  @media (max-aspect-ratio:1/1){.setgrid{grid-template-columns:1fr}}
+  h2{margin:0 0 10px;font-size:26px}
+  h3{margin:9px 0 5px;font-size:17px;opacity:.85}
+  .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .fcard{position:relative;border-radius:18px;border:4px solid #ffffff33;background:linear-gradient(#ffffff22,#ffffff08);padding:6px 6px 8px;text-align:center;cursor:pointer;min-height:120px}
+  .fcard canvas{width:100%;height:96px;object-fit:contain;display:block}
+  .fcard b{display:block;font-size:19px;letter-spacing:.04em}
+  .fcard small{display:block;opacity:.8;font-size:13px}
+  .fcard.sel{border-color:#FFD54F;background:linear-gradient(#ffd54f55,#ffd54f11)}
+  .fcard .tags{position:absolute;top:4px;left:4px;display:flex;gap:3px;flex-wrap:wrap}
+  .tag{font-size:12px;font-weight:700;padding:2px 7px;border-radius:99px;color:#fff;border:2px solid #fff}
+  .plist{display:flex;flex-direction:column;gap:5px}
+  .prow{display:flex;align-items:center;gap:10px;background:#ffffff14;border-radius:14px;padding:3px 10px;font-size:17px}
+  .prow .dot{width:20px;height:20px;border-radius:50%;border:3px solid #fff;flex:none}
+  .prow canvas{width:42px;height:36px;object-fit:contain}
+  .prow .who{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .prow button{border:0;border-radius:10px;padding:6px 10px;font-weight:700;font-size:15px;cursor:pointer;background:#ffffffdd;color:#3b1f73}
+  .seg{display:flex;gap:6px;flex-wrap:wrap}
+  .seg button{flex:1;padding:6px 10px;border-radius:12px;border:3px solid #ffffff55;background:#ffffff14;color:#fff;font-weight:700;font-size:16px;cursor:pointer}
+  .seg button.on{background:#FFD54F;color:#4a2a00;border-color:#fff}
+  .arenas{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .arena{height:58px;border-radius:12px;border:3px solid #ffffff44;background-size:cover;background-position:center;position:relative;cursor:pointer;display:flex;align-items:flex-end;justify-content:center;font-weight:700;font-size:13px;text-shadow:0 2px 3px #000;padding-bottom:3px;box-sizing:border-box;background-color:#3b1f73}
+  .arena.on{border-color:#FFD54F;box-shadow:0 0 0 3px #FFD54F}
+  .joinbox{display:flex;gap:18px;align-items:center;background:#fff;color:#1a1036;border-radius:18px;padding:12px 16px;margin-top:12px}
+  .joinbox canvas{width:170px;height:170px;image-rendering:pixelated}
+  .joinbox .code{font-size:40px;letter-spacing:.18em;font-weight:700;color:#c2185b}
+  .note{opacity:.8;font-size:15px;line-height:1.4}
+  #scrHelp{max-width:760px;font-size:18px;line-height:1.5}
+  #scrHelp table{border-collapse:collapse;width:100%;margin:8px 0}
+  #scrHelp td{padding:4px 8px;border-bottom:1px solid #ffffff22;vertical-align:top}
+  #scrResults{width:min(640px,94vw);text-align:center;margin-top:-34vh}
+  #resTitle{font-size:46px;font-weight:700;margin:0;text-shadow:0 4px 0 #0007}
+  .rrow{display:flex;justify-content:space-between;gap:10px;padding:4px 10px;font-size:18px;border-radius:10px}
+  .rrow:nth-child(odd){background:#ffffff10}
+  #resBtns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+  /* pause / join pop */
+  #pause,#joinpop,#codepop{position:fixed;inset:0;background:#0b0620cc;z-index:60;display:flex;align-items:center;justify-content:center}
+  .card{background:#fff;border:5px solid #3b1f73;border-radius:26px;padding:22px 26px;text-align:center;color:#1a1036;max-width:92vw;max-height:92vh;overflow:auto;box-sizing:border-box}
+  .card h2{font-size:32px}
+  .card button{display:block;width:250px;margin:10px auto;padding:12px;border-radius:16px;border:3px solid #3b1f73;background:#7c4dff;color:#fff;font:700 20px Fredoka,sans-serif;cursor:pointer}
+  .card button.alt{background:#fff;color:#3b1f73}
+  #joinqr canvas{width:260px;height:260px;image-rendering:pixelated;border:8px solid #fff;border-radius:8px}
+  .code{font-size:42px;letter-spacing:.2em;font-weight:700;color:#c2185b}
+  #rotate{position:fixed;inset:0;z-index:90;background:#1a1036;color:#fff;display:none;align-items:center;justify-content:center;text-align:center;font-size:24px;padding:30px;box-sizing:border-box}
+  @media (orientation:portrait){ body.touch:not(.phone) #rotate{display:flex} }
+  #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px}
+  /* ---------- phone controller ---------- */
+  #phone{position:fixed;inset:0;background:radial-gradient(circle at 50% 25%,#3b1f73,#140b2b);color:#fff;display:flex;flex-direction:column}
+  #phJoin{margin:auto;text-align:center;padding:24px;max-width:420px}
+  #phJoin h1{font-size:58px;margin:0;line-height:.95;color:#FFD54F;text-shadow:0 5px 0 #c2185b}
+  #phJoin p{opacity:.85;font-size:18px}
+  #phJoin input{font:700 24px Fredoka,sans-serif;padding:12px 16px;border-radius:16px;border:3px solid #3b1f73;width:100%;box-sizing:border-box;text-align:center}
+  .phbtn{font:700 24px Fredoka,sans-serif;padding:14px 20px;border-radius:18px;border:0;background:#FFD54F;color:#4a2a00;margin-top:14px;width:100%;box-shadow:0 5px 0 #b8860b}
+  #phPick{position:absolute;inset:0;overflow:auto;padding:12px 14px 20px;box-sizing:border-box}
+  #phPick .fgrid{grid-template-columns:repeat(3,1fr)}
+  #phPick .fcard{min-height:0}
+  #phPick .fcard canvas{height:70px}
+  @media (orientation:landscape){ #phPick .fgrid{grid-template-columns:repeat(6,1fr)} }
+  #phPickTop{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:19px}
+  #phPad{position:absolute;inset:0;touch-action:none}
+  #phTop{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:18px;z-index:2;pointer-events:none}
+  .phDot{width:26px;height:26px;border-radius:50%;border:3px solid #fff;flex:none}
+  #phState{margin-left:auto;font-size:14px;opacity:.8;text-align:right}
+  #phMid{position:absolute;left:0;right:0;top:46px;text-align:center;font-size:16px;opacity:.9;pointer-events:none;z-index:2}
+  #phStick{position:absolute;left:12px;bottom:14px;width:calc(52% - 16px);height:calc(100% - 70px);border-radius:24px;background:#ffffff10;border:3px dashed #ffffff44;touch-action:none;overflow:hidden}
+  #phStick .hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:1em;color:#ffffffaa;font-size:16px;pointer-events:none;line-height:1.4}
+  #phBtns{position:absolute;right:10px;bottom:12px;width:calc(48% - 14px);height:calc(100% - 70px)}
+  .pb{position:absolute;border-radius:50%;border:5px solid #fff;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:700;touch-action:none;box-shadow:0 7px 0 #0006;line-height:1.05}
+  .pb.on{transform:translateY(5px);box-shadow:0 2px 0 #0006}
+  #pbJ{right:0;bottom:0;width:min(46%,180px);aspect-ratio:1;background:#FFD54F;color:#6a4000;font-size:24px}
+  #pbP{left:0;bottom:6%;width:min(42%,170px);aspect-ratio:1;background:#ff6b6b;color:#fff;font-size:22px}
+  #pbS{right:6%;top:0;width:min(35%,140px);aspect-ratio:1;background:#7c4dff;color:#fff;font-size:15px;padding:6px;box-sizing:border-box}
+  #pbS.cool{opacity:.45}
+  #phPad.flash{animation:fl .35s}
+  @keyframes fl{0%{background:#ff525266}100%{background:transparent}}
+  #phRes{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;gap:6px}
+  #phRes h2{font-size:34px;color:#FFD54F}
+</style>
+</head>
+<body>
+<div id="loading">Loading Bounce Brawl…</div>
+<div id="game"></div>
+<div id="topbtns">
+  <button id="btnHome" title="Main menu">🏠</button>
+  <button id="btnPause" title="Pause (P)">II</button>
+  <button id="btnMute" title="Sound (M)">♪</button>
+  <button id="btnFull" title="Fullscreen">⛶</button>
+</div>
+<button id="joinbtn">📱 Join QR</button>
+<div id="touch">
+  <div id="tpad"><div class="base idle" style="left:110px;top:calc(100% - 110px)"></div><div class="knob idle" style="left:110px;top:calc(100% - 110px)"></div></div>
+  <div id="tjump" class="tbtn">JUMP</div>
+  <div id="tpunch" class="tbtn">PUNCH</div>
+  <div id="tspec" class="tbtn">SPECIAL</div>
+</div>
+<div id="menu">
+  <div id="scrTitle" class="scr hidden">
+    <div class="logo">BOUNCE<span>BRAWL!</span></div>
+    <div class="bigbtns">
+      <button class="bb" id="mSolo">🎮 Play vs computer</button>
+      <button class="bb pink" id="mParty">📺 Party on the TV (phones)</button>
+      <button class="bb alt" id="mCode">🔑 Join with a code</button>
+      <button class="bb alt" id="mHelp">❓ How to play</button>
+    </div>
+  </div>
+  <div id="scrSetup" class="scr panel hidden">
+    <div class="setgrid">
+      <div>
+        <h2 id="pickTitle">Pick your fighter</h2>
+        <div class="fgrid" id="fgrid"></div>
+        <div class="note" id="pickNote" style="margin-top:8px"></div>
+        <div class="joinbox hidden" id="joinBox"><div id="joinQrSmall"></div><div><div style="font-weight:700">📱 Scan to join</div><div class="note" style="color:#3b1f73">or open the game and type</div><div class="code" id="joinCodeSmall">····</div></div></div>
+      </div>
+      <div>
+        <h3 style="margin-top:0">Fighters in this match</h3>
+        <div class="plist" id="plist"></div>
+        <div style="display:flex;gap:8px;margin-top:8px"><button class="bb sm alt" id="addCpu">+ Add computer</button><button class="bb sm alt" id="shuffleCpu">🎲 Mix up computers</button></div>
+        <h3>Computer skill</h3>
+        <div class="seg" id="diffSeg"><button data-v="easy">😊 Easy</button><button data-v="normal">😎 Normal</button><button data-v="hard">😈 Hard</button></div>
+        <h3>Arena</h3>
+        <div class="arenas" id="arenaPick"></div>
+        <h3>Lives</h3>
+        <div class="seg" id="livesSeg"><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button></div>
+        <div style="display:flex;gap:10px;margin-top:14px"><button class="bb sm alt" id="setBack">◀ Back</button><button class="bb" style="flex:1;min-width:0" id="setGo">FIGHT! ▶</button></div>
+        <div class="note" id="setMsg" style="margin-top:6px;text-align:center"></div>
+      </div>
+    </div>
+  </div>
+  <div id="scrHelp" class="scr panel hidden">
+    <h2>❓ How to play</h2>
+    <div>Knock the other fighters off the arena! Every hit adds to their <b>damage %</b>, and the higher it gets, the further they fly. Fall off the screen and you lose a life. Last fighter standing wins.</div>
+    <table>
+      <tr><td><b>Move</b></td><td>Joystick ◀ ▶ (keyboard: A D or arrows). Hold ▼ on a thin platform to drop through.</td></tr>
+      <tr><td><b>Jump</b></td><td>JUMP. Press again in the air for a double jump (Bonk gets three!)</td></tr>
+      <tr><td><b>Punch</b></td><td>PUNCH (keyboard: J). Running punch = <b>dash</b>. In the air hold ▼ + PUNCH = <b>ground-slam</b></td></tr>
+      <tr><td><b>Special</b></td><td>SPECIAL (keyboard: K) – every fighter has their own, and it helps you get back to the arena</td></tr>
+    </table>
+    <table>
+      <tr><td>🤖 <b>Pip</b></td><td>All-rounder. <i>Spring Rocket</i>: launches up, hitting anyone in the way.</td></tr>
+      <tr><td>🪨 <b>Boulder</b></td><td>Heavy power. <i>Quake Slam</i>: a shockwave rolls along the platform.</td></tr>
+      <tr><td>🦛 <b>Bonk</b></td><td>Heavy bruiser. <i>Belly Bounce</i>: a hop and a huge belly-flop. Three jumps.</td></tr>
+      <tr><td>🦎 <b>Zippa</b></td><td>Speedster. <i>Tail Whip</i> spin. Clings to the side of the arena – press JUMP to wall-jump (3 times).</td></tr>
+      <tr><td>🟣 <b>Gloop</b></td><td>Trickster. Stretchy long punch. <i>Puddle Dodge</i>: melts, slides, then springs up with an uppercut.</td></tr>
+      <tr><td>🐧 <b>Frostbite</b></td><td>Control. <i>Ice Slide</i> leaves slippery ice. In the air it throws a snowball.</td></tr>
+    </table>
+    <div class="note">Keyboard: move A D / ← →, jump W / ↑ / Space, punch J, special K, pause P. Game controllers work too (A jump, X punch, B special).</div>
+    <div style="text-align:center;margin-top:12px"><button class="bb sm" id="helpBack">Got it!</button></div>
+  </div>
+  <div id="scrResults" class="scr panel hidden">
+    <div id="resTitle">🏆 WINNER!</div>
+    <div class="note" id="resSub"></div>
+    <div id="resList" style="margin-top:8px"></div>
+    <div id="resBtns"><button class="bb sm" id="resAgain">🔁 Rematch</button><button class="bb sm alt" id="resChange">👥 Change fighters</button><button class="bb sm alt" id="resMenu">🏠 Main menu</button></div>
+  </div>
+</div>
+<div id="pause" class="hidden">
+  <div class="card">
+    <h2>Paused</h2>
+    <button id="pResume">Resume</button>
+    <button id="pRestart" class="alt">Restart the fight</button>
+    <button id="pChange" class="alt">Change fighters</button>
+    <button id="pTitle" class="alt">Main menu</button>
+  </div>
+</div>
+<div id="joinpop" class="hidden">
+  <div class="card">
+    <h2>📱 Scan to join or get back in</h2>
+    <div id="joinqr"></div>
+    <div>or open the game and type <span class="code" id="joincode"></span></div>
+    <div class="note" style="color:#3b1f73">Dropped out? Join with the same name to get your fighter back.<br>New players join the next fight.</div>
+    <button id="joinclose">Close</button>
+  </div>
+</div>
+<div id="codepop" class="hidden">
+  <div class="card">
+    <h2>🔑 Join a party game</h2>
+    <div class="note" style="color:#3b1f73">Type the 4-letter code shown on the TV</div>
+    <input id="codein" maxlength="4" autocapitalize="characters" autocomplete="off" placeholder="CODE" style="font:700 40px Fredoka,sans-serif;letter-spacing:.2em;text-transform:uppercase;width:200px;text-align:center;padding:8px;border-radius:14px;border:3px solid #3b1f73;margin:10px auto;display:block">
+    <button id="codego">Join</button>
+    <button id="codeclose" class="alt">Cancel</button>
+  </div>
+</div>
+<div id="rotate"><div>📱↻<br><br>Turn your device sideways to play Bounce Brawl</div></div>
+<div id="phone" class="hidden">
+  <div id="phJoin">
+    <h1>BOUNCE<br>BRAWL</h1>
+    <p>Your phone is the controller.<br>Game <b id="phCode"></b></p>
+    <input id="phName" maxlength="12" placeholder="Your name" autocomplete="off">
+    <button class="phbtn" id="phGo">Join the game</button>
+    <p id="phMsg"></p>
+  </div>
+  <div id="phPick" class="hidden">
+    <div id="phPickTop"><span class="phDot" id="phDot1"></span><b id="phWho1">Player</b><span style="margin-left:auto;font-size:14px;opacity:.8" id="phState1">Connecting…</span></div>
+    <div style="font-size:22px;font-weight:700;margin-bottom:8px" id="phPickH">Pick your fighter</div>
+    <div class="fgrid" id="phGrid"></div>
+    <button class="phbtn" id="phStart">▶ Start the fight</button>
+    <div class="note" id="phPickNote" style="text-align:center;margin-top:8px"></div>
+  </div>
+  <div id="phPad" class="hidden">
+    <div id="phTop"><span class="phDot" id="phDot"></span><b id="phWho">Player</b><span id="phState">Connecting…</span></div>
+    <div id="phMid"></div>
+    <div id="phStick"><div class="hint">Put your thumb anywhere here<br>and slide to move<br>(▼ to drop / slam)</div><div class="base hidden"></div><div class="knob hidden"></div></div>
+    <div id="phBtns"><div class="pb" id="pbS">SPECIAL</div><div class="pb" id="pbP">PUNCH</div><div class="pb" id="pbJ">JUMP</div></div>
+  </div>
+  <div id="phRes" class="hidden">
+    <h2 id="phResT">🏆</h2>
+    <div id="phResS" style="font-size:18px;opacity:.9"></div>
+    <button class="phbtn" id="phAgain" style="max-width:340px">🔁 Rematch</button>
+    <button class="phbtn" id="phRepick" style="max-width:340px;background:#fff;color:#3b1f73;box-shadow:0 5px 0 #999">👥 Change fighter</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+// =====================================================================
+//  BOUNCE BRAWL – a family platform fighter. Code by Claude, art by ChatGPT.
+//  6 fighters, 3 arenas, 1-4 players: this device, game controllers, phones (party) and computer players.
+// =====================================================================
+const GAME_URL = 'https://jimmywilson1979-arch.github.io/buzz-in/brawl.html';
+const PHASER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.min.js';
+const VW = 1280, VH = 720, ART = 1.5;          // art is stored 1.5x bigger than it shows, so it stays sharp on a TV
+const QS = new URLSearchParams(location.search);
+const LOCAL = QS.has('local');                  // two tabs on one computer (testing)
+const IS_TOUCH = (window.matchMedia && matchMedia('(pointer: coarse)').matches) || navigator.maxTouchPoints > 0;
+if (IS_TOUCH) document.body.classList.add('touch');
+const store = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+const code4 = () => { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; let s = ''; for (let i = 0; i < 4; i++) s += A[Math.floor(Math.random() * A.length)]; return s; };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const approach = (v, t, a) => v < t ? Math.min(v + a, t) : Math.max(v - a, t);
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+function loadScript(src) { return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
+const $ = id => document.getElementById(id);
+
+// frames in each fighter sheet: name -> [x, w, h, anchorX, anchorY] (anchor = between the feet)
+const META = {"pip":{"idle":[0,132,155,78,153],"run":[136,133,150,83,148],"jump":[273,131,142,71,140],"punch":[408,156,143,67,141],"dash":[568,122,128,65,126],"slam":[694,138,142,80,140],"hurt":[836,145,133,89,131],"win":[985,125,150,66,148]},"boulder":{"idle":[0,215,200,114,198],"run":[219,224,195,118,193],"jump":[447,198,184,89,182],"punch":[649,240,187,98,185],"dash":[893,210,168,81,166],"slam":[1107,245,178,135,176],"hurt":[1356,225,182,124,180],"win":[1585,204,212,96,210]},"bonk":{"idle":[0,187,206,95,204],"run":[191,204,196,100,194],"jump":[399,198,189,88,187],"punch":[601,225,194,86,192],"dash":[830,221,161,86,159],"slam":[1055,220,180,125,178],"hurt":[1279,217,188,129,186],"win":[1500,217,212,115,210]},"zippa":{"idle":[0,119,140,61,138],"run":[123,146,136,76,134],"jump":[273,146,136,76,134],"punch":[423,156,138,53,136],"dash":[583,150,111,60,109],"slam":[737,138,118,81,116],"hurt":[879,141,121,85,119],"win":[1024,126,129,60,127],"cling":[1154,109,142,74,140]},"gloop":{"idle":[0,135,96,68,94],"run":[139,143,88,70,86],"jump":[286,119,105,46,103],"punch":[409,190,91,69,89],"dash":[603,160,75,83,73],"slam":[767,165,80,82,78],"hurt":[936,117,96,54,94],"win":[1057,128,102,63,100],"puddle":[1189,158,41,79,39],"fist":[1351,118,64,29,62]},"frostbite":{"idle":[0,148,140,85,138],"run":[152,148,139,78,137],"jump":[304,165,136,82,134],"punch":[473,173,132,71,130],"dash":[650,159,120,72,118],"slam":[813,174,133,95,131],"hurt":[991,183,130,105,128],"win":[1178,164,144,96,142]}};
+
+// ---------------------------------------------------------------------
+//  FIGHTERS – tune the feel here
+// ---------------------------------------------------------------------
+const FIGHTERS = {
+  pip:       { name: 'PIP', role: 'All-rounder', col: '#e53935', w: 50, h: 92, speed: 360, weight: 1.0, grav: 1.0, jumps: [900, 800],
+               punch: { dmg: 7, reach: 64, base: 250, grow: 7.2, ang: 38, s: .06, a: .10, e: .14 }, sp: 'rocket', spName: 'Spring Rocket' },
+  boulder:   { name: 'BOULDER', role: 'Heavy power', col: '#ef7d1a', w: 96, h: 122, speed: 262, weight: 1.55, grav: 1.12, jumps: [790, 560],
+               punch: { dmg: 12, reach: 76, base: 320, grow: 8.4, ang: 40, s: .13, a: .11, e: .22 }, sp: 'quake', spName: 'Quake Slam' },
+  bonk:      { name: 'BONK', role: 'Heavy bruiser', col: '#5c7cc4', w: 92, h: 128, speed: 285, weight: 1.45, grav: 1.05, jumps: [830, 690, 570],
+               punch: { dmg: 11, reach: 80, base: 305, grow: 8.2, ang: 36, s: .11, a: .11, e: .2 }, sp: 'belly', spName: 'Belly Bounce' },
+  zippa:     { name: 'ZIPPA', role: 'Speedster', col: '#8bc34a', w: 44, h: 84, speed: 470, weight: 0.78, grav: 1.0, jumps: [920, 820],
+               punch: { dmg: 5, reach: 56, base: 225, grow: 6.4, ang: 38, s: .04, a: .08, e: .09 }, sp: 'whip', spName: 'Tail Whip', cling: true },
+  gloop:     { name: 'GLOOP', role: 'Trickster', col: '#a020f0', w: 82, h: 58, speed: 315, weight: 1.0, grav: 0.8, jumps: [830, 740],
+               punch: { dmg: 8, reach: 165, base: 255, grow: 7.0, ang: 30, s: .12, a: .12, e: .2, stretch: true }, sp: 'puddle', spName: 'Puddle Dodge' },
+  frostbite: { name: 'FROSTBITE', role: 'Control', col: '#26a69a', w: 58, h: 86, speed: 370, weight: 0.95, grav: 1.0, jumps: [880, 780],
+               punch: { dmg: 7, reach: 62, base: 250, grow: 7.2, ang: 38, s: .06, a: .10, e: .14 }, sp: 'ice', spName: 'Ice Slide' },
+};
+const FKEYS = Object.keys(FIGHTERS);
+const SLOT_COL = ['#ff3b3b', '#2f8cff', '#2fd25a', '#ffc21a'];
+const SLOT_HEX = [0xff3b3b, 0x2f8cff, 0x2fd25a, 0xffc21a];
+const PHYS = { g: 2300, maxFall: 1150, fastFall: 1500, groundAcc: 3200, iceAcc: 500, airAcc: 1800, drag: 0.4 };
+// blast zones: go past these and you lose a life
+const BLAST = { l: -170, r: VW + 170, t: -280, b: VH + 170 };
+
+// ---------------------------------------------------------------------
+//  ARENAS (top = where you stand, as a fraction of the platform picture)
+// ---------------------------------------------------------------------
+const ARENAS = {
+  sky:  { name: 'Sky Island', bg: 'bg-sky', plat: 'plat-sky', top: 0.10, music: 'sunny',
+          main: { x1: 250, x2: 1030, y: 520 }, soft: [{ x1: 330, x2: 540, y: 385 }, { x1: 740, x2: 950, y: 385 }, { x1: 545, x2: 735, y: 255 }] },
+  dojo: { name: 'Frozen Dojo', bg: 'bg-dojo', plat: 'plat-dojo', top: 0.10, music: 'snow',
+          main: { x1: 300, x2: 980, y: 535 }, soft: [{ x1: 150, x2: 360, y: 400 }, { x1: 920, x2: 1130, y: 400 }, { x1: 540, x2: 740, y: 300 }] },
+  lava: { name: 'Lava Quarry', bg: 'bg-lava', plat: 'plat-lava', top: 0.03, music: 'boss',
+          main: { x1: 220, x2: 1060, y: 540 }, soft: [{ x1: 250, x2: 440, y: 410 }, { x1: 840, x2: 1030, y: 410 }, { x1: 530, x2: 750, y: 275, move: 250 }] },
+};
+const AKEYS = Object.keys(ARENAS);
+const MUSIC_FILES = { sunny: 'pip-art/music/sunny.mp3', snow: 'pip-art/music/snow.mp3', boss: 'pip-art/music/boss.mp3', cloud: 'pip-art/music/cloud.mp3' };
+
+// =====================================================================
+//  SOUND (synthesised effects + the music tracks from Pip)
+// =====================================================================
+const Sound = (() => {
+  let ctx = null, master, sfxGain, noiseBuf, muted = store.get('brawl_muted', false);
+  const TR = {}; let want = null, playing = null, trackGain = null, srcs = [], timer = null;
+  function init() {
+    if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
+    try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ctx = null; return; }
+    master = ctx.createGain(); master.gain.value = muted ? 0 : 0.7; master.connect(ctx.destination);
+    sfxGain = ctx.createGain(); sfxGain.gain.value = 0.55; sfxGain.connect(master);
+    noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 0.5, ctx.sampleRate);
+    const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    if (want) music(want);
+  }
+  function tone(f, dur, o = {}) {
+    if (!ctx) return; const t = ctx.currentTime + (o.when || 0), osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = o.type || 'square'; osc.frequency.setValueAtTime(f, t); if (o.slideTo) osc.frequency.exponentialRampToValueAtTime(o.slideTo, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(o.vol || 0.3, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(g); g.connect(sfxGain); osc.start(t); osc.stop(t + dur + 0.03);
+  }
+  function noise(dur, vol = 0.2, o = {}) {
+    if (!ctx) return; const t = ctx.currentTime + (o.when || 0), src = ctx.createBufferSource(); src.buffer = noiseBuf;
+    const f = ctx.createBiquadFilter(); f.type = o.hp ? 'highpass' : 'lowpass'; f.frequency.value = o.freq || 1800;
+    const g = ctx.createGain(); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(f); f.connect(g); g.connect(sfxGain); src.start(t); src.stop(t + dur + 0.02);
+  }
+  const sfx = {
+    jump() { tone(330, 0.14, { slideTo: 700, vol: 0.18 }); },
+    dbl() { tone(520, 0.15, { type: 'triangle', slideTo: 1200, vol: 0.32 }); },
+    swing() { noise(0.09, 0.18, { hp: true, freq: 2200 }); },
+    hit(k) { const s = clamp(k / 1000, 0.2, 1.3); tone(220 - s * 80, 0.12 + s * 0.08, { type: 'triangle', slideTo: 60, vol: 0.35 + s * 0.25 }); noise(0.08 + s * 0.06, 0.25 + s * 0.2, { freq: 1400 }); },
+    big() { tone(120, 0.5, { type: 'sawtooth', slideTo: 40, vol: 0.4 }); noise(0.4, 0.5, { freq: 900 }); },
+    ko() { tone(900, 0.6, { type: 'sawtooth', slideTo: 90, vol: 0.3 }); noise(0.6, 0.5, { freq: 2500 }); tone(70, 0.6, { type: 'sine', vol: 0.6 }); },
+    land() { noise(0.05, 0.12, { freq: 900 }); },
+    quake() { tone(70, 0.5, { type: 'sawtooth', slideTo: 35, vol: 0.5 }); noise(0.5, 0.45, { freq: 500 }); },
+    spring() { tone(170, 0.35, { type: 'sine', slideTo: 1150, vol: 0.4 }); },
+    whip() { [0, .1, .2].forEach(w => noise(0.08, 0.2, { hp: true, freq: 3000, when: w })); },
+    goo() { tone(300, 0.25, { type: 'sine', slideTo: 90, vol: 0.4 }); },
+    ice() { tone(1400, 0.3, { type: 'triangle', slideTo: 2600, vol: 0.15 }); noise(0.3, 0.15, { hp: true, freq: 5000 }); },
+    count() { tone(660, 0.18, { vol: 0.25 }); },
+    go() { [523, 784, 1047].forEach((f, i) => tone(f, 0.22, { vol: 0.25, when: i * 0.07 })); },
+    win() { [523, 659, 784, 1047, 0, 784, 1047, 1319].forEach((f, i) => f && tone(f, 0.22, { vol: 0.2, when: i * 0.11 })); },
+    select() { tone(660, 0.07, { vol: 0.18 }); tone(990, 0.1, { vol: 0.18, when: 0.05 }); },
+    join() { [659, 880, 1175].forEach((f, i) => tone(f, 0.14, { type: 'triangle', vol: 0.35, when: i * 0.08 })); },
+  };
+  function load(k) {
+    if (!ctx || TR[k] !== undefined || !MUSIC_FILES[k]) return; TR[k] = 'loading';
+    fetch(MUSIC_FILES[k]).then(r => r.arrayBuffer()).then(b => new Promise((res, rej) => ctx.decodeAudioData(b, res, rej)))
+      .then(buf => { TR[k] = buf; if (want === k && playing !== k) play(k); }).catch(() => { TR[k] = null; });
+  }
+  function stop() { if (timer) { clearInterval(timer); timer = null; } srcs.forEach(s => { try { s.stop(); } catch (e) {} }); srcs = []; playing = null; }
+  function play(k) {
+    stop(); const buf = TR[k]; if (!(buf instanceof AudioBuffer)) return; playing = k;
+    if (!trackGain) { trackGain = ctx.createGain(); trackGain.gain.value = 0.38; trackGain.connect(master); }
+    let next = ctx.currentTime + 0.05; const xf = 1;
+    const one = at => { const s = ctx.createBufferSource(), g = ctx.createGain(); s.buffer = buf; s.connect(g); g.connect(trackGain);
+      g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(1, at + xf); g.gain.setValueAtTime(1, at + buf.duration - xf); g.gain.linearRampToValueAtTime(0, at + buf.duration);
+      s.start(at); s.stop(at + buf.duration + 0.05); srcs.push(s); s.onended = () => { srcs = srcs.filter(x => x !== s); }; };
+    const sched = () => { while (next < ctx.currentTime + 2) { one(next); next += buf.duration - xf; } };
+    sched(); timer = setInterval(sched, 400);
+  }
+  function music(k) { want = k; if (!ctx) return; if (!k) { stop(); return; } if (playing === k) return; if (TR[k] instanceof AudioBuffer) play(k); else { stop(); load(k); } }
+  function setMuted(m) { muted = m; store.set('brawl_muted', m); if (master) master.gain.value = m ? 0 : 0.7; }
+  return { init, sfx, music, setMuted, get muted() { return muted; } };
+})();
+
+// =====================================================================
+//  NETWORK (same set-up as Pip and Buzz In: Supabase live channels + a
+//  direct WebRTC link for low-lag buttons once it connects)
+// =====================================================================
+const SUPA_URL = 'https://uqwlmegbelyqtbegxqlz.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxd2xtZWdiZWx5cXRiZWd4cWx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3NTYzNzAsImV4cCI6MjEwNzMzMjM3MH0.bSeF8_kwKqSrEj3n8Ku2OeSU8E5nMqJj0hcfgXb8cW0';
+const ICE = [{ urls: 'stun:stun.l.google.com:19302' }];
+let sb = null;
+async function chan(name, onMsg) {
+  if (LOCAL) { const bc = new BroadcastChannel(name); bc.onmessage = e => onMsg(e.data); return { send: m => bc.postMessage(m), close: () => bc.close() }; }
+  if (!window.supabase) await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js');
+  if (!sb) sb = window.supabase.createClient(SUPA_URL, SUPA_KEY, { realtime: { params: { eventsPerSecond: 30 } } });
+  const ch = sb.channel(name, { config: { broadcast: { self: false } } });
+  ch.on('broadcast', { event: 'm' }, ({ payload }) => onMsg(payload));
+  await new Promise((res, rej) => {
+    let done = false; const t = setTimeout(() => { if (!done) { done = true; rej(new Error('timeout')); } }, 12000);
+    ch.subscribe(st => { if (done) return; if (st === 'SUBSCRIBED') { done = true; clearTimeout(t); res(); } else if (st === 'CHANNEL_ERROR' || st === 'TIMED_OUT' || st === 'CLOSED') { done = true; clearTimeout(t); rej(new Error(st)); } });
+  });
+  return { send: m => ch.send({ type: 'broadcast', event: 'm', payload: m }), close: () => sb.removeChannel(ch) };
+}
+function iceDone(pc) { return new Promise(res => { if (pc.iceGatheringState === 'complete') return res(); const t = setTimeout(res, 2500); pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete') { clearTimeout(t); res(); } }); }); }
+
+const Net = {
+  room: null, main: null, phones: {}, status: '',
+  async host() {
+    if (this.room) return;
+    this.room = (QS.get('tv') || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4) || code4();
+    this.status = 'connecting';
+    try { this.main = await chan('brawl-' + this.room, m => this.onMain(m)); this.status = 'ready'; }
+    catch (e) { this.status = 'error'; return; }
+    setInterval(() => this.bcast({ t: 'state', st: this.pub() }), 2000);
+    App.refresh();
+  },
+  joinUrl() { const base = /^https?:/.test(location.href) && !/claudeusercontent|sandbox/.test(location.host) ? location.origin + location.pathname : GAME_URL; return base + '?join=' + this.room + (LOCAL ? '&local=1' : ''); },
+  bcast(m) { this.main && this.main.send(m); },
+  sendTo(p, m) { if (!p) return; if (p.dc && p.dc.readyState === 'open') { try { p.dc.send(JSON.stringify(m)); return; } catch (e) {} } p.ch && p.ch.send(m); },
+  list() { return Object.values(this.phones); },
+  pub() { return { phase: App.phase, winner: App.lastWinner || '', players: this.list().map(p => ({ id: p.id, slot: p.slot, name: p.name, f: p.f })) }; },
+  onMain(m) { if (m && m.t === 'join' && m.id) this.addPhone(m); },
+  async addPhone(m) {
+    let p = this.phones[m.id];
+    if (!p) { // same name on a new phone gets their old fighter back
+      const n = String(m.name || '').trim().toLowerCase();
+      const old = this.list().find(q => n && q.name.toLowerCase() === n && Date.now() - q.seen > 6000);
+      if (old) { delete this.phones[old.id]; p = old; p.id = m.id; p.ch = null; p.pc = null; p.dc = null; p.pending = null; this.phones[m.id] = p; }
+    }
+    if (!p) {
+      const slot = App.freeSlot();
+      if (slot < 0) { this.bcast({ t: 'full', id: m.id }); return; }
+      p = this.phones[m.id] = { id: m.id, slot, f: App.unusedFighter(), inp: { x: 0, y: 0, j: 0, p: 0, s: 0 }, cnt: { j: -1, p: -1, s: -1 }, q: { j: 0, p: 0, s: 0 }, seen: Date.now(), ch: null, pc: null, dc: null, pending: null,
+        waiting: App.phase === 'fight' };
+      App.dropCpuForSlot(slot);
+      Sound.sfx.join();
+    }
+    p.name = String(m.name || 'Player').slice(0, 12); p.seen = Date.now();
+    if (!p.ch && !p.pending) p.pending = chan('brawl-' + this.room + '-' + m.id, msg => this.onPad(p, msg)).then(ch => { p.ch = ch; p.pending = null; }).catch(() => { p.pending = null; });
+    if (p.pending) await p.pending;
+    this.welcome(p);
+    App.refresh();
+  },
+  welcome(p) { if (p && p.ch) p.ch.send({ t: 'welcome', slot: p.slot, color: SLOT_COL[p.slot], f: p.f, phase: App.phase, waiting: !!p.waiting, winner: App.lastWinner || '' }); },
+  async answer(p, sdp) {
+    try { p.pc && p.pc.close(); } catch (e) {}
+    const pc = p.pc = new RTCPeerConnection({ iceServers: ICE });
+    pc.ondatachannel = e => { const dc = e.channel; p.dc = dc; dc.onmessage = ev => { let m; try { m = JSON.parse(ev.data); } catch (_) { return; } this.onPad(p, m); }; dc.onclose = () => { if (p.dc === dc) p.dc = null; }; };
+    try { await pc.setRemoteDescription({ type: 'offer', sdp }); await pc.setLocalDescription(await pc.createAnswer()); await iceDone(pc); if (p.pc === pc) p.ch.send({ t: 'answer', sdp: pc.localDescription.sdp }); } catch (e) {}
+  },
+  onPad(p, m) {
+    if (!m || !m.t) return; p.seen = Date.now();
+    if (m.t === 'offer') return this.answer(p, m.sdp);
+    if (m.t === 'in') {
+      p.inp = { x: clamp(+m.x || 0, -1, 1), y: clamp(+m.y || 0, -1, 1), j: !!m.j, p: !!m.p, s: !!m.s };
+      for (const k of ['j', 'p', 's']) { const c = m['n' + k]; if (typeof c === 'number') { if (p.cnt[k] >= 0 && c !== p.cnt[k]) p.q[k]++; p.cnt[k] = c; } }
+      return;
+    }
+    if (m.t === 'pick' && FIGHTERS[m.f]) { p.f = m.f; App.refresh(); this.welcome(p); return; }
+    if (m.t === 'start') App.phoneStart(p);
+  },
+  bySlot(slot) { return this.list().find(q => q.slot === slot) || null; },
+  read(slot) {
+    const p = this.bySlot(slot); if (!p) return null;
+    const fresh = Date.now() - p.seen < 2500, q = p.q; p.q = { j: 0, p: 0, s: 0 };
+    return { x: fresh ? p.inp.x : 0, y: fresh ? p.inp.y : 0, jump: fresh && p.inp.j, jumpP: q.j > 0, punchP: q.p > 0, specP: q.s > 0 };
+  },
+  online(slot) { const p = this.bySlot(slot); return !!p && Date.now() - p.seen < 6000; },
+  buzz(slot, ms) { const p = this.bySlot(slot); if (p) this.sendTo(p, { t: 'buzz', ms }); },
+  phaseAll() { this.list().forEach(p => { if (p.ch) this.welcome(p); }); },
+};
+
+// =====================================================================
+//  INPUT: keyboard + touch (this device), game controllers, phones
+// =====================================================================
+const Keys = { down: new Set(), q: { j: 0, p: 0, s: 0 } };
+addEventListener('keydown', e => {
+  if (e.target && e.target.tagName === 'INPUT') return;
+  const k = e.key.toLowerCase(); if (Keys.down.has(k)) return; Keys.down.add(k);
+  if (['w', 'arrowup', ' ', 'z'].includes(k)) Keys.q.j++;
+  if (['j', 'x', 'f'].includes(k)) Keys.q.p++;
+  if (['k', 'c', 'g'].includes(k)) Keys.q.s++;
+  if (k === 'p' || k === 'escape') { if (App.phase === 'fight') togglePause(); }
+  if (k === 'm') toggleMute();
+  if (k === 'enter' && App.screen === 'setup') App.go();
+  if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) e.preventDefault();
+});
+addEventListener('keyup', e => Keys.down.delete(e.key.toLowerCase()));
+addEventListener('blur', () => Keys.down.clear());
+const Touch = { x: 0, y: 0, j: false, q: { j: 0, p: 0, s: 0 } };
+function localInput() {
+  const d = Keys.down, has = (...a) => a.some(k => d.has(k));
+  let x = (has('d', 'arrowright') ? 1 : 0) - (has('a', 'arrowleft') ? 1 : 0), y = (has('s', 'arrowdown') ? 1 : 0) - (has('w', 'arrowup') ? 1 : 0) * 0;
+  if (Touch.x || Touch.y) { x = Touch.x; y = Touch.y; }
+  const r = { x, y, jump: has('w', 'arrowup', ' ', 'z') || Touch.j, jumpP: Keys.q.j + Touch.q.j > 0, punchP: Keys.q.p + Touch.q.p > 0, specP: Keys.q.s + Touch.q.s > 0 };
+  Keys.q = { j: 0, p: 0, s: 0 }; Touch.q = { j: 0, p: 0, s: 0 };
+  return r;
+}
+const Pads = { prev: {} };
+function padRaw(i) { const gp = navigator.getGamepads ? navigator.getGamepads()[i] : null; return gp && gp.connected ? gp : null; }
+function padInput(i) {
+  const gp = padRaw(i); if (!gp) return { x: 0, y: 0, jump: false, jumpP: false, punchP: false, specP: false };
+  const b = n => !!(gp.buttons[n] && gp.buttons[n].pressed), pr = Pads.prev[i] || {};
+  let x = gp.axes[0] || 0, y = gp.axes[1] || 0; if (Math.abs(x) < 0.25) x = 0; if (Math.abs(y) < 0.4) y = 0;
+  if (b(14)) x = -1; if (b(15)) x = 1; if (b(13)) y = 1;
+  const now = { j: b(0) || b(12), p: b(2), s: b(1) || b(3), st: b(9) };
+  Pads.prev[i] = now;
+  return { x, y, jump: now.j, jumpP: now.j && !pr.j, punchP: now.p && !pr.p, specP: now.s && !pr.s, startP: now.st && !pr.st, anyP: (now.j && !pr.j) || (now.p && !pr.p) || (now.s && !pr.s) || (now.st && !pr.st) };
+}
+
+// =====================================================================
+//  APP: menus, players, settings
+// =====================================================================
+const App = {
+  mode: 'solo', screen: 'title', phase: 'title', lastWinner: '',
+  me: { f: store.get('brawl_me', 'pip') },          // this device's player (solo)
+  pads: [],                                          // {i, slot, f}
+  cpus: [],                                          // {slot, f}
+  diff: store.get('brawl_diff', 'normal'), arena: store.get('brawl_arena', 'sky'), lives: store.get('brawl_lives', 3),
+  humans() {
+    const out = [];
+    if (this.mode === 'solo') out.push({ kind: 'me', slot: 0, f: this.me.f, name: 'You' });
+    this.pads.forEach(p => out.push({ kind: 'pad', slot: p.slot, f: p.f, name: '🎮 Controller ' + (p.i + 1), i: p.i }));
+    if (this.mode === 'party') Net.list().forEach(p => out.push({ kind: 'phone', slot: p.slot, f: p.f, name: p.name, waiting: p.waiting, online: Net.online(p.slot) }));
+    return out;
+  },
+  roster() { return this.humans().concat(this.cpus.map(c => ({ kind: 'cpu', slot: c.slot, f: c.f, name: 'CPU' }))).sort((a, b) => a.slot - b.slot); },
+  usedSlots() { return new Set(this.roster().map(r => r.slot)); },
+  freeSlot() { const u = new Set(this.humans().map(h => h.slot)); for (let i = 0; i < 4; i++) if (!u.has(i)) return i; return -1; },
+  freeCpuSlot() { const u = this.usedSlots(); for (let i = 0; i < 4; i++) if (!u.has(i)) return i; return -1; },
+  unusedFighter() { const used = new Set(this.roster().map(r => r.f)); const free = FKEYS.filter(k => !used.has(k)); return pick(free.length ? free : FKEYS); },
+  dropCpuForSlot(slot) {  // a human arrived: if a computer had that slot, move it or drop it
+    const c = this.cpus.find(c => c.slot === slot); if (!c) return;
+    const free = this.freeCpuSlotExcept(slot); if (free >= 0) c.slot = free; else this.cpus = this.cpus.filter(x => x !== c);
+  },
+  freeCpuSlotExcept(slot) { const u = this.usedSlots(); u.add(slot); for (let i = 0; i < 4; i++) if (!u.has(i)) return i; return -1; },
+  addCpu() { const s = this.freeCpuSlot(); if (s < 0) return; this.cpus.push({ slot: s, f: this.unusedFighter() }); this.refresh(); },
+  title() {
+    this.mode = 'solo'; this.screen = 'title'; this.phase = 'title'; document.body.classList.remove('party', 'solo', 'fighting');
+    show('scrTitle'); Scenes.backdrop(); Sound.music('cloud'); Net.phaseAll();
+  },
+  setup(mode) {
+    if (mode) {
+      this.mode = mode; this.pads = [];
+      if (!this.cpus.length) this.cpus = mode === 'solo' ? [{ slot: 1, f: this.unusedFighter() }] : [];
+      if (mode === 'party') { this.cpus = this.cpus.filter(c => c.slot !== 0); Net.host(); }
+    }
+    document.body.classList.toggle('party', this.mode === 'party'); document.body.classList.toggle('solo', this.mode === 'solo'); document.body.classList.remove('fighting');
+    this.screen = 'setup'; this.phase = 'lobby'; Net.list().forEach(p => p.waiting = false);
+    show('scrSetup'); Scenes.backdrop(); Sound.music('cloud'); this.refresh(); Net.phaseAll();
+  },
+  refresh() {
+    if (this.screen !== 'setup') return;
+    const party = this.mode === 'party', ros = this.roster();
+    $('pickTitle').textContent = party ? 'The fighters' : 'Pick your fighter';
+    $('pickNote').textContent = party ? 'Everyone picks their fighter on their own phone. Tap a computer player on the right to change its fighter.' : 'Tap a fighter to choose. Tap a computer player on the right to change its fighter.';
+    // fighter cards
+    const g = $('fgrid'); if (!g.children.length) FKEYS.forEach(k => {
+      const d = document.createElement('div'); d.className = 'fcard'; d.dataset.f = k;
+      d.innerHTML = `<div class="tags"></div>`; d.appendChild(portrait(k, 150, 110)); d.insertAdjacentHTML('beforeend', `<b>${FIGHTERS[k].name}</b><small>${FIGHTERS[k].role} · ${FIGHTERS[k].spName}</small>`);
+      d.onclick = () => { if (this.mode === 'solo') { this.me.f = k; store.set('brawl_me', k); Sound.init(); Sound.sfx.select(); this.refresh(); } };
+      g.appendChild(d);
+    });
+    [...g.children].forEach(d => {
+      const k = d.dataset.f; d.classList.toggle('sel', !party && this.me.f === k);
+      d.querySelector('.tags').innerHTML = ros.filter(r => r.f === k).map(r => `<span class="tag" style="background:${SLOT_COL[r.slot]}">${r.kind === 'cpu' ? 'CPU' : 'P' + (r.slot + 1)}</span>`).join('');
+    });
+    // roster list
+    const pl = $('plist'); pl.innerHTML = '';
+    if (!ros.length) pl.innerHTML = `<div class="note">Waiting for players… scan the QR code with a phone to join.</div>`;
+    ros.forEach(r => {
+      const row = document.createElement('div'); row.className = 'prow';
+      const label = r.kind === 'cpu' ? `🤖 Computer` : r.kind === 'me' ? '👆 You' : r.kind === 'phone' ? `📱 ${esc(r.name)}${r.online === false ? ' (offline)' : ''}` : r.name;
+      row.innerHTML = `<span class="dot" style="background:${SLOT_COL[r.slot]}"></span>`;
+      row.appendChild(portrait(r.f, 60, 50));
+      row.insertAdjacentHTML('beforeend', `<span class="who"><b>P${r.slot + 1}</b> ${label} · ${FIGHTERS[r.f].name}</span>`);
+      if (r.kind === 'cpu') {
+        const c = this.cpus.find(c => c.slot === r.slot);
+        row.style.cursor = 'pointer'; row.onclick = e => { if (e.target.tagName === 'BUTTON') return; c.f = FKEYS[(FKEYS.indexOf(c.f) + 1) % FKEYS.length]; Sound.sfx.select(); this.refresh(); };
+        const b = document.createElement('button'); b.textContent = '✕'; b.title = 'Remove'; b.onclick = () => { this.cpus = this.cpus.filter(x => x !== c); this.refresh(); }; row.appendChild(b);
+      }
+      if (r.kind === 'pad') { const b = document.createElement('button'); b.textContent = '✕'; b.onclick = () => { this.pads = this.pads.filter(x => x.i !== r.i); this.refresh(); }; row.appendChild(b); }
+      if (r.kind === 'phone' && party) { const b = document.createElement('button'); b.textContent = '✕'; b.title = 'Remove player'; b.onclick = () => { const p = Net.bySlot(r.slot); if (p) { delete Net.phones[p.id]; Net.bcast({ t: 'kick', id: p.id }); } this.refresh(); }; row.appendChild(b); }
+      pl.appendChild(row);
+    });
+    $('addCpu').disabled = this.freeCpuSlot() < 0; $('addCpu').style.opacity = this.freeCpuSlot() < 0 ? .4 : 1;
+    [...$('diffSeg').children].forEach(b => b.classList.toggle('on', b.dataset.v === this.diff));
+    [...$('livesSeg').children].forEach(b => b.classList.toggle('on', +b.dataset.v === this.lives));
+    const ap = $('arenaPick'); if (!ap.children.length) { AKEYS.concat(['random']).forEach(k => {
+      const d = document.createElement('div'); d.className = 'arena'; d.dataset.a = k;
+      if (k === 'random') { d.textContent = '🎲 Random'; d.style.background = 'linear-gradient(135deg,#7c4dff,#ff4f9a)'; d.style.alignItems = 'center'; d.style.fontSize = '16px'; }
+      else { d.style.backgroundImage = `url(${artUrl(ARENAS[k].bg, 'jpg')})`; d.textContent = ARENAS[k].name; }
+      d.onclick = () => { this.arena = k; store.set('brawl_arena', k); Sound.sfx.select(); this.refresh(); }; ap.appendChild(d);
+    }); }
+    [...ap.children].forEach(d => d.classList.toggle('on', d.dataset.a === this.arena));
+    // party join box
+    $('joinBox').classList.toggle('hidden', !party);
+    if (party) {
+      $('joinCodeSmall').textContent = Net.room || '····';
+      const box = $('joinQrSmall'); if (Net.room && box.dataset.room !== Net.room) { box.innerHTML = ''; const cv = qrCanvas(Net.joinUrl(), 4); if (cv) box.appendChild(cv); box.dataset.room = Net.room; }
+      if (Net.status === 'error') $('joinCodeSmall').textContent = 'offline';
+    }
+    const n = this.roster().filter(r => !r.waiting).length;
+    $('setGo').disabled = n < 2; $('setGo').style.opacity = n < 2 ? .5 : 1;
+    $('setMsg').textContent = n < 2 ? (party ? 'You need at least 2 fighters – join with a phone, or add a computer player.' : 'Add a computer player to fight against.') : (n + ' fighters ready!' + (party ? ' Any phone can press Start too.' : ''));
+  },
+  go() {
+    const ros = this.roster(); if (ros.length < 2) return;
+    Sound.init(); Sound.sfx.go();
+    this.screen = 'fight'; this.phase = 'fight'; Net.list().forEach(p => p.waiting = false);
+    hideScreens(); document.body.classList.add('fighting');
+    const arena = this.arena === 'random' ? pick(AKEYS) : this.arena;
+    Scenes.fight({ arena, lives: this.lives, diff: this.diff, roster: ros });
+    Net.phaseAll(); Net.bcast({ t: 'state', st: Net.pub() });
+  },
+  phoneStart(p) { if (this.screen === 'setup' || this.screen === 'results') this.go(); },
+  results(list, winner) {
+    this.screen = 'results'; this.phase = 'results'; document.body.classList.remove('fighting');
+    this.lastWinner = winner ? (winner.name + ' (' + FIGHTERS[winner.f].name + ')') : '';
+    $('resTitle').innerHTML = winner ? `🏆 ${FIGHTERS[winner.f].name} WINS!` : 'DRAW!';
+    $('resTitle').style.color = winner ? SLOT_COL[winner.slot] : '#fff';
+    $('resSub').textContent = winner ? (winner.kind === 'cpu' ? 'The computer won this time!' : winner.label + ' is the champion!') : '';
+    $('resList').innerHTML = list.map((f, i) => `<div class="rrow"><span>${['🥇', '🥈', '🥉', '4th'][i] || ''} <b style="color:${SLOT_COL[f.slot]}">${esc(f.label)}</b> · ${FIGHTERS[f.f].name}</span><span>${f.kos} KO${f.kos === 1 ? '' : 's'} · ${f.falls} fall${f.falls === 1 ? '' : 's'}</span></div>`).join('');
+    show('scrResults'); Net.phaseAll(); Net.bcast({ t: 'state', st: Net.pub() });
+  },
+};
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function show(id) { hideScreens(); $(id).classList.remove('hidden'); }
+function hideScreens() { ['scrTitle', 'scrSetup', 'scrHelp', 'scrResults'].forEach(s => $(s).classList.add('hidden')); }
+const webp = () => window.__webpOK !== false;
+function artUrl(name, fallback) { return 'brawl-art/' + name + '.' + (webp() ? 'webp' : (fallback || 'png')); }
+const SheetImg = {};
+function sheetImg(f) { if (!SheetImg[f]) { const im = new Image(); im.src = artUrl(f); SheetImg[f] = im; } return SheetImg[f]; }
+function portrait(f, w, h, pose = 'idle') {
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const c = cv.getContext('2d'), im = sheetImg(f);
+  const draw = () => { const m = META[f][pose], s = Math.min(w / m[1], h / m[2]); c.clearRect(0, 0, w, h); c.drawImage(im, m[0], 0, m[1], m[2], (w - m[1] * s) / 2, h - m[2] * s, m[1] * s, m[2] * s); };
+  if (im.complete && im.naturalWidth) draw(); else im.addEventListener('load', draw);
+  return cv;
+}
+function qrCanvas(url, scale = 6) {
+  if (!url || typeof qrcode === 'undefined') return null;
+  const qr = qrcode(0, 'M'); qr.addData(url); qr.make();
+  const n = qr.getModuleCount(), q = 2, size = (n + q * 2) * scale;
+  const cv = document.createElement('canvas'); cv.width = cv.height = size; const c = cv.getContext('2d');
+  c.fillStyle = '#fff'; c.fillRect(0, 0, size, size); c.fillStyle = '#1a1036';
+  for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) if (qr.isDark(r, k)) c.fillRect((k + q) * scale, (r + q) * scale, scale, scale);
+  return cv;
+}
+
+// =====================================================================
+//  FIGHTER
+// =====================================================================
+let HITID = 1;
+class Fighter {
+  constructor(sc, r, lives) {
+    this.sc = sc; this.f = r.f; this.d = FIGHTERS[r.f]; this.slot = r.slot; this.kind = r.kind; this.padI = r.i; this.name = r.name;
+    this.label = r.kind === 'cpu' ? 'CPU' : r.kind === 'me' ? 'You' : r.name;
+    this.lives = lives; this.dmg = 0; this.kos = 0; this.falls = 0; this.out = false; this.lastHitBy = null; this.place = 0;
+    this.x = 0; this.y = 0; this.vx = 0; this.vy = 0; this.face = 1; this.onGround = false; this.ground = null;
+    this.state = 'air'; this.t = 0; this.stun = 0; this.lag = 0; this.inv = 0; this.cd = 0; this.atkCd = 0; this.jumpsUsed = 0; this.spAir = false; this.dropT = 0;
+    this.clings = 0; this.wall = 0; this.cutDone = false; this.boxes = []; this.hitSet = new Set(); this.atk = null; this.bob = 0; this.respawnT = 0;
+    this.brain = r.kind === 'cpu' ? new Brain(this, sc.cfg.diff) : null;
+    const S = 1 / ART;
+    this.shadow = sc.add.ellipse(0, 0, this.d.w * 1.1, 14, 0x000000, 0.28).setDepth(4);
+    this.spr = sc.add.image(0, 0, this.f, 'idle').setScale(S).setDepth(10);
+    if (this.f === 'gloop') { this.fist = sc.add.image(0, 0, 'gloop', 'fist').setScale(S).setDepth(11).setVisible(false); this.arm = sc.add.graphics().setDepth(10); }
+    this.tag = sc.add.text(0, 0, this.kind === 'cpu' ? 'CPU' : 'P' + (this.slot + 1), { fontFamily: 'Fredoka, sans-serif', fontStyle: '700', fontSize: '20px', color: '#fff', stroke: SLOT_COL[this.slot], strokeThickness: 6 }).setOrigin(0.5, 1).setDepth(30);
+    this.arrow = sc.add.triangle(0, 0, 0, 0, 16, 0, 8, 10, SLOT_HEX[this.slot]).setDepth(30);
+    this.cdBar = sc.add.rectangle(0, 0, 36, 5, 0xffffff, 0.9).setDepth(30).setOrigin(0, 0.5);
+    this.pose = null; this.setPose('idle');
+  }
+  get w() { return this.state === 'puddle' ? this.d.w * 1.3 : this.d.w; }
+  get h() { return this.state === 'puddle' ? 22 : this.d.h; }
+  setPose(p) {
+    if (!META[this.f][p]) p = 'jump';
+    if (p !== this.pose) { this.pose = p; this.spr.setFrame(p); }
+    const m = META[this.f][p]; this.spr.setFlipX(this.face < 0); this.spr.setOrigin(this.face > 0 ? m[3] / m[1] : 1 - m[3] / m[1], m[4] / m[2]);
+  }
+  spawn(x, y) { this.x = x; this.y = y; this.vx = this.vy = 0; this.state = 'air'; this.face = x < VW / 2 ? 1 : -1; }
+  // ---------------------------------------------------------------- update
+  update(dt, inp) {
+    this.boxes = [];
+    if (this.out) return;
+    if (this.state === 'dead') { this.respawnT -= dt; if (this.respawnT <= 0) this.respawn(); return; }
+    if (this.lag > 0) { this.lag -= dt; return; }
+    this.t += dt; this.inv = Math.max(0, this.inv - dt); this.cd = Math.max(0, this.cd - dt); this.atkCd = Math.max(0, this.atkCd - dt); this.dropT = Math.max(0, this.dropT - dt);
+    const d = this.d, st = this.state, sc = this.sc;
+    if (st === 'respawn') {
+      this.vx = this.vy = 0; this.inv = 2;
+      if (this.t > 2.5 || Math.abs(inp.x) > 0.3 || inp.jumpP || inp.punchP || inp.specP) { this.state = 'air'; this.t = 0; this.inv = 1.5; this.jumpsUsed = 1; }
+      return;
+    }
+    let grav = PHYS.g * d.grav, ctrl = false;
+    if (st === 'hurt') {
+      this.stun -= dt; this.vx *= Math.pow(PHYS.drag, dt);
+      if (this.stun <= 0) this.state = this.onGround ? 'idle' : 'air';
+    } else if (st === 'attack') this.updAttack(dt, inp);
+    else if (st === 'special' || st === 'puddle') { grav = this.updSpecial(dt, inp, grav); }
+    else if (st === 'cling') { this.updCling(dt, inp); return; }
+    else ctrl = true;
+    if (ctrl) {
+      // run
+      const icy = this.onGround && sc.onIce(this);
+      const acc = this.onGround ? (icy ? PHYS.iceAcc : PHYS.groundAcc) : PHYS.airAcc;
+      this.vx = approach(this.vx, inp.x * d.speed, acc * dt);
+      if (Math.abs(inp.x) > 0.2) this.face = Math.sign(inp.x);
+      // drop through a thin platform
+      if (this.onGround && this.ground.soft && inp.y > 0.6 && (inp.jumpP || Math.abs(inp.x) < 0.5)) { this.dropT = 0.28; this.onGround = false; this.y += 3; inp.jumpP = false; }
+      // jump
+      if (inp.jumpP) {
+        if (this.onGround) { this.vy = -d.jumps[0]; this.onGround = false; this.jumpsUsed = 1; this.cutDone = false; Sound.sfx.jump(); sc.fx.puff(this.x, this.y, 3); }
+        else if (this.jumpsUsed < d.jumps.length) { this.vy = -d.jumps[this.jumpsUsed]; this.jumpsUsed++; this.cutDone = true; Sound.sfx.dbl(); sc.fx.ring(this.x, this.y, 24, 0xffffff); }
+      }
+      // short hop: let go of jump early to jump lower
+      if (!this.onGround && !inp.jump && !this.cutDone && this.vy < -300 && this.jumpsUsed === 1) { this.vy *= 0.55; this.cutDone = true; }
+      if (inp.punchP && this.atkCd <= 0) {
+        if (this.onGround) this.startAttack(Math.abs(this.vx) > d.speed * 0.7 && Math.abs(inp.x) > 0.6 ? 'dash' : 'punch');
+        else this.startAttack(inp.y > 0.5 ? 'slam' : 'air');
+      } else if (inp.specP && this.cd <= 0) this.startSpecial(inp);
+    }
+    // gravity
+    this.vy = Math.min(this.vy + grav * dt, this.state === 'attack' && this.atk.k === 'slam' ? PHYS.fastFall : PHYS.maxFall);
+    if (this.state === 'special' && this.d.sp === 'quake' && this.spPhase === 'fall') this.vy = PHYS.fastFall;
+    this.move(dt);
+  }
+  // ---------------------------------------------------------------- movement + platforms
+  move(dt) {
+    const sc = this.sc, hw = this.w / 2;
+    if (this.onGround && this.ground && this.ground.dx) this.x += this.ground.dx;
+    const prevY = this.y, prevTop = this.y - this.h;
+    this.x += this.vx * dt;
+    // sides of the main arena (solid)
+    for (const p of sc.solids) {
+      if (this.y > p.y + 6 && this.y - this.h < p.y + p.depth && this.x + hw > p.x1 && this.x - hw < p.x2) {
+        const left = this.x < (p.x1 + p.x2) / 2;
+        this.x = left ? p.x1 - hw : p.x2 + hw;
+        if ((left && this.vx > 0) || (!left && this.vx < 0)) this.vx = this.state === 'hurt' ? -this.vx * 0.3 : 0;
+        if (this.d.cling && !this.onGround && (this.state === 'air' || this.state === 'special') && this.vy > -250 && this.clings < 3 && this.y < p.y + p.depth - 10) this.startCling(left ? 1 : -1);
+      }
+    }
+    this.y += this.vy * dt;
+    const was = this.onGround; this.onGround = false;
+    if (this.vy >= 0) {
+      for (const p of sc.plats) {
+        if (p.soft && this.dropT > 0) continue;
+        if (this.x + hw * 0.55 > p.x1 && this.x - hw * 0.55 < p.x2 && prevY <= p.y + 2 + (p.dy > 0 ? p.dy : 0) && this.y >= p.y) {
+          this.y = p.y; this.vy = 0; this.onGround = true; this.ground = p;
+          if (!was) this.land(); break;
+        }
+      }
+    } else {
+      for (const p of sc.solids) { // bump your head under the main arena
+        const bot = p.y + p.depth;
+        if (this.x + hw * 0.5 > p.x1 && this.x - hw * 0.5 < p.x2 && prevTop >= bot - 2 && this.y - this.h < bot) { this.y = bot + this.h; this.vy = 0; }
+      }
+    }
+    if (!this.onGround) this.ground = null;
+  }
+  land() {
+    this.jumpsUsed = 0; this.spAir = false; this.clings = 0;
+    if (this.state === 'air') { this.state = 'idle'; Sound.sfx.land(); }
+    if (this.state === 'hurt' && this.vy === 0 && this.stun > 0.15 && this.lastKb > 700) { this.vy = -this.lastKb * 0.25; this.onGround = false; this.sc.fx.puff(this.x, this.y, 5); return; } // bounce off the floor
+    if (this.state === 'attack' && this.atk.k === 'slam') this.slamLand();
+    if (this.state === 'special') this.spLand();
+  }
+  // ---------------------------------------------------------------- attacks
+  startAttack(k) {
+    const P = this.d.punch;
+    const a = { k, t: 0, id: HITID++ };
+    if (k === 'punch' || k === 'air') Object.assign(a, { s: P.s, a: P.a, e: P.e, dmg: P.dmg, base: P.base, grow: P.grow, ang: k === 'air' ? P.ang + 6 : P.ang, reach: P.reach, pose: 'punch' });
+    if (k === 'dash') Object.assign(a, { s: 0.03, a: 0.2, e: 0.18, dmg: P.dmg + 2, base: P.base + 50, grow: P.grow, ang: 32, reach: Math.min(P.reach, 80) + 10, pose: 'dash' });
+    if (k === 'slam') Object.assign(a, { s: 0.08, a: 9, e: 0, dmg: 9, base: 230, grow: 5, ang: -60, reach: 0, pose: 'slam' });
+    this.atk = a; this.state = 'attack'; this.hitSet = new Set(); this.atkCd = 0.08;
+    if (k === 'dash') { this.vx = this.face * Math.max(this.d.speed * 1.7, 560); Sound.sfx.swing(); this.sc.fx.lines(this.x, this.y - this.h / 2, this.face); }
+    if (k === 'slam') { this.vy = -200; this.vx *= 0.4; }
+    if (this.d.punch.stretch && (k === 'punch' || k === 'air')) Sound.sfx.goo();
+  }
+  updAttack(dt, inp) {
+    const a = this.atk, d = this.d; a.t += dt;
+    if (a.k === 'dash') this.vx = approach(this.vx, 0, 1700 * dt);
+    else if (this.onGround) this.vx = approach(this.vx, 0, 2600 * dt);
+    else this.vx = approach(this.vx, inp.x * d.speed * 0.8, PHYS.airAcc * 0.6 * dt);
+    if (a.k === 'slam') {
+      if (a.t > a.s) { this.vy = PHYS.fastFall; this.boxes.push({ x: this.x - this.w * 0.6, y: this.y - 30, w: this.w * 1.2, h: 50, dmg: a.dmg, base: a.base, grow: a.grow, ang: a.ang, dir: this.face, id: a.id, spike: true }); }
+      if (a.landed) { a.lt += dt; if (a.lt > 0.22) this.endAttack(); }
+      return;
+    }
+    if (a.t === dt && a.k !== 'dash') Sound.sfx.swing();
+    if (a.t > a.s && a.t < a.s + a.a) {
+      const H = this.d.h, top = this.y - H * 0.78, hh = Math.max(44, H * 0.5);
+      let reach = a.reach, x0 = this.x + this.face * this.d.w * 0.25;
+      if (this.d.punch.stretch && a.k !== 'dash') { const k = clamp((a.t - a.s) / a.a, 0, 1); reach = a.reach * Math.sin(Math.PI * Math.min(1, k * 1.4)); a.ext = reach; }
+      const bx = this.face > 0 ? x0 : x0 - reach;
+      this.boxes.push({ x: bx, y: a.k === 'air' ? top + 6 : top, w: reach + 14, h: hh + (a.k === 'air' ? 16 : 0), dmg: a.dmg, base: a.base, grow: a.grow, ang: a.ang, dir: this.face, id: a.id });
+    }
+    if (a.t > a.s + a.a + a.e) this.endAttack();
+  }
+  slamLand() { const a = this.atk; a.landed = true; a.lt = 0; this.vx = 0; Sound.sfx.quake(); this.sc.fx.puff(this.x, this.y, 8); this.sc.shake(0.12, 0.006);
+    this.boxes.push({ x: this.x - this.w * 1.1, y: this.y - 50, w: this.w * 2.2, h: 54, dmg: 6, base: 280, grow: 5, ang: 70, dir: this.face, id: HITID++, round: true }); }
+  endAttack() { this.atk = null; this.state = this.onGround ? 'idle' : 'air'; this.atkCd = 0.1; if (this.arm) { this.arm.clear(); this.fist.setVisible(false); } }
+  // ---------------------------------------------------------------- specials
+  startSpecial(inp) {
+    const sp = this.d.sp, sc = this.sc;
+    if (['rocket', 'belly', 'puddle'].includes(sp) && !this.onGround && this.spAir) return;  // recovery specials: once per jump
+    this.state = 'special'; this.t = 0; this.spPhase = 'go'; this.spId = HITID++; this.hitSet = new Set();
+    if (Math.abs(inp.x) > 0.3) this.face = Math.sign(inp.x);
+    if (!this.onGround) this.spAir = true;
+    if (sp === 'rocket') { this.vy = -1120; this.vx = this.face * 160; this.onGround = false; this.cd = 1.0; Sound.sfx.spring(); sc.fx.ring(this.x, this.y, 40, 0xffd54f); }
+    if (sp === 'quake') { this.cd = 2.2; if (this.onGround) this.spPhase = 'wind'; else { this.spPhase = 'fall'; this.vx = 0; } }
+    if (sp === 'belly') { this.vy = -760; this.vx = this.face * 260; this.onGround = false; this.cd = 1.8; Sound.sfx.jump(); }
+    if (sp === 'whip') { this.cd = 1.0; Sound.sfx.whip(); }
+    if (sp === 'puddle') { this.state = 'puddle'; this.cd = 1.6; this.inv = 0.5; Sound.sfx.goo(); sc.fx.puff(this.x, this.y, 4, 0xb040ff); }
+    if (sp === 'ice') {
+      this.cd = 1.4;
+      if (this.onGround) { this.spPhase = 'slide'; this.vx = this.face * 720; Sound.sfx.ice(); }
+      else { this.spPhase = 'throw'; sc.snowball(this); }
+    }
+  }
+  updSpecial(dt, inp, grav) {
+    const sp = this.d.sp, sc = this.sc, t = this.t;
+    const hit = (x, y, w, h, o) => this.boxes.push(Object.assign({ x, y, w, h, dir: this.face, id: this.spId }, o));
+    if (sp === 'rocket') {
+      this.vx = approach(this.vx, inp.x * 220, 900 * dt);
+      if (t < 0.38) { hit(this.x - this.w * 0.7, this.y - this.h - 20, this.w * 1.4, this.h + 30, { dmg: 9, base: 360, grow: 6, ang: 82 }); sc.fx.spark(this.x + rnd(-10, 10), this.y - 10, 0xffd54f, 0.4); }
+      if (t > 0.5) this.state = 'air';
+      return grav;
+    }
+    if (sp === 'quake') {
+      if (this.spPhase === 'wind') { this.vx = 0; if (t > 0.26) this.quakeBoom(); }
+      else if (this.spPhase === 'fall') { this.vx = 0; hit(this.x - this.w * 0.6, this.y - 30, this.w * 1.2, 50, { dmg: 8, base: 240, grow: 5, ang: -60, spike: true }); }
+      else if (this.spPhase === 'done' && t > 0.35) this.state = 'idle';
+      return grav;
+    }
+    if (sp === 'belly') {
+      this.vx = approach(this.vx, inp.x * 260, 700 * dt);
+      if (this.spPhase === 'go' && this.vy > 0) this.spPhase = 'flop';
+      if (this.spPhase === 'flop') { this.vy = Math.max(this.vy, 900); hit(this.x - this.w * 0.7, this.y - this.h * 0.7, this.w * 1.4, this.h * 0.8, { dmg: 9, base: 300, grow: 6, ang: -40, spike: true }); }
+      if (this.spPhase === 'land' && t > 0.3) this.state = 'idle';
+      return grav;
+    }
+    if (sp === 'whip') {
+      if (!this.onGround) this.vy = Math.min(this.vy, 160);
+      this.vx = approach(this.vx, inp.x * this.d.speed * 0.6, 1400 * dt);
+      const n = Math.floor(t / 0.12);
+      if (n !== this.whipN && n < 3) { this.whipN = n; this.spId = HITID++; }
+      if (n < 3) hit(this.x - 74, this.y - this.h - 6, 148, this.h + 12, n < 2 ? { dmg: 3, base: 180, grow: 1, ang: 60 } : { dmg: 4, base: 300, grow: 6, ang: 42 });
+      if (t > 0.42) { this.state = this.onGround ? 'idle' : 'air'; this.whipN = -1; }
+      return grav;
+    }
+    if (sp === 'puddle') {
+      if (this.state === 'puddle') {
+        this.vx = this.onGround ? this.face * 360 : approach(this.vx, inp.x * 200, 900 * dt);
+        if (Math.random() < 0.3) sc.fx.puff(this.x, this.y, 1, 0xb040ff);
+        if (t > 0.45) { this.state = 'special'; this.spPhase = 'up'; this.t = 0; this.vy = -980; this.vx = this.face * 100; this.onGround = false; Sound.sfx.spring(); }
+        return grav;
+      }
+      if (t < 0.3) hit(this.x - this.w * 0.6, this.y - this.h - 40, this.w * 1.2, this.h + 40, { dmg: 10, base: 380, grow: 6.2, ang: 84 });
+      if (t > 0.42) this.state = 'air';
+      return grav;
+    }
+    if (sp === 'ice') {
+      if (this.spPhase === 'slide') {
+        this.vx = approach(this.vx, 0, 900 * dt);
+        if (this.onGround) sc.iceAt(this);
+        hit(this.face > 0 ? this.x : this.x - 80, this.y - 56, 80, 52, { dmg: 8, base: 330, grow: 6, ang: 28 });
+        if (t > 0.5) this.state = this.onGround ? 'idle' : 'air';
+      } else { this.vx = approach(this.vx, inp.x * this.d.speed * 0.6, 900 * dt); if (t > 0.3) this.state = 'air'; }
+      return grav;
+    }
+    return grav;
+  }
+  spLand() {
+    const sp = this.d.sp;
+    if (sp === 'quake' && this.spPhase === 'fall') this.quakeBoom();
+    if (sp === 'belly' && (this.spPhase === 'flop' || this.spPhase === 'go')) {
+      this.spPhase = 'land'; this.t = 0; this.vx = 0; Sound.sfx.big(); this.sc.shake(0.18, 0.01); this.sc.fx.puff(this.x, this.y, 10); this.sc.fx.ring(this.x, this.y, 140, 0xffffff);
+      this.spId = HITID++; this.boxes.push({ x: this.x - 140, y: this.y - 90, w: 280, h: 95, dmg: 11, base: 400, grow: 6.5, ang: 78, dir: this.face, id: this.spId, round: true });
+    }
+    if (sp === 'rocket' || sp === 'whip') this.state = 'idle';
+  }
+  quakeBoom() {
+    this.spPhase = 'done'; this.t = 0; Sound.sfx.quake(); this.sc.shake(0.25, 0.012); this.sc.fx.puff(this.x, this.y, 10);
+    if (this.ground) { this.sc.wave(this, 1); this.sc.wave(this, -1); }
+  }
+  // ---------------------------------------------------------------- Zippa's wall cling
+  startCling(side) { this.state = 'cling'; this.wall = side; this.face = side; this.t = 0; this.vx = 0; this.vy = 0; this.clings++; this.clingX = this.x; }
+  updCling(dt, inp) {
+    const slide = this.t > 1.5;
+    this.vy = slide ? 160 : 0; this.y += this.vy * dt; this.x = this.clingX;   // stay against the wall
+    const p = this.sc.solids[0];
+    if (inp.jumpP) { this.state = 'air'; this.vx = -this.wall * 480; this.vy = -880; this.face = -this.wall; this.jumpsUsed = 1; this.cutDone = true; Sound.sfx.jump(); this.sc.fx.puff(this.x + this.wall * 10, this.y - 20, 3); return; }
+    if (inp.x * this.wall < -0.6 || this.y > p.y + p.depth + 10 || this.t > 3) { this.state = 'air'; this.vx = -this.wall * 120; }
+    if (inp.specP && this.cd <= 0) { this.state = 'air'; this.face = -this.wall; this.startSpecial(inp); }
+  }
+  // ---------------------------------------------------------------- getting hit
+  hurtbox() { return { x: this.x - this.w / 2, y: this.y - this.h, w: this.w, h: this.h }; }
+  takeHit(b, from) {
+    if (this.inv > 0 || this.state === 'dead' || this.state === 'respawn' || this.out) return false;
+    this.dmg = Math.min(999, this.dmg + b.dmg);
+    let ang = b.ang;
+    if (b.spike && this.onGround) ang = 65;                // spikes pop you up if you're standing
+    if (b.round) { const dx = this.x - (b.x + b.w / 2); this.face = dx >= 0 ? -1 : 1; b = Object.assign({}, b, { dir: dx >= 0 ? 1 : -1 }); }
+    if (this.onGround && ang < 20 && ang > -10) ang = 20;
+    const kb = (b.base + b.grow * this.dmg) / this.d.weight;
+    const rad = ang * Math.PI / 180;
+    this.vx = Math.cos(rad) * kb * b.dir; this.vy = -Math.sin(rad) * kb; this.lastKb = kb;
+    this.stun = clamp(kb * 0.00042, 0.14, 0.9); this.state = 'hurt'; this.onGround = false; this.t = 0; this.atk = null;
+    if (this.arm) { this.arm.clear(); this.fist.setVisible(false); }
+    this.jumpsUsed = Math.min(this.jumpsUsed, 1); this.spAir = false; this.lastHitBy = from; this.lastHitT = this.sc.time.now;
+    const lag = 0.035 + b.dmg * 0.0035; this.lag = lag; if (from) from.lag = Math.max(from.lag, lag);
+    if (b.dir) this.face = -b.dir;
+    return kb;
+  }
+  ko() {
+    const sc = this.sc; this.falls++; this.lives--; this.state = 'dead'; this.respawnT = 1.4;
+    const killer = this.lastHitBy && this.sc.time.now - this.lastHitT < 8000 ? this.lastHitBy : null; if (killer && killer !== this) killer.kos++;
+    sc.fx.ko(this.x, this.y - this.h / 2, SLOT_HEX[this.slot]); Sound.sfx.ko(); sc.shake(0.3, 0.015);
+    if (this.kind === 'phone') Net.buzz(this.slot, 300);
+    if (this.lives <= 0) { this.out = true; this.place = sc.fighters.filter(f => !f.out).length + 1; sc.checkEnd(); }
+    this.hide();
+  }
+  hide() { [this.spr, this.shadow, this.tag, this.arrow, this.cdBar].forEach(o => o.setVisible(false)); if (this.fist) { this.fist.setVisible(false); this.arm.clear(); } }
+  respawn() { this.dmg = 0; this.state = 'respawn'; this.t = 0; this.x = VW / 2 + (this.slot - 1.5) * 90; this.y = 150; this.vx = this.vy = 0; this.inv = 2; this.jumpsUsed = 0; this.spAir = false; this.cd = 0; this.clings = 0; this.lastHitBy = null; this.spr.setVisible(true); this.tag.setVisible(true); this.cdBar.setVisible(true); }
+  // ---------------------------------------------------------------- drawing
+  draw(time) {
+    if (this.out || this.state === 'dead') return;
+    const st = this.state, sp = this.d.sp; let pose = 'jump', rot = 0, oy = 0, sx = 1, sy = 1;
+    if (st === 'hurt') { pose = 'hurt'; rot = this.stun > 0.3 && !this.onGround ? (time * 0.02) % (Math.PI * 2) * 0 + Math.sin(time * 0.03) * 0.3 : 0; }
+    else if (st === 'attack') { pose = this.atk.pose; if (this.atk.k === 'air' && this.f === 'zippa') pose = 'punch'; }
+    else if (st === 'cling') pose = 'cling';
+    else if (st === 'puddle') pose = 'puddle';
+    else if (st === 'special') {
+      if (sp === 'rocket') { pose = 'jump'; rot = (this.t * 22) * this.face; }
+      else if (sp === 'quake') pose = 'slam';
+      else if (sp === 'belly') { pose = this.spPhase === 'land' ? 'slam' : this.spPhase === 'flop' ? 'dash' : 'jump'; if (this.spPhase === 'flop') rot = 0.5 * this.face; }
+      else if (sp === 'whip') { pose = 'run'; rot = this.t * 30 * this.face; }
+      else if (sp === 'puddle') pose = 'jump';
+      else if (sp === 'ice') pose = this.spPhase === 'slide' ? 'dash' : 'punch';
+    }
+    else if (st === 'respawn') pose = 'idle';
+    else if (this.onGround) {
+      if (Math.abs(this.vx) > 40) { pose = 'run'; this.bob += Math.abs(this.vx) * 0.00045; oy = -Math.abs(Math.sin(this.bob * 8)) * 7; rot = Math.sin(this.bob * 8) * 0.05; }
+      else { pose = 'idle'; sy = 1 + Math.sin(time * 0.005 + this.slot) * 0.025; }
+    } else pose = 'jump';
+    this.setPose(pose);
+    const S = 1 / ART, spinning = (sp === 'rocket' || sp === 'whip') && st === 'special';
+    this.spr.setScale(S * sx, S * sy).setRotation(rot);
+    if (spinning) { const m = META[this.f][pose]; this.spr.setOrigin(0.5, 0.5); this.spr.setPosition(this.x, this.y - this.h / 2); }
+    else this.spr.setPosition(this.x, this.y + oy);
+    const flash = this.inv > 0 && Math.floor(time / 70) % 2 === 0; this.spr.setAlpha(flash ? 0.45 : 1);
+    this.spr.setTint(this.state === 'hurt' && this.t < 0.08 ? 0xff8080 : 0xffffff);
+    // shadow on the platform below
+    const below = this.sc.platBelow(this); this.shadow.setVisible(!!below && st !== 'respawn');
+    if (below) { const gap = below.y - this.y, s = clamp(1 - gap / 400, 0.3, 1); this.shadow.setPosition(this.x, below.y + 2).setScale(s).setAlpha(0.28 * s); }
+    // name tag + special cooldown bar
+    const topY = this.y - this.d.h - 12; this.tag.setPosition(this.x, topY - 8).setVisible(true); this.arrow.setPosition(this.x, topY - 2).setVisible(true);
+    this.cdBar.setPosition(this.x - 18, topY - 34).setVisible(this.cd > 0).setScale(this.cd > 0 ? 1 - this.cd / (this.d.sp === 'quake' ? 2.2 : 1.8) : 1, 1);
+    if (st === 'respawn') { this.sc.fx.cloud(this.x, this.y); }
+    // Gloop's stretchy arm
+    if (this.arm) {
+      this.arm.clear(); const a = this.atk;
+      if (st === 'attack' && a && a.ext > 0) {
+        const fx = this.x + this.face * (this.d.w * 0.6 + a.ext * 0.9), fy = this.y - this.d.h * 0.55;
+        this.arm.lineStyle(16, 0x8e24aa, 1).lineBetween(this.x + this.face * this.d.w * 0.35, fy, fx, fy).lineStyle(8, 0xc04df9, 1).lineBetween(this.x + this.face * this.d.w * 0.35, fy - 3, fx, fy - 3);
+        this.fist.setVisible(true).setFlipX(this.face < 0).setPosition(fx, fy + 14).setOrigin(this.face > 0 ? 0.25 : 0.75, 0.9);
+        this.spr.setFrame('idle'); this.pose = 'idle'; this.setPose('idle');
+      } else this.fist.setVisible(false);
+    }
+  }
+}
+
+// =====================================================================
+//  COMPUTER PLAYERS
+// =====================================================================
+const DIFF = { easy: { react: 0.42, aggr: 0.35, sp: 0.12, rec: 0.6, jumpy: 0.004 }, normal: { react: 0.24, aggr: 0.62, sp: 0.22, rec: 0.85, jumpy: 0.008 }, hard: { react: 0.11, aggr: 0.88, sp: 0.32, rec: 1, jumpy: 0.01 } };
+class Brain {
+  constructor(f, diff) { this.me = f; this.D = DIFF[diff] || DIFF.normal; this.t = rnd(0, 0.3); this.out = { x: 0, y: 0, jump: false, jumpP: false, punchP: false, specP: false }; this.hold = 0; this.target = null; }
+  think(dt) {
+    const me = this.me, sc = me.sc, D = this.D, o = this.out;
+    o.jumpP = o.punchP = o.specP = false;
+    this.t -= dt; if (this.t > 0) return o;
+    this.t = D.react * rnd(0.7, 1.3);
+    const main = sc.solids[0], cx = (main.x1 + main.x2) / 2;
+    o.x = 0; o.y = 0; o.jump = true;
+    // 1. get back to the arena
+    const offL = me.x < main.x1 + 10, offR = me.x > main.x2 - 10, low = me.y > main.y + 5;
+    if (!me.onGround && (offL || offR) && (low || me.y > main.y - 60 || me.vy > 0)) {
+      if (Math.random() < D.rec) {
+        o.x = offL ? 1 : -1;
+        if (me.state === 'cling') { o.jumpP = true; return o; }
+        if (me.vy > -100 && me.jumpsUsed < me.d.jumps.length) o.jumpP = true;
+        else if (me.vy > 50 && me.cd <= 0 && !me.spAir && me.d.sp !== 'quake' && me.d.sp !== 'ice') o.specP = true;
+      }
+      this.t = 0.08; return o;
+    }
+    // 2. pick a target
+    const foes = sc.fighters.filter(f => f !== me && !f.out && f.state !== 'dead' && f.state !== 'respawn');
+    if (!foes.length) return o;
+    if (!this.target || !foes.includes(this.target) || Math.random() < 0.08) this.target = foes.sort((a, b) => Math.abs(a.x - me.x) + Math.abs(a.y - me.y) - Math.abs(b.x - me.x) - Math.abs(b.y - me.y))[Math.random() < 0.8 ? 0 : foes.length - 1];
+    const tg = this.target, dx = tg.x - me.x, dy = tg.y - me.y, adx = Math.abs(dx);
+    const reach = me.d.punch.reach + me.d.w * 0.5 + tg.w * 0.4;
+    // 3. attack when close
+    if (adx < reach && Math.abs(dy) < Math.max(70, me.d.h * 0.7) && Math.random() < D.aggr) {
+      o.x = Math.sign(dx) * 0.3; if (Math.sign(dx) !== me.face) { o.x = Math.sign(dx); this.t = 0.05; return o; }
+      if (me.cd <= 0 && Math.random() < D.sp && me.onGround && me.d.sp !== 'rocket') o.specP = true; else o.punchP = true;
+      return o;
+    }
+    if (me.d.sp === 'ice' && me.cd <= 0 && !me.onGround && adx < 420 && Math.abs(dy) < 120 && Math.sign(dx) === me.face && Math.random() < D.sp) { o.specP = true; return o; }
+    if (me.d.sp === 'quake' && me.cd <= 0 && me.onGround && tg.onGround && tg.ground === me.ground && adx < 500 && Math.random() < D.sp) { o.specP = true; return o; }
+    if (!me.onGround && dy > 80 && adx < 60 && Math.random() < D.aggr * 0.6) { o.y = 1; o.punchP = true; return o; }
+    // 4. move towards the target, but don't run off the edge
+    let wantX = tg.x; if (tg.x < main.x1 + 30 || tg.x > main.x2 - 30) wantX = clamp(tg.x, main.x1 + 50, main.x2 - 50);
+    const mdx = wantX - me.x; o.x = Math.abs(mdx) > 20 ? Math.sign(mdx) : 0;
+    if (me.onGround && me.ground === main && ((me.x < main.x1 + 50 && o.x < 0) || (me.x > main.x2 - 50 && o.x > 0))) o.x = 0;
+    if (me.onGround && dy < -90 && adx < 200 && Math.random() < 0.5) o.jumpP = true;
+    if (me.onGround && me.ground && me.ground.soft && dy > 80 && adx < 150) o.y = 1;
+    if (Math.random() < D.jumpy * 10) o.jumpP = true;
+    if (me.onGround && adx > 60 && adx < 260 && Math.abs(dy) < 60 && Math.random() < D.aggr * 0.25) { o.x = Math.sign(dx); o.punchP = true; me.vx = Math.sign(dx) * me.d.speed; }
+    return o;
+  }
+}
+
+// =====================================================================
+//  SCENES
+// =====================================================================
+const Scenes = {
+  backdrop() { const g = window.__game; if (!g) return; g.scene.getScenes(true).forEach(s => s.scene.stop()); g.scene.start('Backdrop'); },
+  fight(cfg) { const g = window.__game; g.scene.getScenes(true).forEach(s => s.scene.stop()); g.scene.start('Fight', cfg); },
+};
+class Boot extends Phaser.Scene {
+  constructor() { super('Boot'); }
+  preload() {
+    FKEYS.forEach(f => this.load.image(f, artUrl(f)));
+    AKEYS.forEach(a => { this.load.image(ARENAS[a].bg, artUrl(ARENAS[a].bg, 'jpg')); this.load.image(ARENAS[a].plat, artUrl(ARENAS[a].plat)); });
+    const bar = this.add.rectangle(VW / 2 - 200, VH / 2, 4, 16, 0xffd54f).setOrigin(0, 0.5);
+    this.load.on('progress', v => bar.width = 400 * v);
+  }
+  create() {
+    FKEYS.forEach(f => { const tx = this.textures.get(f); for (const n in META[f]) { const m = META[f][n]; tx.add(n, 0, m[0], 0, m[1], m[2]); } });
+    const lp = $('loading'); if (lp) lp.remove();
+    if (QS.get('auto')) { // testing: ?auto=1 starts a computer-only fight
+      App.mode = 'solo'; App.cpus = [{ slot: 1, f: QS.get('f2') || 'boulder' }, { slot: 2, f: QS.get('f3') || 'zippa' }, { slot: 3, f: QS.get('f4') || 'gloop' }];
+      App.me.f = QS.get('f1') || 'pip'; App.arena = QS.get('arena') || 'sky'; App.diff = 'hard'; App.lives = +(QS.get('lives') || 3);
+      if (QS.get('allcpu')) { App.humans = () => []; App.cpus.unshift({ slot: 0, f: App.me.f }); }
+      document.body.classList.add('solo'); App.go(); return;
+    }
+    if (QS.get('tv')) App.setup('party'); else App.title();
+  }
+}
+class Backdrop extends Phaser.Scene {
+  constructor() { super('Backdrop'); }
+  create() {
+    this.add.image(VW / 2, VH / 2, 'bg-sky').setDisplaySize(VW, VH);
+    this.add.rectangle(VW / 2, VH / 2, VW, VH, 0x1a1036, 0.35);
+    const order = ['boulder', 'zippa', 'pip', 'gloop', 'frostbite', 'bonk'];
+    this.figs = order.map((f, i) => { const m = META[f].idle; const im = this.add.image(110 + i * 212, VH - 10, f, 'idle').setOrigin(m[3] / m[1], m[4] / m[2]).setScale(0.8 / ART * 1.25); return im; });
+  }
+  update(t) { this.figs.forEach((im, i) => { im.y = VH - 10 - Math.abs(Math.sin(t * 0.003 + i * 0.9)) * 18; }); }
+}
+
+class Fight extends Phaser.Scene {
+  constructor() { super('Fight'); }
+  init(cfg) { this.cfg = cfg; }
+  create() {
+    const cfg = this.cfg, A = this.A = ARENAS[cfg.arena];
+    this.paused = false; this.over = false; this.started = false; this.acc = 0; this.slowmo = 1;
+    this.add.image(VW / 2, VH / 2, A.bg).setDisplaySize(VW, VH).setDepth(0);
+    // platforms
+    const mk = (p, soft) => {
+      const w = p.x2 - p.x1, tex = this.textures.get(A.plat).getSourceImage(), s = w / tex.width, img = this.add.image(p.x1, p.y - tex.height * s * A.top, A.plat).setOrigin(0, 0).setScale(s).setDepth(3);
+      const o = { x1: p.x1, x2: p.x2, y: p.y, soft, depth: tex.height * s * 0.72, img, move: p.move || 0, cx: (p.x1 + p.x2) / 2, hw: w / 2, dx: 0, dy: 0, ice: [] };
+      return o;
+    };
+    this.main = mk(A.main, false); this.solids = [this.main]; this.plats = [this.main].concat(A.soft.map(p => mk(p, true)));
+    this.iceG = this.add.graphics().setDepth(5);
+    this.fxG = this.add.graphics().setDepth(20);
+    this.fx = new Fx(this);
+    this.waves = []; this.balls = [];
+    // fighters
+    const n = cfg.roster.length;
+    this.fighters = cfg.roster.map((r, i) => { const f = new Fighter(this, r, cfg.lives); const span = this.main.x2 - this.main.x1 - 160; f.spawn(this.main.x1 + 80 + (n === 1 ? span / 2 : span * i / (n - 1)), this.main.y - 200); return f; });
+    this.hud = new Hud(this);
+    Sound.music(A.music);
+    // countdown
+    this.countT = 0; this.countN = 4; this.big = this.add.text(VW / 2, VH * 0.38, '', { fontFamily: 'Fredoka, sans-serif', fontStyle: '700', fontSize: '140px', color: '#FFD54F', stroke: '#3b1f73', strokeThickness: 16 }).setOrigin(0.5).setDepth(50);
+    this.cam = this.cameras.main;
+    window.__fight = this;
+  }
+  onIce(f) { if (f.f === 'frostbite' || !f.ground) return false; return f.ground.ice.some(z => f.x > z.x1 && f.x < z.x2); }
+  iceAt(f) { const g = f.ground; if (!g) return; const z = g.ice.find(z => f.x > z.x1 - 30 && f.x < z.x2 + 30 && z.t > 0); if (z) { z.x1 = Math.min(z.x1, f.x - 30); z.x2 = Math.max(z.x2, f.x + 30); z.t = 4; } else g.ice.push({ x1: f.x - 30, x2: f.x + 30, t: 4 }); }
+  platBelow(f) { let best = null; for (const p of this.plats) if (f.x > p.x1 && f.x < p.x2 && p.y >= f.y - 2 && (!best || p.y < best.y)) best = p; return best; }
+  wave(owner, dir) { const g = owner.ground; this.waves.push({ owner, dir, x: owner.x + dir * owner.w * 0.5, g, id: HITID++, t: 0 }); }
+  snowball(owner) { this.balls.push({ owner, x: owner.x + owner.face * 30, y: owner.y - owner.h * 0.6, vx: owner.face * 820 + owner.vx * 0.3, vy: -120, id: HITID++, t: 0 }); Sound.sfx.swing(); }
+  shake(d, i) { this.cam.shake(d * 1000, i); }
+  inputFor(f) {
+    if (f.brain) return f.brain.think(1 / 60);
+    if (f.kind === 'me') return localInput();
+    if (f.kind === 'pad') return padInput(f.padI);
+    if (f.kind === 'phone') return Net.read(f.slot) || { x: 0, y: 0, jump: false, jumpP: false, punchP: false, specP: false };
+    return { x: 0, y: 0, jump: false };
+  }
+  update(time, delta) {
+    if (this.paused) return;
+    const dtReal = Math.min(delta / 1000, 0.05);
+    // countdown
+    if (!this.started) {
+      this.countT -= dtReal;
+      if (this.countT <= 0) { this.countN--; this.countT = 0.75; if (this.countN > 0) { this.big.setText(String(this.countN)); Sound.sfx.count(); } else { this.big.setText('BRAWL!'); Sound.sfx.go(); this.started = true; this.time.delayedCall(700, () => this.big.setText('')); } this.big.setScale(1.4); this.tweens.add({ targets: this.big, scale: 1, duration: 300, ease: 'Back.Out' }); }
+      this.fighters.forEach(f => { f.boxes = []; f.vy = Math.min(f.vy + PHYS.g * dtReal, 900); f.move(dtReal); f.draw(time); });
+      this.hud.update(); return;
+    }
+    this.acc += dtReal * this.slowmo; const STEP = 1 / 60; let n = 0;
+    while (this.acc >= STEP && n < 4) { this.step(STEP); this.acc -= STEP; n++; }
+    if (this.done) return;
+    this.fighters.forEach(f => f.draw(time));
+    this.drawWorld(time);
+    this.hud.update();
+  }
+  step(dt) {
+    const T = this.time.now / 1000;
+    // moving platforms
+    this.plats.forEach(p => { if (p.move) { const nx = p.cx + Math.sin(T * 0.6) * p.move; p.dx = nx - (p.x1 + p.hw); p.x1 = nx - p.hw; p.x2 = nx + p.hw; p.img.x = p.x1; } p.ice.forEach(z => z.t -= dt); p.ice = p.ice.filter(z => z.t > 0); });
+    // everyone moves
+    for (const f of this.fighters) { if (f.out) continue; f.update(dt, this.inputFor(f)); }
+    // hits
+    const boxes = [];
+    this.fighters.forEach(f => f.boxes.forEach(b => boxes.push([b, f])));
+    this.waves.forEach(w => { w.t += dt; w.x += w.dir * 720 * dt; if (w.g && w.x > w.g.x1 && w.x < w.g.x2) boxes.push([{ x: w.x - 30, y: w.g.y - 60, w: 60, h: 62, dmg: 10, base: 400, grow: 6, ang: 76, dir: w.dir, id: w.id, groundOnly: true }, w.owner]); else w.dead = true; });
+    this.waves = this.waves.filter(w => !w.dead && w.t < 1.5);
+    this.balls.forEach(b => { b.t += dt; b.vy += 700 * dt; b.x += b.vx * dt; b.y += b.vy * dt; boxes.push([{ x: b.x - 16, y: b.y - 16, w: 32, h: 32, dmg: 6, base: 270, grow: 5, ang: 30, dir: Math.sign(b.vx), id: b.id, ball: b }, b.owner]);
+      if (this.plats.some(p => b.x > p.x1 && b.x < p.x2 && b.y > p.y && b.y < p.y + 30) || b.t > 2) { b.dead = true; this.fx.puff(b.x, b.y, 4, 0xffffff); } });
+    this.balls = this.balls.filter(b => !b.dead);
+    for (const [b, owner] of boxes) for (const t of this.fighters) {
+      if (t === owner || t.out || t.state === 'dead') continue;
+      if (b.groundOnly && !t.onGround) continue;
+      if (t.hitSet && t.hitSet.has && false) continue;
+      const key = b.id + ':' + t.slot; if (this.hitDone && this.hitDone.has(key)) continue;
+      const h = t.hurtbox(); if (b.x < h.x + h.w && b.x + b.w > h.x && b.y < h.y + h.h && b.y + b.h > h.y) {
+        const kb = t.takeHit(b, owner); if (!kb) continue;
+        (this.hitDone = this.hitDone || new Set()).add(key); if (this.hitDone.size > 400) this.hitDone = new Set([key]);
+        if (b.ball) b.ball.dead = true;
+        const hx = clamp(t.x, b.x, b.x + b.w), hy = clamp(t.y - t.h / 2, b.y, b.y + b.h);
+        this.fx.spark(hx, hy, SLOT_HEX[owner.slot], clamp(kb / 700, 0.6, 1.8)); Sound.sfx.hit(kb);
+        if (kb > 1000) { this.shake(0.15, 0.008); this.fx.flash(); }
+        if (t.kind === 'phone') Net.buzz(t.slot, kb > 900 ? 120 : 50);
+        if (owner.d.sp === 'belly' && owner.state === 'special' && owner.spPhase === 'flop') { owner.vy = -700; owner.spPhase = 'go'; }   // Bonk bounces off people
+      }
+    }
+    // blast zones
+    for (const f of this.fighters) {
+      if (f.out || f.state === 'dead' || f.state === 'respawn') continue;
+      if (f.x < BLAST.l || f.x > BLAST.r || f.y > BLAST.b || f.y - f.h < BLAST.t) f.ko();
+    }
+  }
+  drawWorld(time) {
+    // ice patches
+    const g = this.iceG; g.clear();
+    this.plats.forEach(p => p.ice.forEach(z => { const a = clamp(z.t, 0, 1) * 0.75; const ix = Math.max(z.x1, p.x1), iw = Math.min(z.x2, p.x2) - ix; g.fillStyle(0x29b6f6, a).fillRoundedRect(ix, p.y - 7, iw, 14, 7); g.fillStyle(0xb3f0ff, a).fillRoundedRect(ix + 4, p.y - 6, iw - 8, 5, 3); for (let sx = ix + 14; sx < ix + iw - 8; sx += 46) g.fillStyle(0xffffff, a).fillCircle(sx + Math.sin(time * 0.01 + sx) * 3, p.y - 3, 2.5); }));
+    // shockwaves + snowballs
+    const fg = this.fxG; fg.clear();
+    this.waves.forEach(w => { if (!w.g) return; for (let i = 0; i < 3; i++) { fg.fillStyle(i ? 0x8d6e63 : 0xffcc80, 0.9 - i * 0.25).fillTriangle(w.x - w.dir * i * 22 - 14, w.g.y, w.x - w.dir * i * 22 + 14, w.g.y, w.x - w.dir * i * 22, w.g.y - 46 + i * 12); } });
+    this.balls.forEach(b => { fg.fillStyle(0xffffff, 1).fillCircle(b.x, b.y, 15); fg.lineStyle(3, 0x4fc3f7, 1).strokeCircle(b.x, b.y, 15); });
+    // off-screen bubbles
+    this.fighters.forEach(f => {
+      if (f.out || f.state === 'dead') return;
+      if (f.x < 0 || f.x > VW || f.y - f.h < 0 || f.y > VH) {
+        const bx = clamp(f.x, 40, VW - 40), by = clamp(f.y - f.h / 2, 40, VH - 40);
+        fg.fillStyle(SLOT_HEX[f.slot], 0.9).fillCircle(bx, by, 26); fg.lineStyle(4, 0xffffff, 1).strokeCircle(bx, by, 26);
+        const ang = Math.atan2(f.y - f.h / 2 - by, f.x - bx); fg.fillStyle(0xffffff, 1).fillTriangle(bx + Math.cos(ang) * 38, by + Math.sin(ang) * 38, bx + Math.cos(ang + 0.5) * 26, by + Math.sin(ang + 0.5) * 26, bx + Math.cos(ang - 0.5) * 26, by + Math.sin(ang - 0.5) * 26);
+      }
+    });
+    this.fx.update();
+  }
+  checkEnd() {
+    const alive = this.fighters.filter(f => !f.out);
+    if (alive.length > 1 || this.over) return;
+    this.over = true; this.slowmo = 0.3; this.big.setText('GAME!'); this.big.setScale(1.5); this.tweens.add({ targets: this.big, scale: 1, duration: 400, ease: 'Back.Out' });
+    Sound.sfx.big();
+    this.time.delayedCall(1600, () => this.showWinner(alive[0] || null));
+  }
+  showWinner(w) {
+    this.slowmo = 0; this.big.setText(''); this.done = true; this.fxG.clear(); this.fx.g.clear();
+    const list = this.fighters.slice().sort((a, b) => (a.out ? a.place : 1) - (b.out ? b.place : 1));
+    this.children.list.filter(o => o.depth >= 3 && o.depth < 50).forEach(o => o.setVisible(false));
+    this.add.rectangle(VW / 2, VH / 2, VW, VH, 0x1a1036, 0.55).setDepth(40);
+    if (w) {
+      const m = META[w.f].win;
+      const glow = this.add.circle(VW / 2, VH - 120, 260, SLOT_HEX[w.slot], 0.35).setDepth(41);
+      this.tweens.add({ targets: glow, scale: 1.15, yoyo: true, repeat: -1, duration: 700 });
+      const im = this.add.image(VW / 2, VH - 30, w.f, 'win').setOrigin(m[3] / m[1], m[4] / m[2]).setScale(1.9 / ART * (FIGHTERS[w.f].h < 70 ? 1.4 : 1)).setDepth(42);
+      this.tweens.add({ targets: im, y: VH - 50, yoyo: true, repeat: -1, duration: 500, ease: 'Sine.InOut' });
+      for (let i = 0; i < 70; i++) { const c = this.add.rectangle(rnd(0, VW), rnd(-400, -20), 10, 16, pick([0xffd54f, 0xff4f9a, 0x4fc3f7, 0x8bc34a, 0xffffff]), 1).setDepth(43); this.tweens.add({ targets: c, y: VH + 40, angle: rnd(-360, 360), duration: rnd(2000, 4000), delay: rnd(0, 1500), repeat: -1 }); }
+    }
+    Sound.sfx.win(); Sound.music(null);
+    App.results(list.map(f => ({ slot: f.slot, f: f.f, label: f.label, kos: f.kos, falls: f.falls, kind: f.kind })), w ? { slot: w.slot, f: w.f, label: w.label, name: w.label, kind: w.kind } : null);
+  }
+}
+
+// HUD: a card for each fighter along the bottom
+class Hud {
+  constructor(sc) {
+    this.sc = sc; const n = sc.fighters.length, W = 230, gap = 16, x0 = VW / 2 - (n * W + (n - 1) * gap) / 2;
+    this.cards = sc.fighters.map((f, i) => {
+      const x = x0 + i * (W + gap), y = VH - 74, c = {};
+      c.bg = sc.add.graphics().setDepth(45); c.bg.fillStyle(0x1a1036, 0.72).fillRoundedRect(x, y, W, 66, 16).lineStyle(4, SLOT_HEX[f.slot], 1).strokeRoundedRect(x, y, W, 66, 16);
+      const m = META[f.f].idle, s = Math.min(70 / m[1], 76 / m[2]);
+      c.face = sc.add.image(x + 42, y + 64, f.f, 'idle').setOrigin(0.5, 1).setScale(s).setDepth(46);
+      c.name = sc.add.text(x + 84, y + 6, (f.kind === 'cpu' ? 'CPU' : 'P' + (f.slot + 1)) + ' ' + (f.kind === 'phone' ? f.label : FIGHTERS[f.f].name), { fontFamily: 'Fredoka, sans-serif', fontStyle: '700', fontSize: '15px', color: '#fff' }).setDepth(46);
+      c.pct = sc.add.text(x + 84, y + 22, '0%', { fontFamily: 'Fredoka, sans-serif', fontStyle: '700', fontSize: '34px', color: '#fff', stroke: '#000', strokeThickness: 5 }).setDepth(46);
+      c.lives = sc.add.text(x + W - 10, y + 62, '', { fontFamily: 'Fredoka, sans-serif', fontStyle: '700', fontSize: '15px', color: '#fff' }).setOrigin(1, 1).setDepth(46);
+      c.last = -1; c.x = x; c.y = y; return c;
+    });
+  }
+  update() {
+    this.sc.fighters.forEach((f, i) => {
+      const c = this.cards[i], d = Math.round(f.dmg);
+      if (d !== c.last) {
+        const col = d < 40 ? '#ffffff' : d < 80 ? '#ffe082' : d < 120 ? '#ffab40' : d < 160 ? '#ff5252' : '#d50000';
+        c.pct.setText(d + '%').setColor(col); if (d > c.last && c.last >= 0) { c.pct.setScale(1.35); this.sc.tweens.add({ targets: c.pct, scale: 1, duration: 200 }); } c.last = d;
+      }
+      c.lives.setText(f.out ? 'OUT' : '❤'.repeat(Math.max(0, f.lives)));
+      c.face.setAlpha(f.out ? 0.35 : 1);
+    });
+  }
+}
+
+// effects: sparks, puffs, rings, KO blasts
+class Fx {
+  constructor(sc) { this.sc = sc; this.g = sc.add.graphics().setDepth(25); this.list = []; }
+  add(o) { o.t = 0; this.list.push(o); }
+  spark(x, y, col, s = 1) { this.add({ k: 'spark', x, y, col, s, life: 0.22, rot: rnd(0, 6) }); }
+  puff(x, y, n = 3, col = 0xffffff) { for (let i = 0; i < n; i++) this.add({ k: 'puff', x: x + rnd(-20, 20), y: y - rnd(0, 10), vx: rnd(-80, 80), vy: rnd(-90, -20), col, life: 0.4, r: rnd(7, 13) }); }
+  ring(x, y, r, col) { this.add({ k: 'ring', x, y, r, col, life: 0.3 }); }
+  lines(x, y, dir) { this.add({ k: 'lines', x, y, dir, life: 0.2 }); }
+  cloud(x, y) { this.g.fillStyle(0xffffff, 0.9).fillEllipse(x, y + 10, 120, 30).fillEllipse(x - 30, y + 2, 50, 30).fillEllipse(x + 30, y + 4, 56, 30); }
+  ko(x, y, col) {
+    const cx = clamp(x, 30, VW - 30), cy = clamp(y, 30, VH - 30);
+    this.add({ k: 'ko', x: cx, y: cy, col, life: 0.7, ang: Math.atan2(VH / 2 - cy, VW / 2 - cx) });
+    this.flash();
+  }
+  flash() { const r = this.sc.add.rectangle(VW / 2, VH / 2, VW, VH, 0xffffff, 0.35).setDepth(60); this.sc.tweens.add({ targets: r, alpha: 0, duration: 180, onComplete: () => r.destroy() }); }
+  update() {
+    const g = this.g, dt = 1 / 60; g.clear();
+    this.list = this.list.filter(o => (o.t += dt) < o.life);
+    for (const o of this.list) {
+      const k = o.t / o.life;
+      if (o.k === 'spark') { const r = 40 * o.s * (0.6 + k); g.fillStyle(0xffffff, 1 - k); this.star(o.x, o.y, r, r * 0.35, 8, o.rot); g.fillStyle(o.col, 1 - k); this.star(o.x, o.y, r * 0.6, r * 0.22, 8, o.rot + 0.2); }
+      if (o.k === 'puff') { o.x += o.vx * dt; o.y += o.vy * dt; g.fillStyle(o.col, 0.7 * (1 - k)).fillCircle(o.x, o.y, o.r * (1 + k)); }
+      if (o.k === 'ring') { g.lineStyle(5 * (1 - k), o.col, 1 - k).strokeEllipse(o.x, o.y, o.r * 2 * (0.4 + k), o.r * 0.6 * (0.4 + k)); }
+      if (o.k === 'lines') { g.lineStyle(4, 0xffffff, 0.8 * (1 - k)); for (let i = 0; i < 4; i++) g.lineBetween(o.x - o.dir * (30 + i * 8), o.y - 30 + i * 18, o.x - o.dir * (90 + i * 12), o.y - 30 + i * 18); }
+      if (o.k === 'ko') {
+        const L = 900 * Math.min(1, k * 3), a = o.ang, w = 0.18 * (1 - k);
+        g.fillStyle(o.col, 0.9 * (1 - k)).fillTriangle(o.x, o.y, o.x + Math.cos(a - w) * L, o.y + Math.sin(a - w) * L, o.x + Math.cos(a + w) * L, o.y + Math.sin(a + w) * L);
+        g.fillStyle(0xffffff, 1 - k).fillCircle(o.x, o.y, 60 * (1 - k) + 20);
+      }
+    }
+  }
+  star(x, y, R, r, n, rot) { const pts = []; for (let i = 0; i < n * 2; i++) { const a = rot + i * Math.PI / n, rr = i % 2 ? r : R; pts.push({ x: x + Math.cos(a) * rr, y: y + Math.sin(a) * rr }); } this.g.fillPoints(pts, true); }
+}
+
+// =====================================================================
+//  PHONE CONTROLLER (?join=CODE)
+// =====================================================================
+async function phoneMain(codeRaw) {
+  document.body.className = 'phone'; const lp = $('loading'); if (lp) lp.remove();
+  $('phone').classList.remove('hidden');
+  const room = String(codeRaw || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
+  $('phCode').textContent = room;
+  const id = store.get('brawl_id', null) || uid(); store.set('brawl_id', id);
+  $('phName').value = store.get('brawl_name', '') || store.get('pip_name', '') || '';
+  let own = null, mainCh = null, pc = null, dc = null, welcomed = false, slot = -1, phase = 'lobby', myF = store.get('brawl_me', 'pip'), waiting = false, joinT = null, lastSent = '', winner = '';
+  const st = { x: 0, y: 0, j: 0, p: 0, s: 0 }, cnt = { j: 0, p: 0, s: 0 };
+  const dcOpen = () => dc && dc.readyState === 'open';
+  function send(m) { m.id = id; if (dcOpen()) { try { dc.send(JSON.stringify(m)); return; } catch (e) {} } own && own.send(m); }
+  const join = () => mainCh && mainCh.send({ t: 'join', id, name: $('phName').value.trim() || 'Player' });
+  function sendIn(force) { const m = { t: 'in', x: st.x, y: st.y, j: st.j, p: st.p, s: st.s, nj: cnt.j, np: cnt.p, ns: cnt.s }; const k = JSON.stringify(m); if (force || k !== lastSent) { lastSent = k; send(m); } }
+  function vib(ms) { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} }
+  // fighter picker
+  const grid = $('phGrid');
+  FKEYS.forEach(k => { const d = document.createElement('div'); d.className = 'fcard'; d.dataset.f = k; d.appendChild(portrait(k, 120, 84)); d.insertAdjacentHTML('beforeend', `<b>${FIGHTERS[k].name}</b><small>${FIGHTERS[k].role}</small>`);
+    d.onclick = () => { myF = k; store.set('brawl_me', k); send({ t: 'pick', f: k }); vib(15); ui(); }; grid.appendChild(d); });
+  function ui() {
+    const conn = !welcomed ? 'Connecting…' : (dcOpen() ? '⚡ Direct' : '● Online');
+    $('phState').textContent = conn; $('phState1').textContent = conn;
+    [...grid.children].forEach(d => d.classList.toggle('sel', d.dataset.f === myF));
+    const show = welcomed ? (waiting ? 'pick' : phase === 'fight' ? 'pad' : phase === 'results' ? 'res' : 'pick') : 'join';
+    $('phJoin').classList.toggle('hidden', show !== 'join'); $('phPick').classList.toggle('hidden', show !== 'pick'); $('phPad').classList.toggle('hidden', show !== 'pad'); $('phRes').classList.toggle('hidden', show !== 'res');
+    $('phPickH').textContent = waiting ? "You're in the next fight! Pick your fighter" : 'Pick your fighter';
+    $('phStart').classList.toggle('hidden', waiting || phase === 'fight');
+    $('phPickNote').textContent = phase === 'title' ? 'Waiting for the TV to open Party mode…' : 'When everyone is ready, press Start here or on the TV.';
+    $('pbS').innerHTML = 'SPECIAL<br><small style="font-size:.75em;opacity:.9">' + FIGHTERS[myF].spName + '</small>';
+    const nm = ($('phName').value.trim() || 'Player'); $('phWho').textContent = nm + ' · ' + FIGHTERS[myF].name; $('phWho1').textContent = nm;
+    $('phResT').textContent = winner ? '🏆 ' + winner : '🏁 Fight over'; $('phResS').textContent = 'Rematch, or change your fighter';
+  }
+  async function startDirect() {
+    if (pc || QS.has('nodirect') || LOCAL) return;
+    pc = new RTCPeerConnection({ iceServers: ICE }); const my = pc;
+    dc = pc.createDataChannel('pad', { ordered: false, maxRetransmits: 0 });
+    dc.onmessage = ev => { let m; try { m = JSON.parse(ev.data); } catch (_) { return; } onPrivate(m); };
+    dc.onopen = () => ui(); dc.onclose = () => { if (my === pc) stopDirect(); };
+    pc.onconnectionstatechange = () => { if (my === pc && ['failed', 'closed'].includes(pc.connectionState)) stopDirect(); };
+    try { await pc.setLocalDescription(await pc.createOffer()); await iceDone(pc); if (my === pc) own.send({ t: 'offer', id, sdp: pc.localDescription.sdp }); } catch (e) { stopDirect(); }
+    setTimeout(() => { if (my === pc && !dcOpen()) stopDirect(); }, 10000);
+  }
+  function stopDirect() { try { pc && pc.close(); } catch (e) {} pc = null; dc = null; ui(); }
+  function onPrivate(m) {
+    if (!m) return;
+    if (m.t === 'welcome') {
+      if (!welcomed) vib(40);
+      welcomed = true; slot = m.slot; phase = m.phase || phase; waiting = !!m.waiting; winner = m.winner || ''; if (m.f) myF = m.f;
+      [$('phDot'), $('phDot1')].forEach(d => d.style.background = m.color);
+      document.querySelectorAll('#phStick .knob').forEach(k => k.style.background = m.color);
+      if (!pc) startDirect(); ui();
+    }
+    if (m.t === 'answer' && pc && pc.signalingState === 'have-local-offer') pc.setRemoteDescription({ type: 'answer', sdp: m.sdp }).catch(() => {});
+    if (m.t === 'buzz') { vib(m.ms || 60); const p = $('phPad'); p.classList.remove('flash'); void p.offsetWidth; p.classList.add('flash'); }
+  }
+  function onMain(m) {
+    if (!m) return;
+    if (m.t === 'state') { const was = phase; phase = m.st.phase; winner = m.st.winner || ''; const me = m.st.players.find(p => p.id === id); if (welcomed && !me) { welcomed = false; join(); } if (me && me.f) myF = me.f; if (was !== phase && phase === 'lobby') waiting = false; ui(); }
+    if (m.t === 'full' && m.id === id) $('phMsg').textContent = 'Sorry, the game is full (4 players).';
+    if (m.t === 'kick' && m.id === id) { welcomed = false; ui(); $('phMsg').textContent = 'You were removed from the game. Tap Join to come back.'; $('phGo').disabled = false; clearInterval(joinT); }
+  }
+  // joystick + buttons
+  bindStick($('phStick'), (x, y) => { st.x = x; st.y = y; sendIn(); }, () => $('phStick').querySelector('.hint').classList.add('hidden'));
+  [['pbJ', 'j'], ['pbP', 'p'], ['pbS', 's']].forEach(([el, k]) => {
+    const b = $(el);
+    b.addEventListener('pointerdown', e => { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (x) {} st[k] = 1; cnt[k]++; b.classList.add('on'); vib(10); sendIn(); });
+    const end = () => { if (!st[k]) return; st[k] = 0; b.classList.remove('on'); sendIn(); };
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => b.addEventListener(ev, end));
+  });
+  $('phStart').onclick = () => { send({ t: 'start' }); vib(30); };
+  $('phAgain').onclick = () => { send({ t: 'start' }); vib(30); };
+  $('phRepick').onclick = () => { phase = 'lobby'; ui(); };
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  async function go() {
+    const name = $('phName').value.trim(); if (!name) { $('phName').focus(); return; }
+    store.set('brawl_name', name); $('phMsg').textContent = 'Connecting…'; $('phGo').disabled = true;
+    try { own = own || await chan('brawl-' + room + '-' + id, onPrivate); mainCh = mainCh || await chan('brawl-' + room, onMain); }
+    catch (e) { $('phMsg').textContent = "Couldn't connect – check your internet and try again."; $('phGo').disabled = false; return; }
+    join(); clearInterval(joinT); joinT = setInterval(() => { if (!welcomed) join(); }, 2000);
+    setInterval(() => sendIn(true), 160);
+    setTimeout(() => { if (welcomed) send({ t: 'pick', f: myF }); }, 1500);
+    try { navigator.wakeLock && navigator.wakeLock.request('screen').catch(() => {}); } catch (e) {}
+  }
+  $('phGo').onclick = go; $('phName').onkeydown = e => { if (e.key === 'Enter') go(); };
+  if ($('phName').value && store.get('brawl_room', '') === room) go();
+  store.set('brawl_room', room);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && mainCh && !welcomed) join(); });
+  ui();
+}
+
+// =====================================================================
+//  DOM: touch, pause, mute, fullscreen, join QR
+// =====================================================================
+function bindStick(area, onXY, onStart) {
+  const base = area.querySelector('.base'), knob = area.querySelector('.knob'), RAD = 70; let cx = 0, cy = 0, pid = null, home = null, last = '';
+  if (base.classList.contains('idle')) home = { l: base.style.left, t: base.style.top };
+  const put = (el, x, y) => { el.style.left = x + 'px'; el.style.top = y + 'px'; };
+  area.addEventListener('pointerdown', e => {
+    e.preventDefault(); if (pid != null) return; pid = e.pointerId; try { area.setPointerCapture(pid); } catch (x) {}
+    const r = area.getBoundingClientRect(); cx = e.clientX - r.left; cy = e.clientY - r.top;
+    put(base, cx, cy); put(knob, cx, cy); base.classList.remove('hidden', 'idle'); knob.classList.remove('hidden', 'idle'); onStart && onStart(); Sound.init();
+  });
+  area.addEventListener('pointermove', e => {
+    if (e.pointerId !== pid) return; const r = area.getBoundingClientRect();
+    let dx = e.clientX - r.left - cx, dy = e.clientY - r.top - cy; const d = Math.hypot(dx, dy); if (d > RAD) { dx *= RAD / d; dy *= RAD / d; }
+    put(knob, cx + dx, cy + dy);
+    const x = Math.round(dx / RAD * 10) / 10, y = Math.round(dy / RAD * 10) / 10, k = x + ',' + y; if (k !== last) { last = k; onXY(Math.abs(x) < 0.2 ? 0 : x, Math.abs(y) < 0.35 ? 0 : y); }
+  });
+  const end = e => {
+    if (e.pointerId !== pid) return; pid = null; last = ''; onXY(0, 0);
+    if (home) { base.style.left = knob.style.left = home.l; base.style.top = knob.style.top = home.t; base.classList.add('idle'); knob.classList.add('idle'); }
+    else { base.classList.add('hidden'); knob.classList.add('hidden'); }
+  };
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => area.addEventListener(ev, end));
+}
+function setupTouch() {
+  bindStick($('tpad'), (x, y) => { Touch.x = x; Touch.y = y; });
+  [['tjump', 'j'], ['tpunch', 'p'], ['tspec', 's']].forEach(([el, k]) => {
+    const b = $(el);
+    b.addEventListener('pointerdown', e => { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (x) {} if (k === 'j') Touch.j = true; Touch.q[k]++; b.classList.add('on'); });
+    const end = () => { if (k === 'j') Touch.j = false; b.classList.remove('on'); };
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => b.addEventListener(ev, end));
+  });
+  document.addEventListener('contextmenu', e => e.preventDefault());
+}
+function fightScene() { return window.__game && window.__game.scene.isActive('Fight') ? window.__game.scene.getScene('Fight') : null; }
+function togglePause(force) {
+  const s = fightScene(); if (!s || s.over) return;
+  const p = force !== undefined ? force : !s.paused; s.paused = p;
+  $('pause').classList.toggle('hidden', !p);
+  if (p) { s.tweens.pauseAll(); Sound.music(null); } else { s.tweens.resumeAll(); Sound.music(s.A.music); }
+}
+function toggleMute() { Sound.init(); Sound.setMuted(!Sound.muted); $('btnMute').style.opacity = Sound.muted ? 0.45 : 1; $('btnMute').textContent = Sound.muted ? '✕' : '♪'; }
+function showJoinQR() {
+  if (!Net.room) return;
+  const box = $('joinqr'); box.innerHTML = ''; const cv = qrCanvas(Net.joinUrl(), 6); if (cv) box.appendChild(cv);
+  $('joincode').textContent = Net.room; $('joinpop').classList.remove('hidden');
+}
+function showCodePop() {
+  $('codepop').classList.remove('hidden'); $('codein').value = ''; setTimeout(() => $('codein').focus(), 50);
+  const go = () => { const c = $('codein').value.trim().toUpperCase().replace(/[^A-Z]/g, ''); if (c.length === 4) location.search = '?join=' + c + (LOCAL ? '&local=1' : ''); };
+  $('codego').onclick = go; $('codein').onkeydown = e => { e.stopPropagation(); if (e.key === 'Enter') go(); };
+  $('codeclose').onclick = () => $('codepop').classList.add('hidden');
+}
+function setupDom() {
+  setupTouch();
+  const click = (id, fn) => { $(id).onclick = e => { Sound.init(); Sound.sfx.select(); fn(e); }; };
+  click('mSolo', () => App.setup('solo'));
+  click('mParty', () => App.setup('party'));
+  click('mCode', () => showCodePop());
+  click('mHelp', () => show('scrHelp'));
+  click('helpBack', () => App.title());
+  click('addCpu', () => App.addCpu());
+  click('shuffleCpu', () => { const used = new Set(App.humans().map(h => h.f)); App.cpus.forEach(c => { const free = FKEYS.filter(k => !used.has(k)); c.f = pick(free.length ? free : FKEYS); used.add(c.f); }); App.refresh(); });
+  [...$('diffSeg').children].forEach(b => b.onclick = () => { App.diff = b.dataset.v; store.set('brawl_diff', App.diff); Sound.sfx.select(); App.refresh(); });
+  [...$('livesSeg').children].forEach(b => b.onclick = () => { App.lives = +b.dataset.v; store.set('brawl_lives', App.lives); Sound.sfx.select(); App.refresh(); });
+  click('setBack', () => App.title());
+  $('setGo').onclick = () => App.go();
+  click('resAgain', () => App.go());
+  click('resChange', () => App.setup());
+  click('resMenu', () => App.title());
+  click('btnHome', () => { togglePause(false); App.setup(); });
+  $('btnPause').onclick = () => togglePause();
+  $('btnMute').onclick = () => toggleMute();
+  if (Sound.muted) { $('btnMute').style.opacity = 0.45; $('btnMute').textContent = '✕'; }
+  $('btnFull').onclick = () => {
+    try { const d = document.documentElement; if (!document.fullscreenElement) { const r = d.requestFullscreen && d.requestFullscreen(); if (r && r.then) r.then(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch (e) {} }).catch(() => {}); } else document.exitFullscreen(); } catch (e) {}
+  };
+  click('pResume', () => togglePause(false));
+  click('pRestart', () => { togglePause(false); App.go(); });
+  click('pChange', () => { togglePause(false); App.setup(); });
+  click('pTitle', () => { togglePause(false); App.title(); });
+  $('joinbtn').onclick = () => showJoinQR();
+  $('joinclose').onclick = () => $('joinpop').classList.add('hidden');
+  $('joinpop').onclick = e => { if (e.target.id === 'joinpop') $('joinpop').classList.add('hidden'); };
+  addEventListener('blur', () => { if (App.mode === 'solo') togglePause(true); });
+  // game controllers: in the fighter picker a button press adds that controller as a player
+  setInterval(() => {
+    if (App.screen !== 'setup' || !navigator.getGamepads) return;
+    const gps = navigator.getGamepads(); for (let i = 0; i < gps.length; i++) {
+      if (!gps[i] || !gps[i].connected) continue; const inp = padInput(i), pad = App.pads.find(p => p.i === i);
+      if (!pad && inp.anyP) { const slot = App.freeSlot(); if (slot >= 0) { App.dropCpuForSlot(slot); App.pads.push({ i, slot, f: App.unusedFighter() }); Sound.sfx.join(); App.refresh(); } continue; }
+      if (pad) {
+        if (inp.x !== 0 && !pad.moved) { pad.f = FKEYS[(FKEYS.indexOf(pad.f) + (inp.x > 0 ? 1 : FKEYS.length - 1)) % FKEYS.length]; pad.moved = true; Sound.sfx.select(); App.refresh(); }
+        if (inp.x === 0) pad.moved = false;
+        if (inp.startP) App.go();
+      }
+    }
+  }, 50);
+}
+
+// =====================================================================
+//  START
+// =====================================================================
+function startGame() {
+  setupDom();
+  window.__game = new Phaser.Game({
+    type: Phaser.AUTO, parent: 'game', width: VW, height: VH, backgroundColor: '#1a1036',
+    scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+    render: { antialias: true, roundPixels: false },
+    scene: [Boot, Backdrop, Fight]
+  });
+}
+(async function boot() {
+  if (QS.has('join')) return phoneMain(QS.get('join'));
+  try { if (typeof Phaser === 'undefined') await loadScript(PHASER_URL); }
+  catch (e) { $('loading').textContent = 'Could not load the game engine – check your connection.'; return; }
+  const wait = () => new Promise(r => { const t0 = Date.now(); (function w() { if (window.__webpOK !== null || Date.now() - t0 > 800) r(); else setTimeout(w, 30); })(); });
+  await wait();
+  const done = () => { if (!window.__started) { window.__started = true; startGame(); } };
+  try { document.fonts.load('700 40px Fredoka').then(done, done); } catch (e) { done(); }
+  setTimeout(done, 2500);
+})();
+</script>
+</body>
+</html>

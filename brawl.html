@@ -82,6 +82,9 @@ window.__errs = 0; window.addEventListener('error', function (e) {
   .arenas{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
   .arena{height:58px;border-radius:12px;border:3px solid #ffffff44;background-size:cover;background-position:center;position:relative;cursor:pointer;display:flex;align-items:flex-end;justify-content:center;font-weight:700;font-size:13px;text-shadow:0 2px 3px #000;padding-bottom:3px;box-sizing:border-box;background-color:#3b1f73}
   .arena.on{border-color:#FFD54F;box-shadow:0 0 0 3px #FFD54F}
+  #scrSetup.arcade .hideArcade,#scrSetup.raid .hideRaid,#scrSetup:not(.arcade) .showArcade{display:none}
+  .stv{display:flex;flex-direction:column;align-items:center;font-weight:700;font-size:16px}
+  .stv canvas{display:block}
   .joinbox{display:flex;gap:18px;align-items:center;background:#fff;color:#1a1036;border-radius:18px;padding:12px 16px;margin-top:12px}
   .joinbox canvas{width:170px;height:170px;image-rendering:pixelated}
   .joinbox .code{font-size:40px;letter-spacing:.18em;font-weight:700;color:#c2185b}
@@ -160,6 +163,7 @@ window.__errs = 0; window.addEventListener('error', function (e) {
     <div class="logo">BOUNCE<span>BRAWL!</span></div>
     <div class="bigbtns">
       <button class="bb" id="mSolo">🎮 Play vs computer</button>
+      <button class="bb" id="mArcade" style="background:#4fc3f7;color:#0b2a4a">🏆 Arcade – beat them all</button>
       <button class="bb pink" id="mParty">📺 Party on the TV (phones)</button>
       <button class="bb alt" id="mCode">🔑 Join with a code</button>
       <button class="bb alt" id="mHelp">❓ How to play</button>
@@ -174,19 +178,30 @@ window.__errs = 0; window.addEventListener('error', function (e) {
         <div class="joinbox hidden" id="joinBox"><div id="joinQrSmall"></div><div><div style="font-weight:700">📱 Scan to join</div><div class="note" style="color:#3b1f73">or open the game and type</div><div class="code" id="joinCodeSmall">····</div></div></div>
       </div>
       <div>
-        <h3 style="margin-top:0">Fighters in this match</h3>
+        <div class="hideArcade"><h3 style="margin-top:0">Game</h3>
+        <div class="seg" id="gameSeg"><button data-v="brawl">🥊 Brawl (everyone for themselves)</button><button data-v="raid">🤝 Boss Raid (team up)</button></div></div>
+        <div class="hideArcade"><h3 id="rosterH">Fighters in this match</h3>
         <div class="plist" id="plist"></div>
-        <div style="display:flex;gap:8px;margin-top:8px"><button class="bb sm alt" id="addCpu">+ Add computer</button><button class="bb sm alt" id="shuffleCpu">🎲 Mix up computers</button></div>
-        <h3>Computer skill</h3>
+        <div style="display:flex;gap:8px;margin-top:8px"><button class="bb sm alt" id="addCpu">+ Add computer</button><button class="bb sm alt" id="shuffleCpu">🎲 Mix up computers</button></div></div>
+        <div class="showArcade note" id="arcInfo" style="font-size:17px;line-height:1.5;margin-bottom:6px"></div>
+        <h3 id="diffH">Computer skill</h3>
         <div class="seg" id="diffSeg"><button data-v="easy">😊 Easy</button><button data-v="normal">😎 Normal</button><button data-v="hard">😈 Hard</button></div>
-        <h3>Arena</h3>
-        <div class="arenas" id="arenaPick"></div>
-        <h3>Lives</h3>
-        <div class="seg" id="livesSeg"><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button></div>
+        <div class="hideArcade hideRaid"><h3>Arena</h3>
+        <div class="arenas" id="arenaPick"></div></div>
+        <div class="hideArcade"><h3 id="livesH">Lives</h3>
+        <div class="seg" id="livesSeg"><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button></div></div>
         <div style="display:flex;gap:10px;margin-top:14px"><button class="bb sm alt" id="setBack">◀ Back</button><button class="bb" style="flex:1;min-width:0" id="setGo">FIGHT! ▶</button></div>
         <div class="note" id="setMsg" style="margin-top:6px;text-align:center"></div>
       </div>
     </div>
+  </div>
+  <div id="scrStage" class="scr panel hidden" style="text-align:center;width:min(760px,94vw)">
+    <div id="stTop" style="font-size:22px;font-weight:700;color:#FFD54F;letter-spacing:.05em"></div>
+    <div id="stVs" style="display:flex;align-items:flex-end;justify-content:center;gap:22px;margin:12px 0 4px"></div>
+    <div id="stName" style="font-size:42px;font-weight:700;line-height:1.1"></div>
+    <div id="stInfo" class="note" style="font-size:18px;margin-top:6px"></div>
+    <button class="bb" id="stGo" style="margin-top:14px">▶ Fight!</button>
+    <div class="note" id="stAuto" style="margin-top:6px"></div>
   </div>
   <div id="scrHelp" class="scr panel hidden">
     <h2>❓ How to play</h2>
@@ -205,6 +220,7 @@ window.__errs = 0; window.addEventListener('error', function (e) {
       <tr><td>🟣 <b>Gloop</b></td><td>Trickster. Stretchy long punch. <i>Puddle Dodge</i>: melts, slides, then springs up with an uppercut.</td></tr>
       <tr><td>🐧 <b>Frostbite</b></td><td>Control. <i>Ice Slide</i> leaves slippery ice. In the air it throws a snowball.</td></tr>
     </table>
+    <div style="margin:6px 0"><b>🏆 Arcade:</b> pick a fighter and beat the other five one after another, then the five bosses from Pip – King Gloop, Captain Clank, Yeti-Bot, Scrap King and Queen Buzz. Your lives carry on between fights (beating a boss gives you an extra one).<br><b>🤝 Boss Raid:</b> team up with family (phones) or computer helpers and take on the bosses together. Bosses have a health bar – hit them as much as you can, and hit them extra hard when they're dizzy!</div>
     <div class="note">Keyboard: move A D / ← →, jump W / ↑ / Space, punch J, special K, pause P. Game controllers work too (A jump, X punch, B special).</div>
     <div style="text-align:center;margin-top:12px"><button class="bb sm" id="helpBack">Got it!</button></div>
   </div>
@@ -212,7 +228,7 @@ window.__errs = 0; window.addEventListener('error', function (e) {
     <div id="resTitle">🏆 WINNER!</div>
     <div class="note" id="resSub"></div>
     <div id="resList" style="margin-top:8px"></div>
-    <div id="resBtns"><button class="bb sm" id="resAgain">🔁 Rematch</button><button class="bb sm alt" id="resChange">👥 Change fighters</button><button class="bb sm alt" id="resMenu">🏠 Main menu</button></div>
+    <div id="resBtns"></div>
   </div>
 </div>
 <div id="pause" class="hidden">
@@ -316,8 +332,8 @@ const FIGHTERS = {
                punch: { dmg: 7, reach: 62, base: 250, grow: 7.2, ang: 38, s: .06, a: .10, e: .14 }, sp: 'ice', spName: 'Ice Slide' },
 };
 const FKEYS = Object.keys(FIGHTERS);
-const SLOT_COL = ['#ff3b3b', '#2f8cff', '#2fd25a', '#ffc21a'];
-const SLOT_HEX = [0xff3b3b, 0x2f8cff, 0x2fd25a, 0xffc21a];
+const SLOT_COL = ['#ff3b3b', '#2f8cff', '#2fd25a', '#ffc21a', '#ffffff'];
+const SLOT_HEX = [0xff3b3b, 0x2f8cff, 0x2fd25a, 0xffc21a, 0xffffff];
 const PHYS = { g: 2300, maxFall: 1150, fastFall: 1500, groundAcc: 3200, iceAcc: 500, airAcc: 1800, drag: 0.4 };
 // blast zones: go past these and you lose a life
 const BLAST = { l: -170, r: VW + 170, t: -280, b: VH + 170 };
@@ -334,7 +350,41 @@ const ARENAS = {
           main: { x1: 220, x2: 1060, y: 540 }, soft: [{ x1: 250, x2: 440, y: 410 }, { x1: 840, x2: 1030, y: 410 }, { x1: 530, x2: 750, y: 275, move: 250 }] },
 };
 const AKEYS = Object.keys(ARENAS);
-const MUSIC_FILES = { sunny: 'pip-art/music/sunny.mp3', snow: 'pip-art/music/snow.mp3', boss: 'pip-art/music/boss.mp3', cloud: 'pip-art/music/cloud.mp3' };
+const MUSIC_FILES = { sunny: 'pip-art/music/sunny.mp3', snow: 'pip-art/music/snow.mp3', boss: 'pip-art/music/boss.mp3', cloud: 'pip-art/music/cloud.mp3', beach: 'pip-art/music/beach.mp3', factory: 'pip-art/music/factory.mp3' };
+
+// ---------------------------------------------------------------------
+//  BOSSES (from Pip). Their animation sheets come straight from Pip's game.
+// ---------------------------------------------------------------------
+const seq = (p, n) => Array.from({ length: n }, (_, i) => p + i);
+// boss poses (drawn by ChatGPT): name -> [x, w, h, anchorX, anchorY] in brawl-art/boss-<key>
+const BMETA = {"gloop":{"idle":[0,294,248,142,246],"move":[298,341,234,161,232],"atk1":[643,336,236,131,234],"atk2":[983,388,248,137,246],"hurt":[1375,295,246,134,244],"down":[1674,324,151,159,149]},"crab":{"idle":[0,294,278,141,276],"move":[298,317,259,135,257],"atk1":[619,313,268,101,266],"atk2":[936,327,255,149,253],"hurt":[1267,290,272,113,270],"down":[1561,338,182,168,180]},"yeti":{"idle":[0,264,322,125,320],"move":[268,278,310,137,308],"atk1":[550,320,290,123,288],"atk2":[874,285,309,146,307],"hurt":[1163,314,320,161,318],"down":[1481,343,189,169,187]},"king":{"idle":[0,364,360,204,358],"move":[368,323,345,155,343],"atk1":[695,398,346,127,344],"atk2":[1097,332,378,143,376],"hurt":[1433,394,359,218,357],"down":[1831,397,269,198,267]},"queen":{"idle":[0,280,285,141,283],"move":[284,267,231,119,229],"atk1":[555,322,238,114,236],"atk2":[881,312,282,133,280],"hurt":[1197,275,265,186,263],"down":[1476,305,177,154,175]}};
+const BOSSES = [
+  { key: 'gloop', name: 'KING GLOOP', world: 'Sunny Springs', hp: 240, speed: 120, w: 200, h: 140, bg: 'bg-sky', plat: 'plat-sky', top: 0.10, music: 'boss',
+    attacks: (b, tg, dx) => [['leap', 4], ['punch', Math.abs(dx) < 450 ? 4 : 0.5], ['goo', 3]] },
+  { key: 'crab', name: 'CAPTAIN CLANK', world: 'Sandy Shores', hp: 280, speed: 150, w: 200, h: 160, bg: 'bg_sea', plat: 'plat-sky', top: 0.10, music: 'beach',
+    attacks: (b, tg, dx) => [['charge', 3], ['throw', 3], ['snap', Math.abs(dx) < 260 ? 5 : 0.5]] },
+  { key: 'yeti', name: 'YETI-BOT', world: 'Frosty Peaks', hp: 320, speed: 130, w: 150, h: 200, bg: 'bg-dojo', plat: 'plat-dojo', top: 0.10, music: 'snow',
+    attacks: (b, tg, dx) => [['pound', Math.abs(dx) < 350 ? 4 : 2], ['snow', 3], ['leap', 3]] },
+  { key: 'king', name: 'SCRAP KING', world: 'Junkyard Factory', hp: 360, speed: 110, w: 170, h: 220, bg: 'bg_factory', plat: 'plat-lava', top: 0.03, music: 'factory',
+    attacks: (b, tg, dx) => [['magnet', 4], ['bolts', 3]] },
+  { key: 'queen', name: 'QUEEN BUZZ', world: 'Cloud Kingdom', hp: 400, speed: 0, w: 150, h: 160, bg: 'bg_cloud', plat: 'plat-sky', top: 0.10, music: 'boss', flies: true,
+    attacks: (b, tg, dx) => [['stingers', 4], ['dive', 3]] },
+];
+const BOSS_BG = { bg_sea: 'pip-art/w2/seaSky.jpg', bg_factory: 'pip-art/w4/factorySky.jpg', bg_cloud: 'pip-art/w5/cloudSky.jpg' };
+const BOSS_LAYOUT = { main: { x1: 170, x2: 1110, y: 560 }, soft: [{ x1: 190, x2: 410, y: 410 }, { x1: 870, x2: 1090, y: 410 }, { x1: 535, x2: 745, y: 290 }] };
+function bossArena(i) { const b = BOSSES[i]; return { name: b.world, bg: b.bg, plat: b.plat, top: b.top, music: b.music, main: BOSS_LAYOUT.main, soft: BOSS_LAYOUT.soft }; }
+const DIFF_HP = { easy: 0.75, normal: 1, hard: 1.3 };
+// things that fly about: snowballs, goo, barrels, bolts, stingers
+const BALLS = {
+  snow: { r: 15, g: 700, dmg: 6, base: 270, grow: 5, ang: 30, life: 2 },
+  snowbig: { r: 24, g: 900, dmg: 9, base: 330, grow: 5.5, ang: 40, life: 3 },
+  goo: { r: 20, g: 1400, roll: 1, dmg: 8, base: 300, grow: 5, ang: 45, life: 4 },
+  barrel: { r: 26, g: 1600, roll: 1, dmg: 10, base: 360, grow: 6, ang: 40, life: 5 },
+  bolt: { r: 12, g: 1500, dmg: 7, base: 280, grow: 5, ang: 50, life: 3 },
+  stinger: { r: 10, g: 0, dmg: 7, base: 300, grow: 5, ang: 35, life: 3 },
+};
+const hearts = n => n <= 0 ? '' : n <= 6 ? '❤'.repeat(n) : '❤×' + n;
+function drawStar(g, x, y, R, r, n, rot) { const pts = []; for (let i = 0; i < n * 2; i++) { const a = rot + i * Math.PI / n, rr = i % 2 ? r : R; pts.push({ x: x + Math.cos(a) * rr, y: y + Math.sin(a) * rr }); } g.fillPoints(pts, true); }
 
 // =====================================================================
 //  SOUND (synthesised effects + the music tracks from Pip)
@@ -505,6 +555,7 @@ addEventListener('keydown', e => {
   if (k === 'p' || k === 'escape') { if (App.phase === 'fight') togglePause(); }
   if (k === 'm') toggleMute();
   if (k === 'enter' && App.screen === 'setup') App.go();
+  if (k === 'enter' && App.screen === 'stage' && App.stageGo) App.stageGo();
   if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) e.preventDefault();
 });
 addEventListener('keyup', e => Keys.down.delete(e.key.toLowerCase()));
@@ -538,9 +589,10 @@ const App = {
   me: { f: store.get('brawl_me', 'pip') },          // this device's player (solo)
   pads: [],                                          // {i, slot, f}
   cpus: [],                                          // {slot, f}
-  diff: store.get('brawl_diff', 'normal'), arena: store.get('brawl_arena', 'sky'), lives: store.get('brawl_lives', 3),
+  diff: store.get('brawl_diff', 'normal'), arena: store.get('brawl_arena', 'sky'), lives: store.get('brawl_lives', 3), game: store.get('brawl_game', 'brawl'), current: 'brawl', again: null,
   humans() {
     const out = [];
+    if (this.mode === 'arcade') return [{ kind: 'me', slot: 0, f: this.me.f, name: 'You' }];
     if (this.mode === 'solo') out.push({ kind: 'me', slot: 0, f: this.me.f, name: 'You' });
     this.pads.forEach(p => out.push({ kind: 'pad', slot: p.slot, f: p.f, name: '🎮 Controller ' + (p.i + 1), i: p.i }));
     if (this.mode === 'party') Net.list().forEach(p => out.push({ kind: 'phone', slot: p.slot, f: p.f, name: p.name, waiting: p.waiting, online: Net.online(p.slot) }));
@@ -564,27 +616,35 @@ const App = {
   setup(mode) {
     if (mode) {
       this.mode = mode; this.pads = [];
-      if (!this.cpus.length) this.cpus = mode === 'solo' ? [{ slot: 1, f: this.unusedFighter() }] : [];
+      if (!this.cpus.length && mode === 'solo') this.cpus = [{ slot: 1, f: this.unusedFighter() }];
       if (mode === 'party') { this.cpus = this.cpus.filter(c => c.slot !== 0); Net.host(); }
     }
-    document.body.classList.toggle('party', this.mode === 'party'); document.body.classList.toggle('solo', this.mode === 'solo'); document.body.classList.remove('fighting');
+    document.body.classList.toggle('party', this.mode === 'party'); document.body.classList.toggle('solo', this.mode !== 'party'); document.body.classList.remove('fighting');
     this.screen = 'setup'; this.phase = 'lobby'; Net.list().forEach(p => p.waiting = false);
     show('scrSetup'); Scenes.backdrop(); Sound.music('cloud'); this.refresh(); Net.phaseAll();
   },
   refresh() {
     if (this.screen !== 'setup') return;
-    const party = this.mode === 'party', ros = this.roster();
-    $('pickTitle').textContent = party ? 'The fighters' : 'Pick your fighter';
-    $('pickNote').textContent = party ? 'Everyone picks their fighter on their own phone. Tap a computer player on the right to change its fighter.' : 'Tap a fighter to choose. Tap a computer player on the right to change its fighter.';
+    const party = this.mode === 'party', arcade = this.mode === 'arcade', raid = !arcade && this.game === 'raid', ros = this.roster();
+    $('scrSetup').className = 'scr panel' + (arcade ? ' arcade' : '') + (raid ? ' raid' : '');
+    $('pickTitle').textContent = arcade ? '🏆 Arcade – pick your fighter' : party ? 'The fighters' : 'Pick your fighter';
+    $('pickNote').textContent = arcade ? 'Beat the other 5 fighters one after another, then the 5 bosses from Pip!' : party ? 'Everyone picks their fighter on their own phone. Tap a computer player on the right to change its fighter.' : 'Tap a fighter to choose. Tap a computer player on the right to change its fighter.';
+    [...$('gameSeg').children].forEach(b => b.classList.toggle('on', b.dataset.v === this.game));
+    $('rosterH').textContent = raid ? 'Your team' : 'Fighters in this match';
+    $('addCpu').textContent = raid ? '+ Add a computer helper' : '+ Add computer';
+    $('diffH').textContent = arcade ? 'How tough?' : raid ? 'Boss strength' : 'Computer skill';
+    $('livesH').textContent = raid ? 'Lives (each player, shared by the team)' : 'Lives';
+    const best = store.get('brawl_arcade_best', null);
+    $('arcInfo').innerHTML = `<b>10 stages:</b> 5 fighters on random arenas, then King Gloop, Captain Clank, Yeti-Bot, Scrap King and Queen Buzz.<br>You start with 4 lives and they carry on between fights. Beat a boss for an extra life.<br>` + (best ? `🏅 Best: <b>${best.score}</b> points with ${FIGHTERS[best.f] ? FIGHTERS[best.f].name : ''}${best.time ? ' in ' + fmtTime(best.time) : ''}` : '🏅 No best score yet – be the first!');
     // fighter cards
     const g = $('fgrid'); if (!g.children.length) FKEYS.forEach(k => {
       const d = document.createElement('div'); d.className = 'fcard'; d.dataset.f = k;
       d.innerHTML = `<div class="tags"></div>`; d.appendChild(portrait(k, 150, 110)); d.insertAdjacentHTML('beforeend', `<b>${FIGHTERS[k].name}</b><small>${FIGHTERS[k].role} · ${FIGHTERS[k].spName}</small>`);
-      d.onclick = () => { if (this.mode === 'solo') { this.me.f = k; store.set('brawl_me', k); Sound.init(); Sound.sfx.select(); this.refresh(); } };
+      d.onclick = () => { if (this.mode !== 'party') { this.me.f = k; store.set('brawl_me', k); Sound.init(); Sound.sfx.select(); this.refresh(); } };
       g.appendChild(d);
     });
     [...g.children].forEach(d => {
-      const k = d.dataset.f; d.classList.toggle('sel', !party && this.me.f === k);
+      const k = d.dataset.f; d.classList.toggle('sel', !party && this.me.f === k); if (arcade) { d.querySelector('.tags').innerHTML = this.me.f === k ? '<span class="tag" style="background:#ff3b3b">YOU</span>' : ''; return; }
       d.querySelector('.tags').innerHTML = ros.filter(r => r.f === k).map(r => `<span class="tag" style="background:${SLOT_COL[r.slot]}">${r.kind === 'cpu' ? 'CPU' : 'P' + (r.slot + 1)}</span>`).join('');
     });
     // roster list
@@ -592,7 +652,7 @@ const App = {
     if (!ros.length) pl.innerHTML = `<div class="note">Waiting for players… scan the QR code with a phone to join.</div>`;
     ros.forEach(r => {
       const row = document.createElement('div'); row.className = 'prow';
-      const label = r.kind === 'cpu' ? `🤖 Computer` : r.kind === 'me' ? '👆 You' : r.kind === 'phone' ? `📱 ${esc(r.name)}${r.online === false ? ' (offline)' : ''}` : r.name;
+      const label = r.kind === 'cpu' ? (raid ? '🤖 Helper' : '🤖 Computer') : r.kind === 'me' ? '👆 You' : r.kind === 'phone' ? `📱 ${esc(r.name)}${r.online === false ? ' (offline)' : ''}` : r.name;
       row.innerHTML = `<span class="dot" style="background:${SLOT_COL[r.slot]}"></span>`;
       row.appendChild(portrait(r.f, 60, 50));
       row.insertAdjacentHTML('beforeend', `<span class="who"><b>P${r.slot + 1}</b> ${label} · ${FIGHTERS[r.f].name}</span>`);
@@ -622,12 +682,16 @@ const App = {
       const box = $('joinQrSmall'); if (Net.room && box.dataset.room !== Net.room) { box.innerHTML = ''; const cv = qrCanvas(Net.joinUrl(), 4); if (cv) box.appendChild(cv); box.dataset.room = Net.room; }
       if (Net.status === 'error') $('joinCodeSmall').textContent = 'offline';
     }
-    const n = this.roster().filter(r => !r.waiting).length;
-    $('setGo').disabled = n < 2; $('setGo').style.opacity = n < 2 ? .5 : 1;
-    $('setMsg').textContent = n < 2 ? (party ? 'You need at least 2 fighters – join with a phone, or add a computer player.' : 'Add a computer player to fight against.') : (n + ' fighters ready!' + (party ? ' Any phone can press Start too.' : ''));
+    const n = this.roster().filter(r => !r.waiting).length, need = arcade ? 0 : raid ? 1 : 2;
+    $('setGo').disabled = n < need; $('setGo').style.opacity = n < need ? .5 : 1;
+    $('setGo').textContent = arcade ? 'START ARCADE ▶' : raid ? 'FIGHT THE BOSSES ▶' : 'FIGHT! ▶';
+    $('setMsg').textContent = arcade ? '' : n < need ? (party ? (raid ? 'Join with a phone to make a team.' : 'You need at least 2 fighters – join with a phone, or add a computer player.') : 'Add a computer player to fight against.') : (raid ? `A team of ${n} against 5 bosses!` : n + ' fighters ready!') + (party ? ' Any phone can press Start too.' : '');
   },
   go() {
+    if (this.mode === 'arcade') { Sound.init(); return Arcade.start(this.me.f, this.diff); }
+    if (this.game === 'raid') { const team = this.roster().filter(r => !r.waiting); if (!team.length) return; Sound.init(); Net.list().forEach(p => p.waiting = false); return Raid.start(this.roster().map(r => Object.assign({}, r, { team: 0 })), this.lives, this.diff); }
     const ros = this.roster(); if (ros.length < 2) return;
+    this.current = 'brawl';
     Sound.init(); Sound.sfx.go();
     this.screen = 'fight'; this.phase = 'fight'; Net.list().forEach(p => p.waiting = false);
     hideScreens(); document.body.classList.add('fighting');
@@ -635,20 +699,130 @@ const App = {
     Scenes.fight({ arena, lives: this.lives, diff: this.diff, roster: ros });
     Net.phaseAll(); Net.bcast({ t: 'state', st: Net.pub() });
   },
-  phoneStart(p) { if (this.screen === 'setup' || this.screen === 'results') this.go(); },
+  phoneStart(p) { if (this.screen === 'setup') this.go(); else if (this.screen === 'results') (this.again || (() => this.go()))(); else if (this.screen === 'stage' && this.stageGo) this.stageGo(); },
+  restartFight() { if (this.current === 'arcade') Arcade.fight(); else if (this.current === 'raid') Raid.fight(); else this.go(); },
   results(list, winner) {
-    this.screen = 'results'; this.phase = 'results'; document.body.classList.remove('fighting');
-    this.lastWinner = winner ? (winner.name + ' (' + FIGHTERS[winner.f].name + ')') : '';
-    $('resTitle').innerHTML = winner ? `🏆 ${FIGHTERS[winner.f].name} WINS!` : 'DRAW!';
-    $('resTitle').style.color = winner ? SLOT_COL[winner.slot] : '#fff';
-    $('resSub').textContent = winner ? (winner.kind === 'cpu' ? 'The computer won this time!' : winner.label + ' is the champion!') : '';
-    $('resList').innerHTML = list.map((f, i) => `<div class="rrow"><span>${['🥇', '🥈', '🥉', '4th'][i] || ''} <b style="color:${SLOT_COL[f.slot]}">${esc(f.label)}</b> · ${FIGHTERS[f.f].name}</span><span>${f.kos} KO${f.kos === 1 ? '' : 's'} · ${f.falls} fall${f.falls === 1 ? '' : 's'}</span></div>`).join('');
-    show('scrResults'); Net.phaseAll(); Net.bcast({ t: 'state', st: Net.pub() });
+    endScreen({ keepScene: true, winner: winner ? (winner.name + ' (' + FIGHTERS[winner.f].name + ')') : '',
+      title: winner ? `🏆 ${FIGHTERS[winner.f].name} WINS!` : 'DRAW!', color: winner ? SLOT_COL[winner.slot] : '#fff',
+      sub: winner ? (winner.kind === 'cpu' ? 'The computer won this time!' : winner.label + ' is the champion!') : '',
+      rows: list.map((f, i) => `<div class="rrow"><span>${['🥇', '🥈', '🥉', '4th'][i] || ''} <b style="color:${SLOT_COL[f.slot]}">${esc(f.label)}</b> · ${FIGHTERS[f.f].name}</span><span>${f.kos} KO${f.kos === 1 ? '' : 's'} · ${f.falls} fall${f.falls === 1 ? '' : 's'}</span></div>`).join(''),
+      buttons: [['🔁 Rematch', () => App.go(), ''], ['👥 Change fighters', () => App.setup(), 'alt'], ['🏠 Main menu', () => App.title(), 'alt']], again: () => App.go() });
+  },
+};
+function fmtTime(s) { s = Math.round(s); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+// shared "fight over" screen
+function endScreen(o) {
+  App.screen = 'results'; App.phase = 'results'; App.again = o.again || null; App.lastWinner = o.winner || '';
+  document.body.classList.remove('fighting'); clearTimeout(App.stageT);
+  if (!o.keepScene) Scenes.backdrop();
+  $('resTitle').innerHTML = o.title; $('resTitle').style.color = o.color || '#FFD54F';
+  $('resSub').textContent = o.sub || ''; $('resList').innerHTML = o.rows || '';
+  const bb = $('resBtns'); bb.innerHTML = '';
+  (o.buttons || []).forEach(([label, fn, cls]) => { const b = document.createElement('button'); b.className = 'bb sm ' + (cls || ''); b.textContent = label; b.onclick = () => { Sound.init(); Sound.sfx.select(); fn(); }; bb.appendChild(b); });
+  $('scrResults').style.marginTop = o.keepScene ? '-34vh' : '0';
+  show('scrResults'); Net.phaseAll(); Net.bcast({ t: 'state', st: Net.pub() });
+}
+// "next up" card shown between fights
+function stageCard(o) {
+  App.screen = 'stage'; App.phase = 'fight'; document.body.classList.remove('fighting'); Scenes.backdrop(); Sound.music('cloud');
+  $('stTop').textContent = o.top; $('stName').innerHTML = o.name; $('stInfo').innerHTML = o.info || '';
+  const vs = $('stVs'); vs.innerHTML = '';
+  const col = (arr, label) => { const d = document.createElement('div'); d.className = 'stv'; d.style.display = 'flex'; d.style.gap = '6px'; d.style.alignItems = 'flex-end'; arr.forEach(c => d.appendChild(c)); vs.appendChild(d); };
+  col(o.left); const v = document.createElement('div'); v.textContent = 'VS'; v.style.cssText = 'font-size:46px;font-weight:700;color:#ff4f9a;align-self:center;text-shadow:0 4px 0 #0008'; vs.appendChild(v); col(o.right);
+  show('scrStage'); Net.phaseAll(); Net.bcast({ t: 'state', st: Net.pub() });
+  let n = o.auto || 4; const tick = () => { $('stAuto').textContent = 'Starting in ' + n + '…'; if (n-- <= 0) go(); else App.stageT = setTimeout(tick, 1000); };
+  const go = () => { clearTimeout(App.stageT); App.stageGo = null; if (App.screen === 'stage') o.go(); };
+  App.stageGo = go; $('stGo').onclick = () => { Sound.init(); go(); }; clearTimeout(App.stageT); tick();
+}
+function bossPortrait(i, w, h) {
+  const k = BOSSES[i].key, cv = document.createElement('canvas'); cv.width = w; cv.height = h; const c = cv.getContext('2d'), im = new Image();
+  im.onload = () => { const m = BMETA[k].idle, s = Math.min(w / m[1], h / m[2]); c.drawImage(im, m[0], 0, m[1], m[2], (w - m[1] * s) / 2, h - m[2] * s, m[1] * s, m[2] * s); };
+  im.src = artUrl('boss-' + k); return cv;
+}
+function startFightUI() { App.screen = 'fight'; App.phase = 'fight'; hideScreens(); document.body.classList.add('fighting'); Net.phaseAll(); Net.bcast({ t: 'state', st: Net.pub() }); }
+
+// ---------------------------------------------------------------------
+//  ARCADE: you against the other 5 fighters, then the 5 Pip bosses
+// ---------------------------------------------------------------------
+const Arcade = {
+  run: null,
+  start(f, diff) {
+    const others = FKEYS.filter(k => k !== f).sort(() => Math.random() - 0.5);
+    const ramp = { easy: ['easy', 'easy', 'easy', 'normal', 'normal'], normal: ['easy', 'normal', 'normal', 'normal', 'hard'], hard: ['normal', 'hard', 'hard', 'hard', 'hard'] }[diff] || ['normal', 'normal', 'normal', 'normal', 'normal'];
+    this.run = { f, diff, stage: 0, lives: 4, score: 0, t0: Date.now(), continues: 0,
+      stages: others.map((o, i) => ({ type: 'fighter', f: o, arena: pick(AKEYS), skill: ramp[i], lives: i < 2 ? 1 : 2 })).concat(BOSSES.map((b, i) => ({ type: 'boss', boss: i }))) };
+    App.current = 'arcade'; this.intro();
+  },
+  intro(last) {
+    const r = this.run, s = r.stages[r.stage];
+    stageCard({ top: `🏆 ARCADE · STAGE ${r.stage + 1} OF ${r.stages.length}`,
+      left: [portrait(r.f, 150, 130)], right: [s.type === 'fighter' ? portrait(s.f, 150, 130) : bossPortrait(s.boss, 190, 150)],
+      name: s.type === 'fighter' ? `${FIGHTERS[r.f].name} vs ${FIGHTERS[s.f].name}` : `BOSS: ${BOSSES[s.boss].name}`,
+      info: `${s.type === 'fighter' ? ARENAS[s.arena].name + ' · ' + s.lives + ' li' + (s.lives === 1 ? 'fe' : 'ves') + ' to take' : BOSSES[s.boss].world} · Your lives: ${hearts(r.lives)} · Score: <b>${r.score}</b>${last ? ' (+' + last + ')' : ''}`,
+      go: () => this.fight() });
+  },
+  fight() {
+    const r = this.run, s = r.stages[r.stage];
+    const roster = [{ kind: 'me', slot: 0, f: r.f, name: 'You', team: 0 }];
+    if (s.type === 'fighter') roster.push({ kind: 'cpu', slot: 1, f: s.f, name: 'CPU', team: 1 });
+    startFightUI(); App.current = 'arcade';
+    Scenes.fight({ mode: 'arcade', arena: s.arena || 'sky', boss: s.type === 'boss' ? s.boss : null, bossHp: DIFF_HP[r.diff] || 1, lives: s.lives || 1, diff: s.skill || r.diff, roster, pool: r.lives - 1, onEnd: res => this.end(res) });
+  },
+  end(res) {
+    const r = this.run, s = r.stages[r.stage];
+    if (!res.win) return this.gameOver();
+    const pts = (s.type === 'boss' ? 3000 : 1000) + Math.round(res.dealt * 10) + Math.max(0, Math.round(2000 - res.time * 15));
+    r.score += pts; r.lives = res.pool + 1 + (s.type === 'boss' ? 1 : 0); r.stage++;
+    if (r.stage >= r.stages.length) return this.victory();
+    this.intro(pts);
+  },
+  victory() {
+    const r = this.run, time = (Date.now() - r.t0) / 1000, best = store.get('brawl_arcade_best', null), isBest = !best || r.score > best.score;
+    if (isBest) store.set('brawl_arcade_best', { score: r.score, f: r.f, time });
+    endScreen({ title: '🏆 ARCADE CHAMPION!', sub: `${FIGHTERS[r.f].name} beat every fighter and all 5 bosses!`,
+      rows: `<div class="rrow"><span>Score</span><b>${r.score}${isBest ? ' 🏅 NEW BEST!' : ''}</b></div><div class="rrow"><span>Time</span><b>${fmtTime(time)}</b></div><div class="rrow"><span>Continues used</span><b>${r.continues}</b></div>` + (!isBest ? `<div class="rrow"><span>Best ever</span><b>${best.score}</b></div>` : ''),
+      buttons: [['🔁 Play again', () => Arcade.start(r.f, r.diff)], ['👥 Pick another fighter', () => App.setup('arcade'), 'alt'], ['🏠 Main menu', () => App.title(), 'alt']] });
+  },
+  gameOver() {
+    const r = this.run, s = r.stages[r.stage];
+    endScreen({ title: 'GAME OVER', color: '#ff8a80', sub: `You reached stage ${r.stage + 1} of ${r.stages.length}` + (s.type === 'boss' ? ` – ${BOSSES[s.boss].name}` : ` – ${FIGHTERS[s.f].name}`) + `. Score: ${r.score}`,
+      buttons: [['▶ Continue (score halves)', () => { r.score = Math.floor(r.score / 2); r.lives = 3; r.continues++; Arcade.intro(); }], ['🔁 Start again', () => Arcade.start(r.f, r.diff), 'alt'], ['🏠 Main menu', () => App.title(), 'alt']] });
+  },
+};
+
+// ---------------------------------------------------------------------
+//  BOSS RAID: everyone teams up against the 5 Pip bosses
+// ---------------------------------------------------------------------
+const Raid = {
+  run: null,
+  start(roster, lives, diff) { this.run = { roster, lives, diff, stage: 0, t0: Date.now() }; App.current = 'raid'; this.intro(); },
+  pool() { const r = this.run; return Math.max(0, r.lives * r.roster.length - r.roster.length); },
+  intro() {
+    const r = this.run, b = BOSSES[r.stage];
+    stageCard({ top: `🤝 BOSS RAID · BOSS ${r.stage + 1} OF ${BOSSES.length}`, left: r.roster.map(p => portrait(p.f, r.roster.length > 2 ? 80 : 120, r.roster.length > 2 ? 80 : 110)), right: [bossPortrait(r.stage, 190, 150)],
+      name: b.name, info: `${b.world} · Team lives: ${hearts(this.pool() + r.roster.length)} · Hit it hardest when it's dizzy!`, go: () => this.fight(), auto: 5 });
+  },
+  fight() {
+    const r = this.run, n = r.roster.length;
+    startFightUI(); App.current = 'raid';
+    Scenes.fight({ mode: 'raid', boss: r.stage, bossHp: (0.55 + 0.45 * n) * (DIFF_HP[r.diff] || 1), lives: 1, diff: r.diff, roster: r.roster, pool: this.pool(), onEnd: res => this.end(res) });
+  },
+  end(res) { const r = this.run; if (!res.win) return this.lose(); r.stage++; if (r.stage >= BOSSES.length) return this.victory(); this.intro(); },
+  victory() {
+    const r = this.run, time = (Date.now() - r.t0) / 1000;
+    endScreen({ title: '🏆 ALL 5 BOSSES BEATEN!', winner: 'The team beat all 5 bosses!', sub: 'What a team! Every Pip boss is down.',
+      rows: `<div class="rrow"><span>Team</span><b>${r.roster.map(p => esc(p.kind === 'cpu' ? 'CPU' : p.name) + ' (' + FIGHTERS[p.f].name + ')').join(', ')}</b></div><div class="rrow"><span>Time</span><b>${fmtTime(time)}</b></div>`,
+      buttons: [['🔁 Play again', () => Raid.start(r.roster, r.lives, r.diff)], ['👥 Change team', () => App.setup(), 'alt'], ['🏠 Main menu', () => App.title(), 'alt']], again: () => Raid.start(r.roster, r.lives, r.diff) });
+  },
+  lose() {
+    const r = this.run, b = BOSSES[r.stage];
+    endScreen({ title: '💥 ' + b.name + ' WON!', color: '#ff8a80', winner: b.name + ' won – try again!', sub: `The team reached boss ${r.stage + 1} of ${BOSSES.length}. Have another go!`,
+      buttons: [['🔁 Try this boss again', () => Raid.intro()], ['👥 Change team', () => App.setup(), 'alt'], ['🏠 Main menu', () => App.title(), 'alt']], again: () => Raid.intro() });
   },
 };
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 function show(id) { hideScreens(); $(id).classList.remove('hidden'); }
-function hideScreens() { ['scrTitle', 'scrSetup', 'scrHelp', 'scrResults'].forEach(s => $(s).classList.add('hidden')); }
+function hideScreens() { ['scrTitle', 'scrSetup', 'scrHelp', 'scrResults', 'scrStage'].forEach(s => $(s).classList.add('hidden')); }
 const webp = () => window.__webpOK !== false;
 function artUrl(name, fallback) { return 'brawl-art/' + name + '.' + (webp() ? 'webp' : (fallback || 'png')); }
 const SheetImg = {};
@@ -677,6 +851,7 @@ class Fighter {
   constructor(sc, r, lives) {
     this.sc = sc; this.f = r.f; this.d = FIGHTERS[r.f]; this.slot = r.slot; this.kind = r.kind; this.padI = r.i; this.name = r.name;
     this.label = r.kind === 'cpu' ? 'CPU' : r.kind === 'me' ? 'You' : r.name;
+    this.team = r.team != null ? r.team : r.slot; this.dealt = 0;
     this.lives = lives; this.dmg = 0; this.kos = 0; this.falls = 0; this.out = false; this.lastHitBy = null; this.place = 0;
     this.x = 0; this.y = 0; this.vx = 0; this.vy = 0; this.face = 1; this.onGround = false; this.ground = null;
     this.state = 'air'; this.t = 0; this.stun = 0; this.lag = 0; this.inv = 0; this.cd = 0; this.atkCd = 0; this.jumpsUsed = 0; this.spAir = false; this.dropT = 0;
@@ -934,11 +1109,12 @@ class Fighter {
     return kb;
   }
   ko() {
-    const sc = this.sc; this.falls++; this.lives--; this.state = 'dead'; this.respawnT = 1.4;
+    const sc = this.sc, pooled = sc.pool && this.team === 0; this.falls++; if (!pooled) this.lives--; this.state = 'dead'; this.respawnT = 1.4;
     const killer = this.lastHitBy && this.sc.time.now - this.lastHitT < 8000 ? this.lastHitBy : null; if (killer && killer !== this) killer.kos++;
     sc.fx.ko(this.x, this.y - this.h / 2, SLOT_HEX[this.slot]); Sound.sfx.ko(); sc.shake(0.3, 0.015);
     if (this.kind === 'phone') Net.buzz(this.slot, 300);
-    if (this.lives <= 0) { this.out = true; this.place = sc.fighters.filter(f => !f.out).length + 1; sc.checkEnd(); }
+    if (pooled) { if (sc.pool.n > 0) sc.pool.n--; else this.out = true; } else if (this.lives <= 0) this.out = true;
+    if (this.out) { this.place = sc.fighters.filter(f => !f.out).length + 1; sc.checkEnd(); }
     this.hide();
   }
   hide() { [this.spr, this.shadow, this.tag, this.arrow, this.cdBar].forEach(o => o.setVisible(false)); if (this.fist) { this.fist.setVisible(false); this.arm.clear(); } }
@@ -1016,7 +1192,7 @@ class Brain {
       this.t = 0.08; return o;
     }
     // 2. pick a target
-    const foes = sc.fighters.filter(f => f !== me && !f.out && f.state !== 'dead' && f.state !== 'respawn');
+    const foes = (sc.targets || sc.fighters).filter(f => f !== me && f.team !== me.team && !f.out && f.state !== 'dead' && f.state !== 'respawn' && f.state !== 'gone');
     if (!foes.length) return o;
     if (!this.target || !foes.includes(this.target) || Math.random() < 0.08) this.target = foes.sort((a, b) => Math.abs(a.x - me.x) + Math.abs(a.y - me.y) - Math.abs(b.x - me.x) - Math.abs(b.y - me.y))[Math.random() < 0.8 ? 0 : foes.length - 1];
     const tg = this.target, dx = tg.x - me.x, dy = tg.y - me.y, adx = Math.abs(dx);
@@ -1060,16 +1236,21 @@ class Boot extends Phaser.Scene {
   preload() {
     FKEYS.forEach(f => this.load.image(f, artUrl(f)));
     AKEYS.forEach(a => { this.load.image(ARENAS[a].bg, artUrl(ARENAS[a].bg, 'jpg')); this.load.image(ARENAS[a].plat, artUrl(ARENAS[a].plat)); });
+    for (const k in BMETA) this.load.image('boss_' + k, artUrl('boss-' + k));
+    for (const k in BOSS_BG) this.load.image(k, BOSS_BG[k]);
     const bar = this.add.rectangle(VW / 2 - 200, VH / 2, 4, 16, 0xffd54f).setOrigin(0, 0.5);
     this.load.on('progress', v => bar.width = 400 * v);
   }
   create() {
     FKEYS.forEach(f => { const tx = this.textures.get(f); for (const n in META[f]) { const m = META[f][n]; tx.add(n, 0, m[0], 0, m[1], m[2]); } });
+    for (const k in BMETA) { const tx = this.textures.get('boss_' + k); for (const n in BMETA[k]) { const m = BMETA[k][n]; tx.add(n, 0, m[0], 0, m[1], m[2]); } }
     const lp = $('loading'); if (lp) lp.remove();
     if (QS.get('auto')) { // testing: ?auto=1 starts a computer-only fight
       App.mode = 'solo'; App.cpus = [{ slot: 1, f: QS.get('f2') || 'boulder' }, { slot: 2, f: QS.get('f3') || 'zippa' }, { slot: 3, f: QS.get('f4') || 'gloop' }];
       App.me.f = QS.get('f1') || 'pip'; App.arena = QS.get('arena') || 'sky'; App.diff = 'hard'; App.lives = +(QS.get('lives') || 3);
       if (QS.get('allcpu')) { App.humans = () => []; App.cpus.unshift({ slot: 0, f: App.me.f }); }
+      if (QS.get('raid')) { App.game = 'raid'; App.lives = 3; App.diff = QS.get('diff') || 'normal'; Raid.start(App.roster().slice(0, +(QS.get('team') || 2)).map(r => Object.assign({}, r, { team: 0 })), 3, App.diff); if (QS.get('boss')) { Raid.run.stage = +QS.get('boss'); Raid.fight(); } return; }
+      if (QS.get('boss')) { document.body.classList.add('solo'); App.current = 'raid'; Raid.run = { roster: [{ kind: 'cpu', slot: 0, f: App.me.f, name: 'CPU', team: 0 }], lives: 5, diff: 'normal', stage: +QS.get('boss'), t0: Date.now() }; Raid.fight(); return; }
       document.body.classList.add('solo'); App.go(); return;
     }
     if (QS.get('tv')) App.setup('party'); else App.title();
@@ -1090,7 +1271,7 @@ class Fight extends Phaser.Scene {
   constructor() { super('Fight'); }
   init(cfg) { this.cfg = cfg; }
   create() {
-    const cfg = this.cfg, A = this.A = ARENAS[cfg.arena];
+    const cfg = this.cfg, A = this.A = cfg.boss != null ? bossArena(cfg.boss) : ARENAS[cfg.arena];
     this.paused = false; this.over = false; this.done = false; this.started = false; this.acc = 0; this.slowmo = 1; this.hitDone = new Set();
     this.add.image(VW / 2, VH / 2, A.bg).setDisplaySize(VW, VH).setDepth(0);
     // platforms
@@ -1106,11 +1287,16 @@ class Fight extends Phaser.Scene {
     this.waves = []; this.balls = [];
     // fighters
     const n = cfg.roster.length;
-    this.fighters = cfg.roster.map((r, i) => { const f = new Fighter(this, r, cfg.lives); const span = this.main.x2 - this.main.x1 - 160; f.spawn(this.main.x1 + 80 + (n === 1 ? span / 2 : span * i / (n - 1)), this.main.y - 200); return f; });
+    const bossFight = cfg.boss != null;
+    this.pool = cfg.pool != null ? { n: cfg.pool } : null;
+    this.fighters = cfg.roster.map((r, i) => { const f = new Fighter(this, r, cfg.lives); const span = this.main.x2 - this.main.x1 - 160;
+      f.spawn(bossFight ? this.main.x1 + 90 + i * 95 : this.main.x1 + 80 + (n === 1 ? span / 2 : span * i / (n - 1)), this.main.y - 200); if (bossFight) f.face = 1; return f; });
+    this.boss = bossFight ? new Boss(this, BOSSES[cfg.boss], cfg.bossHp || 1) : null;
+    this.targets = this.fighters.concat(this.boss ? [this.boss] : []);
     this.hud = new Hud(this);
     Sound.music(A.music);
     // countdown
-    this.countT = 0; this.countN = 4; this.big = this.add.text(VW / 2, VH * 0.38, '', { fontFamily: 'Fredoka, sans-serif', fontStyle: '700', fontSize: '140px', color: '#FFD54F', stroke: '#3b1f73', strokeThickness: 16 }).setOrigin(0.5).setDepth(50);
+    this.countT = 0; this.countN = this.boss ? 5 : 4; this.big = this.add.text(VW / 2, VH * 0.38, '', { fontFamily: 'Fredoka, sans-serif', fontStyle: '700', fontSize: '140px', color: '#FFD54F', stroke: '#3b1f73', strokeThickness: 16 }).setOrigin(0.5).setDepth(50);
     this.cam = this.cameras.main;
     window.__fight = this;
   }
@@ -1118,7 +1304,8 @@ class Fight extends Phaser.Scene {
   iceAt(f) { const g = f.ground; if (!g) return; const z = g.ice.find(z => f.x > z.x1 - 30 && f.x < z.x2 + 30 && z.t > 0); if (z) { z.x1 = Math.min(z.x1, f.x - 30); z.x2 = Math.max(z.x2, f.x + 30); z.t = 4; } else g.ice.push({ x1: f.x - 30, x2: f.x + 30, t: 4 }); }
   platBelow(f) { let best = null; for (const p of this.plats) if (f.x > p.x1 && f.x < p.x2 && p.y >= f.y - 2 && (!best || p.y < best.y)) best = p; return best; }
   wave(owner, dir) { const g = owner.ground; this.waves.push({ owner, dir, x: owner.x + dir * owner.w * 0.5, g, id: HITID++, t: 0 }); }
-  snowball(owner) { this.balls.push({ owner, x: owner.x + owner.face * 30, y: owner.y - owner.h * 0.6, vx: owner.face * 820 + owner.vx * 0.3, vy: -120, id: HITID++, t: 0 }); Sound.sfx.swing(); }
+  snowball(owner) { this.ball(owner, 'snow', owner.x + owner.face * 30, owner.y - owner.h * 0.6, owner.face * 820 + owner.vx * 0.3, -120); Sound.sfx.swing(); }
+  ball(owner, kind, x, y, vx, vy) { this.balls.push({ owner, kind, x, y, vx, vy, id: HITID++, t: 0, rot: 0 }); }
   shake(d, i) { this.cam.shake(d * 1000, i); }
   inputFor(f) {
     if (f.brain) return f.brain.think(1 / 60);
@@ -1133,14 +1320,19 @@ class Fight extends Phaser.Scene {
     // countdown
     if (!this.started) {
       this.countT -= dtReal;
-      if (this.countT <= 0) { this.countN--; this.countT = 0.75; if (this.countN > 0) { this.big.setText(String(this.countN)); Sound.sfx.count(); } else { this.big.setText('BRAWL!'); Sound.sfx.go(); this.started = true; this.time.delayedCall(700, () => this.big.setText('')); } this.big.setScale(1.4); this.tweens.add({ targets: this.big, scale: 1, duration: 300, ease: 'Back.Out' }); }
+      if (this.countT <= 0) { this.countN--; this.countT = 0.75; this.big.setFontSize(140);
+        if (this.countN === 4) { this.big.setFontSize(84).setText(this.boss.def.name + '!'); this.countT = 1.3; Sound.sfx.big(); }
+        else if (this.countN > 0) { this.big.setText(String(this.countN)); Sound.sfx.count(); } else { this.big.setText('BRAWL!'); Sound.sfx.go(); this.started = true; this.startT = this.time.now; this.time.delayedCall(700, () => { if (!this.over) this.big.setText(''); }); }
+        this.big.setScale(1.4); this.tweens.add({ targets: this.big, scale: 1, duration: 300, ease: 'Back.Out' }); }
       this.fighters.forEach(f => { f.boxes = []; f.vy = Math.min(f.vy + PHYS.g * dtReal, 900); f.move(dtReal); f.draw(time); });
+      if (this.boss) this.boss.draw(time);
       this.hud.update(); return;
     }
     this.acc += dtReal * this.slowmo; const STEP = 1 / 60; let n = 0;
     while (this.acc >= STEP && n < 4) { this.step(STEP); this.acc -= STEP; n++; }
     if (this.done) return;
     this.fighters.forEach(f => f.draw(time));
+    if (this.boss) this.boss.draw(time);
     this.drawWorld(time);
     this.hud.update();
   }
@@ -1150,16 +1342,22 @@ class Fight extends Phaser.Scene {
     this.plats.forEach(p => { if (p.move) { const nx = p.cx + Math.sin(T * 0.6) * p.move; p.dx = nx - (p.x1 + p.hw); p.x1 = nx - p.hw; p.x2 = nx + p.hw; p.img.x = p.x1; } p.ice.forEach(z => z.t -= dt); p.ice = p.ice.filter(z => z.t > 0); });
     // everyone moves
     for (const f of this.fighters) { if (f.out) continue; f.update(dt, this.inputFor(f)); }
+    if (this.boss) this.boss.update(dt);
     // hits
     const boxes = [];
     this.fighters.forEach(f => f.boxes.forEach(b => boxes.push([b, f])));
+    if (this.boss) this.boss.boxes.forEach(b => boxes.push([b, this.boss]));
     this.waves.forEach(w => { w.t += dt; w.x += w.dir * 720 * dt; if (w.g && w.x > w.g.x1 && w.x < w.g.x2) boxes.push([{ x: w.x - 30, y: w.g.y - 60, w: 60, h: 62, dmg: 10, base: 400, grow: 6, ang: 76, dir: w.dir, id: w.id, groundOnly: true }, w.owner]); else w.dead = true; });
     this.waves = this.waves.filter(w => !w.dead && w.t < 1.5);
-    this.balls.forEach(b => { b.t += dt; b.vy += 700 * dt; b.x += b.vx * dt; b.y += b.vy * dt; boxes.push([{ x: b.x - 16, y: b.y - 16, w: 32, h: 32, dmg: 6, base: 270, grow: 5, ang: 30, dir: Math.sign(b.vx), id: b.id, ball: b }, b.owner]);
-      if (this.plats.some(p => b.x > p.x1 && b.x < p.x2 && b.y > p.y && b.y < p.y + 30) || b.t > 2) { b.dead = true; this.fx.puff(b.x, b.y, 4, 0xffffff); } });
+    this.balls.forEach(b => {
+      const K = BALLS[b.kind] || BALLS.snow, py = b.y; b.t += dt; b.vy += K.g * dt; b.x += b.vx * dt; b.y += b.vy * dt; b.rot += b.vx * dt * 0.03;
+      boxes.push([{ x: b.x - K.r, y: b.y - K.r, w: K.r * 2, h: K.r * 2, dmg: K.dmg, base: K.base, grow: K.grow, ang: K.ang, dir: Math.sign(b.vx) || 1, id: b.id, ball: b }, b.owner]);
+      const p = b.vy >= 0 && this.plats.find(p => b.x > p.x1 && b.x < p.x2 && py + K.r <= p.y + 6 && b.y + K.r >= p.y);
+      if (p) { if (K.roll) { b.y = p.y - K.r; b.vy = b.kind === 'goo' && b.vy > 250 ? -b.vy * 0.5 : 0; } else { b.dead = true; this.fx.puff(b.x, b.y, 4, b.kind === 'bolt' ? 0x9e9e9e : 0xffffff); } }
+      if (b.t > K.life || b.y > VH + 100 || b.x < -120 || b.x > VW + 120) b.dead = true; });
     this.balls = this.balls.filter(b => !b.dead);
-    for (const [b, owner] of boxes) for (const t of this.fighters) {
-      if (t === owner || t.out || t.state === 'dead') continue;
+    for (const [b, owner] of boxes) for (const t of this.targets) {
+      if (t === owner || t.team === owner.team || t.out || t.state === 'dead' || t.state === 'gone') continue;
       if (b.groundOnly && !t.onGround) continue;
       if (t.hitSet && t.hitSet.has && false) continue;
       const key = b.id + ':' + t.slot; if (this.hitDone && this.hitDone.has(key)) continue;
@@ -1167,6 +1365,7 @@ class Fight extends Phaser.Scene {
         const kb = t.takeHit(b, owner); if (!kb) continue;
         (this.hitDone = this.hitDone || new Set()).add(key); if (this.hitDone.size > 400) this.hitDone = new Set([key]);
         if (b.ball) b.ball.dead = true;
+        if (owner.kind !== 'boss') owner.dealt = (owner.dealt || 0) + b.dmg;
         const hx = clamp(t.x, b.x, b.x + b.w), hy = clamp(t.y - t.h / 2, b.y, b.y + b.h);
         this.fx.spark(hx, hy, SLOT_HEX[owner.slot], clamp(kb / 700, 0.6, 1.8)); Sound.sfx.hit(kb);
         if (kb > 1000) { this.shake(0.15, 0.008); this.fx.flash(); }
@@ -1187,7 +1386,14 @@ class Fight extends Phaser.Scene {
     // shockwaves + snowballs
     const fg = this.fxG; fg.clear();
     this.waves.forEach(w => { if (!w.g) return; for (let i = 0; i < 3; i++) { fg.fillStyle(i ? 0x8d6e63 : 0xffcc80, 0.9 - i * 0.25).fillTriangle(w.x - w.dir * i * 22 - 14, w.g.y, w.x - w.dir * i * 22 + 14, w.g.y, w.x - w.dir * i * 22, w.g.y - 46 + i * 12); } });
-    this.balls.forEach(b => { fg.fillStyle(0xffffff, 1).fillCircle(b.x, b.y, 15); fg.lineStyle(3, 0x4fc3f7, 1).strokeCircle(b.x, b.y, 15); });
+    this.balls.forEach(b => {
+      const K = BALLS[b.kind] || BALLS.snow, r = K.r;
+      if (b.kind === 'snow' || b.kind === 'snowbig') { fg.fillStyle(0xffffff, 1).fillCircle(b.x, b.y, r); fg.lineStyle(3, 0x4fc3f7, 1).strokeCircle(b.x, b.y, r); }
+      else if (b.kind === 'goo') { fg.fillStyle(0x8e24aa, 1).fillCircle(b.x, b.y, r); fg.fillStyle(0xd38cff, 1).fillCircle(b.x - 6, b.y - 7, r * 0.35); fg.lineStyle(3, 0x3d0a52, 1).strokeCircle(b.x, b.y, r); }
+      else if (b.kind === 'barrel') { fg.fillStyle(0x8d5a2b, 1).fillCircle(b.x, b.y, r); fg.lineStyle(4, 0x4e2e12, 1).strokeCircle(b.x, b.y, r); for (const o of [0, Math.PI / 2]) fg.lineBetween(b.x + Math.cos(b.rot + o) * r, b.y + Math.sin(b.rot + o) * r, b.x - Math.cos(b.rot + o) * r, b.y - Math.sin(b.rot + o) * r); }
+      else if (b.kind === 'bolt') { fg.fillStyle(0xb0bec5, 1).fillCircle(b.x, b.y, r); fg.lineStyle(3, 0x37474f, 1).strokeCircle(b.x, b.y, r); fg.fillStyle(0x37474f, 1).fillCircle(b.x, b.y, r * 0.35); }
+      else if (b.kind === 'stinger') { const a = Math.atan2(b.vy, b.vx); fg.fillStyle(0xffd54f, 1).fillTriangle(b.x + Math.cos(a) * 20, b.y + Math.sin(a) * 20, b.x + Math.cos(a + 2.5) * 12, b.y + Math.sin(a + 2.5) * 12, b.x + Math.cos(a - 2.5) * 12, b.y + Math.sin(a - 2.5) * 12); fg.lineStyle(3, 0x212121, 1).lineBetween(b.x + Math.cos(a + 1.6) * 7, b.y + Math.sin(a + 1.6) * 7, b.x + Math.cos(a - 1.6) * 7, b.y + Math.sin(a - 1.6) * 7); }
+    });
     // off-screen bubbles
     this.fighters.forEach(f => {
       if (f.out || f.state === 'dead') return;
@@ -1200,11 +1406,26 @@ class Fight extends Phaser.Scene {
     this.fx.update();
   }
   checkEnd() {
+    if (this.over) return;
+    if (this.cfg.onEnd) {   // arcade / boss raid: your team against the computer or a boss
+      if (!this.fighters.some(f => f.team === 0 && !f.out)) return this.finish(false);
+      if (this.boss) { if (this.boss.state === 'gone') this.finish(true); return; }
+      if (!this.fighters.some(f => f.team !== 0 && !f.out)) this.finish(true);
+      return;
+    }
     const alive = this.fighters.filter(f => !f.out);
     if (alive.length > 1 || this.over) return;
     this.over = true; this.slowmo = 0.3; this.big.setText('GAME!'); this.big.setScale(1.5); this.tweens.add({ targets: this.big, scale: 1, duration: 400, ease: 'Back.Out' });
     Sound.sfx.big();
     this.time.delayedCall(1600, () => this.showWinner(alive[0] || null));
+  }
+  finish(win) {
+    this.over = true; this.slowmo = 0.35;
+    this.big.setFontSize(win ? 120 : 110).setColor(win ? '#FFD54F' : '#ff8a80').setText(win ? (this.boss ? 'BOSS DOWN!' : 'K.O.!') : 'DEFEATED');
+    this.big.setScale(1.5); this.tweens.add({ targets: this.big, scale: 1, duration: 400, ease: 'Back.Out' });
+    Sound.sfx.big(); if (win) Sound.sfx.win();
+    const res = { win, time: (this.time.now - (this.startT || this.time.now)) / 1000, dealt: this.fighters.filter(f => f.team === 0).reduce((a, f) => a + (f.dealt || 0), 0), pool: this.pool ? this.pool.n : 0 };
+    this.time.delayedCall(1800, () => { this.done = true; this.slowmo = 0; Sound.music(null); this.cfg.onEnd(res); });
   }
   showWinner(w) {
     this.slowmo = 0; this.big.setText(''); this.done = true; this.fxG.clear(); this.fx.g.clear();
@@ -1224,6 +1445,195 @@ class Fight extends Phaser.Scene {
   }
 }
 
+// =====================================================================
+//  BOSS – a big enemy with a health bar instead of a damage %
+// =====================================================================
+class Boss {
+  constructor(sc, def, hpMul) {
+    Object.assign(this, { sc, def, k: def.key, kind: 'boss', team: 1, slot: 4, label: def.name, f: 'boss', out: false, state: 'walk', t: 0, face: -1, vx: 0, vy: 0,
+      boxes: [], next: 1.4, atks: 0, since: 0, flash: 0, dealt: 0, kos: 0, falls: 0, lag: 0, inv: 0, ext: 0, fired: 0, dur: 2 });
+    this.d = { w: def.w, h: def.h, weight: 99, punch: { reach: 0 } };
+    this.w = def.w; this.h = def.h; this.max = this.hp = Math.round(def.hp * hpMul);
+    this.onGround = !def.flies; this.ground = def.flies ? null : sc.main; this.home = 300;
+    this.x = VW * 0.74; this.y = def.flies ? this.home : sc.main.y;
+    this.shadow = sc.add.ellipse(0, 0, def.w * 0.9, 20, 0x000000, 0.3).setDepth(4);
+    this.spr = sc.add.image(this.x, this.y, 'boss_' + this.k, 'idle').setDepth(9);
+    this.g = sc.add.graphics().setDepth(12);
+    if (this.k === 'gloop') this.fist = sc.add.image(0, 0, 'gloop', 'fist').setDepth(12).setVisible(false);
+  }
+  foes() { return this.sc.fighters.filter(f => f.team !== this.team && !f.out && f.state !== 'dead' && f.state !== 'respawn'); }
+  target() { const fs = this.foes(); if (!fs.length) return null; return fs.reduce((a, b) => Math.abs(b.x - this.x) < Math.abs(a.x - this.x) ? b : a); }
+  get vuln() { return this.state === 'dizzy' || this.state === 'hot'; }
+  hurtbox() { return { x: this.x - this.w / 2, y: this.y - this.h, w: this.w, h: this.h }; }
+  takeHit(b, from) {
+    if (this.state === 'dead' || this.state === 'gone') return false;
+    const dmg = b.dmg * (this.vuln ? 1.6 : 1);
+    this.hp = Math.max(0, this.hp - dmg); this.flash = 0.12; this.since += dmg;
+    if (from) from.lag = Math.max(from.lag || 0, 0.04);
+    if (this.hp <= 0) { this.state = 'dead'; this.t = 0; this.boxes = []; this.ext = 0; Sound.sfx.big(); this.sc.shake(0.4, 0.02); }
+    else if (this.since >= 45 && (this.state === 'walk' || this.state === 'rise')) { this.since = 0; this.state = 'hurt'; this.t = 0; }
+    return 300 + dmg * 40;
+  }
+  update(dt) {
+    this.boxes = []; this.flash = Math.max(0, this.flash - dt); this.t += dt;
+    const sc = this.sc, m = sc.main;
+    if (this.state === 'gone') return;
+    if (this.state === 'dead') {
+      if (Math.random() < 0.4) sc.fx.spark(this.x + rnd(-this.w / 2, this.w / 2), this.y - rnd(0, this.h), 0xffd54f, 0.8);
+      if (this.t > 1.8) { this.state = 'gone'; sc.fx.ko(this.x, this.y - this.h / 2, 0xffd54f); sc.fx.puff(this.x, this.y - this.h / 2, 14, 0xffd54f); Sound.sfx.ko(); sc.checkEnd(); }
+      return;
+    }
+    const tg = this.target(); if (!tg) return;
+    const dx = tg.x - this.x, lo = m.x1 + this.w * 0.45, hi = m.x2 - this.w * 0.45;
+    if (this.state === 'walk' || this.state === 'rise') {
+      this.face = dx >= 0 ? 1 : -1;
+      if (this.def.flies) {
+        this.onGround = false;
+        const ty = this.home + Math.sin(sc.time.now / 600) * 30;
+        this.vx = approach(this.vx, clamp(dx * 1.4, -230, 230), 600 * dt); this.vy = approach(this.vy, (ty - this.y) * 2.5, 1600 * dt);
+        this.x = clamp(this.x + this.vx * dt, 150, VW - 150); this.y += this.vy * dt;
+        if (this.state === 'rise' && Math.abs(this.y - ty) < 40) this.state = 'walk';
+      } else { this.vx = Math.abs(dx) > 70 ? this.face * this.def.speed : 0; this.x = clamp(this.x + this.vx * dt, lo, hi); }
+      if (this.state === 'walk') { this.next -= dt; if (this.next <= 0) this.pickAttack(tg, dx); }
+      return;
+    }
+    if (this.state === 'hurt') { if (this.t > 0.55) this.state = this.def.flies ? 'rise' : 'walk'; return; }
+    if (this.state === 'dizzy' || this.state === 'hot') {
+      if (this.state === 'hot' && Math.random() < 0.2) sc.fx.puff(this.x + rnd(-50, 50), this.y - this.h, 1, 0xdddddd);
+      if (this.t > this.dur) { this.state = this.def.flies ? 'rise' : 'walk'; this.next = 0.9; }
+      return;
+    }
+    if (this.state === 'atk') this.attack(dt, tg, dx, lo, hi);
+  }
+  pickAttack(tg, dx) {
+    const opts = this.def.attacks(this, tg, dx); let r = Math.random() * opts.reduce((a, o) => a + o[1], 0), a = opts[0][0];
+    for (const o of opts) { if ((r -= o[1]) <= 0) { a = o[0]; break; } }
+    Object.assign(this, { state: 'atk', a, t: 0, fired: 0, tx: tg.x, aid: HITID++, face: dx >= 0 ? 1 : -1, vx: 0, ext: 0 });
+  }
+  endAttack(rest = 0.9) {
+    this.atks++; this.ext = 0; this.state = this.def.flies ? 'rise' : 'walk'; this.t = 0; this.next = rest * rnd(0.8, 1.3);
+    if (!this.def.flies && this.atks % 3 === 0) { this.state = this.k === 'king' ? 'hot' : 'dizzy'; this.dur = this.k === 'king' ? 2.6 : 2.2; }
+  }
+  attack(dt, tg, dx, lo, hi) {
+    const t = this.t, sc = this.sc, m = sc.main, k = this.k, a = this.a, F = this.face;
+    const hit = (x, y, w, h, o) => this.boxes.push(Object.assign({ x, y, w, h, dir: F, id: this.aid }, o));
+    const once = (n, at) => { if (this.fired < n && t >= at) { this.fired = n; return true; } return false; };
+    if (a === 'leap') {   // King Gloop + Yeti-Bot: jump onto you, shockwaves when they land
+      if (t < 0.4) return;
+      if (once(1, 0.4)) { this.vy = -1150; this.vx = clamp((this.tx - this.x) / 1.0, -620, 620); this.onGround = false; Sound.sfx.jump(); }
+      if (this.fired === 1) {
+        this.vy += 2300 * dt; this.x = clamp(this.x + this.vx * dt, lo, hi); this.y += this.vy * dt;
+        if (this.vy > 0) hit(this.x - this.w * 0.45, this.y - this.h * 0.6, this.w * 0.9, this.h * 0.6, { dmg: 10, base: 380, grow: 6, ang: -50, spike: true });
+        if (this.y >= m.y) { this.y = m.y; this.vy = 0; this.onGround = true; this.fired = 2; this.landT = t; this.aid = HITID++; sc.shake(0.25, 0.014); Sound.sfx.quake(); sc.fx.puff(this.x, this.y, 10); sc.fx.ring(this.x, this.y, 180, 0xffffff); this.ground = m; sc.wave(this, 1); sc.wave(this, -1);
+          hit(this.x - this.w * 0.7, this.y - 70, this.w * 1.4, 72, { dmg: 11, base: 400, grow: 6, ang: 70, round: true }); }
+      }
+      if (this.fired === 2 && t > this.landT + 0.5) this.endAttack(0.8);
+      return;
+    }
+    if (k === 'gloop') {
+      if (a === 'punch') {   // giant stretchy punch
+        const s = 0.45, e = 0.9;
+        if (t > s && t < e) { const p = (t - s) / (e - s); this.ext = Math.sin(Math.PI * Math.min(1, p * 1.3)) * 380; const fx = this.x + F * (this.w * 0.35 + this.ext), fy = this.y - this.h * 0.45; hit(fx - 45, fy - 50, 90, 100, { dmg: 12, base: 380, grow: 6, ang: 32 }); if (once(1, s)) Sound.sfx.goo(); } else this.ext = 0;
+        if (t > 1.25) this.endAttack(0.7);
+        return;
+      }
+      if (a === 'goo') { if (once(1, 0.35)) { for (let i = 0; i < 3; i++) sc.ball(this, 'goo', this.x + F * 60, this.y - this.h * 0.7, F * (220 + i * 160), -650 - i * 90); Sound.sfx.goo(); } if (t > 0.8) this.endAttack(0.8); return; }
+    }
+    if (k === 'crab') {
+      if (a === 'charge') {  // claws up, then charge across the arena
+        if (t < 0.6) { this.x += Math.sin(t * 60) * 1.5; return; }
+        if (once(1, 0.6)) Sound.sfx.swing();
+        if (this.fired === 1) {
+          this.x += F * 700 * dt; hit(this.x - this.w / 2, this.y - this.h * 0.8, this.w, this.h * 0.8, { dmg: 13, base: 420, grow: 6, ang: 40 });
+          if (this.x <= lo || this.x >= hi) { this.x = clamp(this.x, lo, hi); this.fired = 2; sc.shake(0.2, 0.01); Sound.sfx.big(); sc.fx.puff(this.x + F * this.w / 2, this.y - 40, 6); this.atks++; this.ext = 0;
+            if (Math.random() < 0.65) { this.state = 'dizzy'; this.t = 0; this.dur = 2.0; } else { this.atks--; this.endAttack(0.6); } }
+        }
+        return;
+      }
+      if (a === 'throw') { if (once(1, 0.35) || once(2, 0.85)) { sc.ball(this, 'barrel', this.x + F * 70, this.y - this.h * 0.5, F * 430, -260); Sound.sfx.swing(); } if (t > 1.2) this.endAttack(0.8); return; }
+      if (a === 'snap') { if (t > 0.55 && t < 0.72) hit(this.x - 200, this.y - 120, 400, 120, { dmg: 12, base: 400, grow: 6, ang: 62, round: true }); if (once(1, 0.55)) { sc.shake(0.2, 0.01); Sound.sfx.big(); sc.fx.puff(this.x - 150, this.y, 4); sc.fx.puff(this.x + 150, this.y, 4); } if (t > 1.0) this.endAttack(0.8); return; }
+    }
+    if (k === 'yeti') {
+      if (a === 'pound') { if (once(1, 0.5)) { sc.shake(0.3, 0.016); Sound.sfx.quake(); this.ground = m; sc.wave(this, 1); sc.wave(this, -1); sc.fx.puff(this.x, this.y, 10); } if (t > 0.5 && t < 0.62) hit(this.x - 140, this.y - 90, 280, 92, { dmg: 11, base: 400, grow: 6, ang: 72, round: true }); if (t > 1.05) this.endAttack(0.8); return; }
+      if (a === 'snow') { if (once(1, 0.35)) { for (let i = 0; i < 3; i++) { const T = 0.9 + i * 0.15; sc.ball(this, 'snowbig', this.x + F * 50, this.y - this.h * 0.75, (this.tx - this.x) / T * rnd(0.8, 1.2), -620 - i * 60); } Sound.sfx.swing(); } if (t > 0.9) this.endAttack(0.8); return; }
+    }
+    if (k === 'king') {
+      if (a === 'magnet') {  // pulls everyone in... then SLAM
+        if (t < 1.7) { if (once(1, 0)) Sound.sfx.ice(); for (const f of this.foes()) { if (f.state === 'hurt') continue; const d = this.x - f.x; if (Math.abs(d) > 50) f.vx += Math.sign(d) * 1500 * dt; } return; }
+        if (t > 2.0 && t < 2.15) hit(this.x - 210, this.y - 140, 420, 142, { dmg: 14, base: 430, grow: 6.5, ang: 66, round: true });
+        if (once(2, 2.0)) { sc.shake(0.35, 0.018); Sound.sfx.quake(); this.ground = m; sc.wave(this, 1); sc.wave(this, -1); sc.fx.puff(this.x, this.y, 12); }
+        if (t > 2.6) this.endAttack(0.9);
+        return;
+      }
+      if (a === 'bolts') { if (once(1, 0.35)) { for (let i = 0; i < 5; i++) sc.ball(this, 'bolt', this.x, this.y - this.h * 0.8, F * rnd(120, 560), rnd(-1000, -650)); Sound.sfx.swing(); } if (t > 0.9) this.endAttack(0.8); return; }
+    }
+    if (k === 'queen') {
+      if (a === 'stingers') {
+        for (const [n, at] of [[1, 0.35], [2, 0.6], [3, 0.85]]) if (once(n, at)) { const tg2 = this.target() || tg, sy = this.y - this.h * 0.4; const ang = Math.atan2(tg2.y - tg2.h / 2 - sy, tg2.x - this.x); sc.ball(this, 'stinger', this.x + Math.cos(ang) * 60, sy + Math.sin(ang) * 60, Math.cos(ang) * 560, Math.sin(ang) * 560); Sound.sfx.swing(); }
+        if (t > 1.1) this.endAttack(0.9); return;
+      }
+      if (a === 'dive') {   // swoops down at you, then sits dizzy on the floor
+        if (t < 0.6) { this.y -= 60 * dt; return; }
+        if (once(1, 0.6)) { const tx = clamp(this.tx, lo, hi); const d = Math.hypot(tx - this.x, m.y - this.y) || 1; this.vx = (tx - this.x) / d * 1000; this.vy = (m.y - this.y) / d * 1000; this.face = this.vx >= 0 ? 1 : -1; Sound.sfx.swing(); }
+        this.x += this.vx * dt; this.y += this.vy * dt;
+        hit(this.x - this.w * 0.4, this.y - this.h * 0.8, this.w * 0.8, this.h * 0.8, { dmg: 13, base: 440, grow: 6, ang: 50 });
+        if (this.y >= m.y) { this.y = m.y; this.x = clamp(this.x, lo, hi); this.vx = this.vy = 0; this.onGround = true; sc.shake(0.25, 0.014); Sound.sfx.big(); sc.fx.puff(this.x, this.y, 8); this.state = 'dizzy'; this.t = 0; this.dur = 2.3; this.atks++; }
+        return;
+      }
+    }
+    this.endAttack();
+  }
+  frame() {
+    const k = this.k, st = this.state, t = this.t, a = this.a;
+    if (st === 'dead') return 'down';
+    if (st === 'hurt' || st === 'dizzy' || st === 'hot') return 'hurt';
+    if (st === 'atk') {
+      if (a === 'leap') return t >= 0.4 && this.fired === 1 ? 'move' : 'idle';
+      if (k === 'gloop') return a === 'punch' ? (t > 0.4 ? 'atk1' : 'idle') : (t > 0.3 ? 'atk2' : 'idle');
+      if (k === 'crab') return a === 'charge' ? (t < 0.6 ? 'atk1' : 'atk2') : a === 'throw' ? (t % 0.5 < 0.25 ? 'atk1' : 'idle') : (t < 0.55 ? 'atk1' : 'atk2');
+      if (k === 'yeti') return a === 'pound' ? (t < 0.5 ? 'atk2' : 'idle') : (t < 0.35 ? 'atk2' : 'atk1');
+      if (k === 'king') return a === 'magnet' ? (t < 1.7 ? 'atk1' : t < 2.0 ? 'atk2' : 'idle') : 'atk2';
+      if (k === 'queen') return a === 'dive' ? 'atk1' : 'atk2';
+    }
+    if (this.def.flies) return Math.abs(this.vx) > 140 ? 'move' : 'idle';
+    return Math.abs(this.vx) > 10 && Math.floor(this.sc.time.now / 240) % 2 ? 'move' : 'idle';
+  }
+  draw(time) {
+    const g = this.g; g.clear();
+    if (this.state === 'gone') { this.spr.setVisible(false); this.shadow.setVisible(false); if (this.fist) this.fist.setVisible(false); return; }
+    const fr = this.frame(); if (fr !== this.fr) { this.spr.setFrame(fr); this.fr = fr; }
+    const M = BMETA[this.k][fr], w = M[1], ax = M[3], ay = M[4], S = 1 / ART, t = this.t, a = this.a;
+    // squash and stretch so the poses feel alive
+    let sx = 1, sy = 1, oy = 0, rot = 0;
+    if (this.state === 'walk' && !this.def.flies && Math.abs(this.vx) > 10) oy = -Math.abs(Math.sin(time * 0.012)) * 7;
+    if (this.state === 'walk' && !this.def.flies && Math.abs(this.vx) <= 10) sy = 1 + Math.sin(time * 0.005) * 0.025;
+    if (this.def.flies && this.state !== 'dizzy' && this.state !== 'dead') { oy = Math.sin(time * 0.008) * 6; rot = this.state === 'atk' && a === 'dive' && t > 0.6 ? 0.35 * this.face : 0; }
+    if (this.state === 'atk') {
+      if (a === 'leap' && (t < 0.4 || (this.fired === 2 && t < this.landT + 0.18))) { sy = 0.84; sx = 1.12; }
+      if (this.k === 'yeti' && a === 'pound' && t > 0.5 && t < 0.7) { sy = 0.86; sx = 1.1; }
+      if (this.k === 'king' && a === 'magnet' && t > 2.0 && t < 2.2) { sy = 0.88; sx = 1.08; }
+      if (this.k === 'crab' && a === 'charge' && t < 0.6) oy = Math.sin(t * 70) * 2;
+    }
+    this.spr.setFlipX(this.face < 0).setOrigin(this.face > 0 ? ax / w : 1 - ax / w, ay / M[2]).setScale(S * sx, S * sy).setRotation(rot);
+    this.spr.setPosition(this.x, this.y + oy).setAlpha(1);
+    if (this.state === 'dead') { const k = clamp(this.t / 1.8, 0, 1); this.spr.setAlpha(1 - k * 0.6).setRotation(Math.sin(this.t * 30) * 0.06); }
+    this.spr.setTint(this.flash > 0 ? 0xff7070 : this.state === 'hot' ? 0xffa070 : 0xffffff);
+    const m = this.sc.main; this.shadow.setVisible(true).setPosition(this.x, m.y + 2).setScale(clamp(1 - (m.y - this.y) / 500, 0.4, 1));
+    const top = this.y - ay * S * sy;
+    if (this.k === 'gloop') {   // King Gloop's punch stretches even further than the picture
+      if (this.state === 'atk' && a === 'punch' && this.ext > 120) {
+        const fy = this.y - this.h * 0.5, sxp = this.x + this.face * this.w * 0.55, fx = this.x + this.face * (this.w * 0.35 + this.ext);
+        g.lineStyle(30, 0x8e24aa, 1).lineBetween(sxp, fy, fx, fy).lineStyle(14, 0xc04df9, 1).lineBetween(sxp, fy - 6, fx, fy - 6);
+        this.fist.setVisible(true).setFlipX(this.face < 0).setPosition(fx, fy + 34).setOrigin(this.face > 0 ? 0.25 : 0.75, 0.9).setScale(1.25 / ART);
+      } else this.fist.setVisible(false);
+    }
+    if (this.vuln) for (let i = 0; i < 3; i++) { const an = time * 0.006 + i * 2.1; g.fillStyle(0xffeb3b, 1); drawStar(g, this.x + Math.cos(an) * 55, top + 4 + Math.sin(an) * 12, 12, 5, 5, an); }
+    if (this.state === 'hot' && Math.random() < 0.3) this.sc.fx.puff(this.x + rnd(-40, 40), top + 20, 1, 0xdddddd);
+    if (this.k === 'king' && this.state === 'atk' && a === 'magnet' && t < 1.7) for (const f of this.foes()) g.lineStyle(3, 0x80d8ff, 0.55 + Math.sin(time * 0.03) * 0.25).lineBetween(this.x + this.face * 90, this.y - this.h * 0.55, f.x, f.y - f.h / 2);
+    if (this.k === 'queen' && this.state === 'atk' && a === 'dive' && t < 0.6) g.lineStyle(4, 0xff5252, 0.6).lineBetween(this.x, this.y - this.h / 2, clamp(this.tx, m.x1 + 60, m.x2 - 60), m.y);
+  }
+}
+
 // HUD: a card for each fighter along the bottom
 class Hud {
   constructor(sc) {
@@ -1238,6 +1648,12 @@ class Hud {
       c.lives = sc.add.text(x + W - 10, y + 62, '', { fontFamily: 'Fredoka, sans-serif', fontStyle: '700', fontSize: '15px', color: '#fff' }).setOrigin(1, 1).setDepth(46);
       c.last = -1; c.x = x; c.y = y; return c;
     });
+    if (sc.boss) {
+      this.bar = sc.add.graphics().setDepth(46);
+      this.bname = sc.add.text(VW / 2, 14, sc.boss.def.name, { fontFamily: 'Fredoka, sans-serif', fontStyle: '700', fontSize: '22px', color: '#fff', stroke: '#3b1f73', strokeThickness: 6 }).setOrigin(0.5, 0).setDepth(47);
+      this.lastHp = -1;
+    }
+    if (sc.pool && sc.cfg.mode === 'raid') this.team = sc.add.text(20, 64, '', { fontFamily: 'Fredoka, sans-serif', fontStyle: '700', fontSize: '22px', color: '#fff', stroke: '#3b1f73', strokeThickness: 6 }).setDepth(47);
   }
   update() {
     this.sc.fighters.forEach((f, i) => {
@@ -1246,9 +1662,19 @@ class Hud {
         const col = d < 40 ? '#ffffff' : d < 80 ? '#ffe082' : d < 120 ? '#ffab40' : d < 160 ? '#ff5252' : '#d50000';
         c.pct.setText(d + '%').setColor(col); if (d > c.last && c.last >= 0) { c.pct.setScale(1.35); this.sc.tweens.add({ targets: c.pct, scale: 1, duration: 200 }); } c.last = d;
       }
-      c.lives.setText(f.out ? 'OUT' : '❤'.repeat(Math.max(0, f.lives)));
+      const pooled = this.sc.pool && f.team === 0;
+      c.lives.setText(f.out ? 'OUT' : pooled ? (this.sc.cfg.mode === 'arcade' ? hearts(this.sc.pool.n + 1) : 'team') : hearts(f.lives));
       c.face.setAlpha(f.out ? 0.35 : 1);
     });
+    if (this.team) this.team.setText('Team lives ' + (this.sc.pool.n > 0 ? hearts(this.sc.pool.n) : '– last chance!'));
+    const B = this.sc.boss;
+    if (B && Math.round(B.hp) !== this.lastHp) {
+      this.lastHp = Math.round(B.hp); const W = 560, x = VW / 2 - W / 2, y = 46, k = B.hp / B.max, g = this.bar; g.clear();
+      g.fillStyle(0x1a1036, 0.85).fillRoundedRect(x - 6, y - 6, W + 12, 30, 12);
+      g.fillStyle(0x4a2b2b, 1).fillRoundedRect(x, y, W, 18, 8);
+      if (k > 0) g.fillStyle(k > 0.5 ? 0x66bb6a : k > 0.25 ? 0xffca28 : 0xef5350, 1).fillRoundedRect(x, y, Math.max(16, W * k), 18, 8);
+      g.lineStyle(3, 0xffffff, 1).strokeRoundedRect(x - 6, y - 6, W + 12, 30, 12);
+    }
   }
 }
 
@@ -1457,6 +1883,8 @@ function setupDom() {
   const click = (id, fn) => { $(id).onclick = e => { Sound.init(); Sound.sfx.select(); fn(e); }; };
   click('mSolo', () => App.setup('solo'));
   click('mParty', () => App.setup('party'));
+  click('mArcade', () => App.setup('arcade'));
+  [...$('gameSeg').children].forEach(b => b.onclick = () => { App.game = b.dataset.v; store.set('brawl_game', App.game); Sound.sfx.select(); App.refresh(); });
   click('mCode', () => showCodePop());
   click('mHelp', () => show('scrHelp'));
   click('helpBack', () => App.title());
@@ -1466,9 +1894,6 @@ function setupDom() {
   [...$('livesSeg').children].forEach(b => b.onclick = () => { App.lives = +b.dataset.v; store.set('brawl_lives', App.lives); Sound.sfx.select(); App.refresh(); });
   click('setBack', () => App.title());
   $('setGo').onclick = () => App.go();
-  click('resAgain', () => App.go());
-  click('resChange', () => App.setup());
-  click('resMenu', () => App.title());
   click('btnHome', () => { togglePause(false); App.setup(); });
   $('btnPause').onclick = () => togglePause();
   $('btnMute').onclick = () => toggleMute();
@@ -1477,13 +1902,13 @@ function setupDom() {
     try { const d = document.documentElement; if (!document.fullscreenElement) { const r = d.requestFullscreen && d.requestFullscreen(); if (r && r.then) r.then(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch (e) {} }).catch(() => {}); } else document.exitFullscreen(); } catch (e) {}
   };
   click('pResume', () => togglePause(false));
-  click('pRestart', () => { togglePause(false); App.go(); });
+  click('pRestart', () => { togglePause(false); App.restartFight(); });
   click('pChange', () => { togglePause(false); App.setup(); });
   click('pTitle', () => { togglePause(false); App.title(); });
   $('joinbtn').onclick = () => showJoinQR();
   $('joinclose').onclick = () => $('joinpop').classList.add('hidden');
   $('joinpop').onclick = e => { if (e.target.id === 'joinpop') $('joinpop').classList.add('hidden'); };
-  addEventListener('blur', () => { if (App.mode === 'solo') togglePause(true); });
+  addEventListener('blur', () => { if (App.mode !== 'party') togglePause(true); });
   // game controllers: in the fighter picker a button press adds that controller as a player
   setInterval(() => {
     if (App.screen !== 'setup' || !navigator.getGamepads) return;
